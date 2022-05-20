@@ -313,6 +313,7 @@
         try {
             let params = {
                 populate: [
+                    "waybill",
                     "stock_release_item",
                     "stock_release_item.stock_release",
                     "stock_release_item.stock_release.consortium_member",
@@ -326,11 +327,7 @@
                             $in: [event.detail.data?.id],
                         },
                     },
-                    waybill: {
-                        id: {
-                            $notIn: [null]  
-                        }
-                    }
+                    
                 },
                 "pagination[limit]": -1,
             };
@@ -341,7 +338,7 @@
 
             console.log("Get Waybill Items ", response);
 
-            waybill_items = response.data;
+            waybill_items = response.data.filter( x => x.attributes.waybill.data );
         } catch (e) {
             console.log("Error Waybill Items ", e);
         }
@@ -745,6 +742,20 @@
                                 Waybill Item is required
                             </p>
                         {/if}
+                    </div>
+                </div>
+            </div>
+            <div class="columns">
+                <div class="column">
+                    <div class="field">
+                        <label for="" class="gray">Remark</label><br />
+                        <div class="control is-fullwidth">
+                            <textarea
+                                rows="1"
+                                class="textarea"
+                                bind:value={remark}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

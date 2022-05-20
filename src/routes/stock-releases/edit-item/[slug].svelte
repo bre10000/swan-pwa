@@ -122,13 +122,13 @@ import { createActivityLog } from "../../../utils/activity/log";
                         populate: "*",
                     },
                 },
-                filters: {
-                            consortium_member: {
-                                id: {
-                                    $in: [consortium],
-                                },
-                            }
-                },
+                // filters: {
+                //             consortium_member: {
+                //                 id: {
+                //                     $in: [consortium],
+                //                 },
+                //             }
+                // },
                 "pagination[limit]": -1,
             };
             params = qs.stringify(params, {
@@ -142,7 +142,7 @@ import { createActivityLog } from "../../../utils/activity/log";
                 return {
                     value: x.id,
                     label:
-                        "PO# - " +x.attributes.poNumber +
+                        "PO# - " +x.attributes.poNumber + " - " + x.attributes.consortium_member.data?.attributes.name +
                         "  ------- Date   " +
                         x.attributes.date +
                         "    ID    " +

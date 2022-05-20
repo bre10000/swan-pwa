@@ -202,7 +202,7 @@ import { createActivityLog } from "../../../utils/activity/log";
 
         try {
             let response = await del(
-                "stock-items/" + currentItem.id,
+                "stock-release-items/" + currentItem.id,
                 null
             );
 
@@ -270,13 +270,13 @@ import { createActivityLog } from "../../../utils/activity/log";
                         populate: "*",
                     },
                 },
-                filters: {
-                            consortium_member: {
-                                id: {
-                                    $in: [$consortium_member.value.value],
-                                },
-                            }
-                },
+                // filters: {
+                //             consortium_member: {
+                //                 id: {
+                //                     $in: [$consortium_member.value.value],
+                //                 },
+                //             }
+                // },
                 "pagination[limit]": -1,
             };
             params = qs.stringify(params, {
@@ -290,7 +290,7 @@ import { createActivityLog } from "../../../utils/activity/log";
                 return {
                     value: x.id,
                     label:
-                        "PO# - " +x.attributes.poNumber +
+                    "PO# - " +x.attributes.poNumber + " - " + x.attributes.consortium_member.data?.attributes.name +
                         "  ------- Date   " +
                         x.attributes.date +
                         "    ID    " +

@@ -25,56 +25,45 @@
 import { createActivityLog } from "../../../utils/activity/log";
 
     export let slug;
-    let stockId;
+    let waybillId;
 
-    const consortium_member = field("consortium_member", "", [required()]);
-    const date = field("date", new Date(), [required()]);
-
-    const formItem = form(consortium_member, date);
-
-    const purchase_order = field("purchase_order", null, [required()]);
-    const purchase_order_item = field("purchase_order_item", null, [required()]);
-    const quantity = field("quantity", "", [required()]);
+    const stock_release = field("stock_release", null, [required()]);
+    const stock_release_item = field("stock_release_item", null, [required()]);
 
     let remark = "";
-    let remaining = 0;
-    let stock_items = [];
+
+    const formChildItem = form(stock_release, stock_release_item);
+
+    let stock_releases = [];
     let stock_release_items = [];
 
-    const formChildItem = form(
-        purchase_order,
-        purchase_order_item,
-        quantity
-    );
-    let purchase_orders = [];
-    let purchase_order_items = [];
-
+    let waybill_items = [];
 
     let errors;
 
 
     async function add() {
         await formChildItem.validate();
-        if (!$formChildItem.valid || remaining - $quantity.value < 0) {
+        if (!$formChildItem.valid || waybill_items.length > 0 ) {
             return;
         }
 
         try {
             let response = await put({
-                path: "stock-release-items/" + slug + "?populate=%2A",
+                path: "waybill-items/" + slug + "?populate=%2A",
                 data: {
                     data: {
-                        purchase_order_item: $purchase_order_item.value.value,
-                        quantity: $quantity.value,
+                        // waybill: waybillId,
+                        stock_release_item: $stock_release_item.value.value ,
                         remark: remark
                     },
                 },
             });
 
-            console.log("Edit Stock Release Request  ", response);
+            console.log("Edit Waybill Request  ", response);
 
             if (response.data?.id) {
-                toast.push("Stock Release Edited Successfully!", {
+                toast.push("Waybill Edited Successfully!", {
                     duration: 20000,
                     theme: {
                         "--toastBackground": "#48BB78",
@@ -82,17 +71,17 @@ import { createActivityLog } from "../../../utils/activity/log";
                     },
                 });
 
-                createActivityLog("Stock Release", response.data, "Edit", response.data.id)
+                createActivityLog("Waybill", response.data, "Edit", response.data.id)
 
-                goto("stock-releases/edit/" + stockId)
+                goto("waybills/edit/" + waybillId)
             }
         } catch (e) {
-            console.log("Error Edit Stock Release   ", e);
+            console.log("Error Edit Waybill   ", e);
 
-            errors = e.error?.details.errors;
+            errors = e.error?.details?.errors;
 
             toast.push(
-                "Stock Release Could Not Be Edited! \n\n" + e.error?.message,
+                "Waybill Item Could Not Be Edited! \n\n" + e.error?.message,
                 {
                     duration: 20000,
                     theme: {
@@ -105,211 +94,192 @@ import { createActivityLog } from "../../../utils/activity/log";
     }
 
 
-    async function getPurchaseOrders(consortium) {
-        purchase_order.set("");
-        purchase_order_item.set("");
-        remaining = 0;
-        stock_items = [];
+
+    async function getStockReleases(consortium) {
+        stock_release.set("");
+        stock_release_item.set("");
 
         try {
             let params = {
-                populate: {
+                populate: [
+                    "consortium_member",
+                    "stock_release_items",
+                    "stock_release_items.purchase_order_item",
+                    "stock_release_items.purchase_order_item.purchase_order",
+                    "stock_release_items.purchase_order_item.item",
+                ],
+                filters: {
                     consortium_member: {
-                        populate: "*",
-                        
+                        id: {
+                            $in: [consortium],
+                        },
                     },
-                    purchase_order_items: {
-                        populate: "*",
-                    },
-                },
-                filters: {
-                            consortium_member: {
-                                id: {
-                                    $in: [consortium],
-                                },
-                            }
                 },
                 "pagination[limit]": -1,
             };
             params = qs.stringify(params, {
                 encodeValuesOnly: true,
             });
-            let response = await get("purchase-orders", params);
+            let response = await get("stock-releases", params);
 
-            console.log("Get Purchase Orders ", response);
+            console.log("Get Stock Release ", response);
 
-            purchase_orders = response.data.map((x) => {
+            stock_releases = response.data.map((x) => {
                 return {
                     value: x.id,
                     label:
-                        "PO# - " +x.attributes.poNumber +
+                        "SRF# - " +
+                        x.id +
                         "  ------- Date   " +
-                        x.attributes.date +
-                        "    ID    " +
-                        x.id,
-                    data: x
+                        x.attributes.date,
+                    data: x,
                 };
             });
         } catch (e) {
-            console.log("Error Purchase Orders ", e);
+            console.log("Error Stock Release ", e);
         }
     }
 
-    async function getPurchaseOrderItems(event) {
-        if(event.detail?.value && purchase_orders.length > 0) {
-            console.log( purchase_orders)
-            purchase_order_items = purchase_orders.filter( x => x.value == event.detail.value)[0].data?.attributes.purchase_order_items.data;
+    async function getStockReleaseItems(event) {
+        if(stock_releases.length == 0) {
+            return
+        }
+        if (event.detail?.value) {
+            console.log(
+                stock_releases.filter((x) => x.value == event.detail.value)[0]
+                    .data?.attributes
+            );
+            stock_release_items = stock_releases.filter(
+                (x) => x.value == event.detail.value
+            )[0].data?.attributes.stock_release_items.data;
 
-            purchase_order_items = purchase_order_items.map((x) => {
+            stock_release_items = stock_release_items.map((x) => {
                 return {
                     value: x.id,
                     label:
-                        x.attributes.item.data.attributes.name + '-'+  x.attributes.item.data.attributes.category +
+                        x.attributes.purchase_order_item.data?.attributes.item
+                            .data.attributes.name +
+                        "-" +
+                        x.attributes.purchase_order_item.data?.attributes.item
+                            .data.attributes.category +
                         "  --- Unit - " +
-                        x.attributes.unit + " - Pieces - " +  x.attributes.pieces + " - Quantity - " +  x.attributes.quantity + " - Unit Price - " +  x.attributes.unitPrice + " - Currency - " + x.attributes.currency +
+                        x.attributes.purchase_order_item.data?.attributes.unit +
+                        " - Pieces - " +
+                        x.attributes.purchase_order_item.data?.attributes
+                            .pieces +
+                        " - Quantity - " +
+                        x.attributes.quantity +
+                        " - Unit Price - " +
+                        x.attributes.purchase_order_item.data?.attributes
+                            .unitPrice +
+                        " - Currency - " +
+                        x.attributes.purchase_order_item.data?.attributes
+                            .currency +
                         "    ID    " +
                         x.id,
-                        data: x
+                    data: x,
                 };
             });
-
-            
         }
     }
 
-    async function getRemaining(event) {
-        if(event.detail?.data) {
-            
-
-            try {
+    async function getWaybillItems(event) {
+        console.log("--------------", event, event.detail.data?.id);
+        try {
             let params = {
-                populate: ['stock', 'stock.consortium_member', 'stock.warehouse' ,'purchase_order_item', 'purchase_order_item.item'],
+                populate: [
+                    "waybill",
+                    "stock_release_item",
+                    "stock_release_item.stock_release",
+                    "stock_release_item.stock_release.consortium_member",
+                    "stock_release_item.purchase_order_item",
+                    "stock_release_item.purchase_order_item.purchase_order",
+                    "stock_release_item.purchase_order_item.item",
+                ],
                 filters: {
-                            purchase_order_item: {
-                                id: {
-                                    $in: [event.detail.data.id],
-                                },
-                            }
+                    stock_release_item: {
+                        id: {
+                            $in: [event.detail.data?.id],
+                        },
+                    },
                 },
                 "pagination[limit]": -1,
             };
             params = qs.stringify(params, {
                 encodeValuesOnly: true,
             });
-            let response = await get("stock-items", params);
+            let response = await get("waybill-items", params);
 
-            console.log("Get Stock Items ", response);
+            console.log("Get Waybill Items ", response);
 
-            let stocks = 0;
-            stock_items = response.data;
-            response.data.forEach(element => {
-                stocks += parseInt(element.attributes.received);
-            });
-
-            remaining =  stocks;
-
-            getRemainingStockReleases(event);
-
-            return;
+            waybill_items = response.data.filter( x => x.attributes.waybill.data );
         } catch (e) {
-            console.log("Error Stock Items ", e);
+            console.log("Error Waybill Items ", e);
         }
-
-
-        }
-        remaining = 0;
     }
 
 
-    async function getRemainingStockReleases(event) {
-        if(event.detail?.data) {
-            
-
-            try {
-            let params = {
-                populate: ['stock_release', 'stock_release.consortium_member' ,'purchase_order_item', 'purchase_order_item.item'],
-                filters: {
-                            purchase_order_item: {
-                                id: {
-                                    $in: [event.detail.data.id],
-                                },
-                            }
-                },
-                "pagination[limit]": -1,
-            };
-            params = qs.stringify(params, {
-                encodeValuesOnly: true,
-            });
-            let response = await get("stock-release-items", params);
-
-            console.log("Get Stock Release Items ", response);
-
-            let stocks = 0;
-            stock_release_items = response.data;
-            response.data.forEach(element => {
-                if(element.id != slug)
-                stocks += parseInt(element.attributes.quantity);
-            });
-
-            remaining =  remaining - stocks;
-
-            return;
-        } catch (e) {
-            console.log("Error Stock Release Items ", e);
-        }
-
-
-        }
-        remaining = 0;
-    }
 
     async function getItem() {
         try {
             let params = {
-                populate: ['stock_release', 'stock_release.consortium_member' ,'purchase_order_item', 'purchase_order_item.item', 'purchase_order_item.purchase_order']
+                populate: ['waybill','stock_release_item', 'stock_release_item.stock_release', 'stock_release_item.stock_release.consortium_member' ,'stock_release_item.purchase_order_item', 'stock_release_item.purchase_order_item.item', 'stock_release_item.purchase_order_item.purchase_order']
             };
             params = qs.stringify(params, {
                 encodeValuesOnly: true,
             });
 
-            let response = await get("stock-release-items/" + slug, params);
+            let response = await get("waybill-items/" + slug, params);
 
-            console.log("Get Stock Release by ID ", response);
+            console.log("Get Waybill by ID ", response);
 
-            getPurchaseOrders(response.data?.attributes.stock_release.data?.attributes.consortium_member.data?.id)
+            getStockReleases(response.data?.attributes.stock_release_item.data?.attributes.stock_release.data?.attributes.consortium_member.data?.id)
 
-            purchase_order.set({
-                value: response.data.attributes.purchase_order_item.data.attributes.purchase_order.data?.id,
+            stock_release.set({
+                value: response.data?.attributes.stock_release_item.data?.attributes.stock_release.data?.id,
                     label:
-                        "PO# - " + response.data.attributes.purchase_order_item.data.attributes.purchase_order.data?.attributes.poNumber +
+                        "SRF# - " +
+                        response.data?.attributes.stock_release_item.data?.attributes.stock_release.data?.id +
                         "  ------- Date   " +
-                        response.data.attributes.purchase_order_item.data.attributes.purchase_order.data?.attributes.date +
-                        "    ID    " +
-                        response.data.attributes.purchase_order_item.data.attributes.purchase_order.data?.id,
-                    data: response.data.attributes.purchase_order_item.data.attributes.purchase_order.data
+                        response.data?.attributes.stock_release_item.data?.attributes.stock_release.data?.attributes.date,
+                    data: response.data?.attributes.stock_release_item.data?.attributes.stock_release.data,
             })
 
-            purchase_order_item.set({
-                value: response.data.attributes.purchase_order_item.data.id,
+            stock_release_item.set({
+                value: response.data?.attributes.stock_release_item.data?.id,
                     label:
-                        response.data.attributes.purchase_order_item.data?.attributes.item.data.attributes.name + '-'+  response.data.attributes.purchase_order_item.data?.attributes.item.data.attributes.category +
+                    response.data?.attributes.stock_release_item.data?.attributes.purchase_order_item.data?.attributes.item
+                            .data.attributes.name +
+                        "-" +
+                        response.data?.attributes.stock_release_item.data?.attributes.purchase_order_item.data?.attributes.item
+                            .data.attributes.category +
                         "  --- Unit - " +
-                        response.data.attributes.purchase_order_item.data?.attributes.unit + " - Pieces - " +  response.data.attributes.purchase_order_item.data?.attributes.pieces + " - Quantity - " +  response.data.attributes.purchase_order_item.data?.attributes.quantity + " - Unit Price - " +  response.data.attributes.purchase_order_item.data?.attributes.unitPrice + " - Currency - " + response.data.attributes.purchase_order_item.data?.attributes.currency +
+                        response.data?.attributes.stock_release_item.data?.attributes.purchase_order_item.data?.attributes.unit +
+                        " - Pieces - " +
+                        response.data?.attributes.stock_release_item.data?.attributes.purchase_order_item.data?.attributes
+                            .pieces +
+                        " - Quantity - " +
+                        response.data?.attributes.stock_release_item.data?.attributes.quantity +
+                        " - Unit Price - " +
+                        response.data?.attributes.stock_release_item.data?.attributes.purchase_order_item.data?.attributes
+                            .unitPrice +
+                        " - Currency - " +
+                        response.data?.attributes.stock_release_item.data?.attributes.purchase_order_item.data?.attributes
+                            .currency +
                         "    ID    " +
-                        response.data.attributes.purchase_order_item.data?.id,
-                        data: response.data.attributes.purchase_order_item.data
+                        response.data?.attributes.stock_release_item.data?.id,
+                    data: response.data?.attributes.stock_release_item.data,
             });
 
-            
+            remark = response.data?.attributes.remark;
 
-            quantity.set(response.data.attributes.quantity);
-            
-            remark = response.data.attributes.remark;
 
-            stockId = response.data?.attributes.stock_release?.data?.id;
+            waybillId = response.data?.attributes.waybill?.data?.id;
+
+            // getStockReleases(response.data?.attributes.waybill?.data?.attributes.consortium_member.data?.id);
             
         } catch (e) {
-            console.log("Error get Stock Release Item by ID ", e);
+            console.log("Error get Waybill Item by ID ", e);
         }
     }
 
@@ -319,12 +289,12 @@ import { createActivityLog } from "../../../utils/activity/log";
 </script>
 
 <svelte:head>
-    <title>Edit Stock Release</title>
+    <title>Edit Waybill</title>
 </svelte:head>
 
 <br /><br />
 <div class="container px-6">
-    <a href="stock-releases/edit/{stockId}" class="has-text-dark"
+    <a href="waybills/edit/{waybillId}" class="has-text-dark"
         ><span class="icon is-small"><Icon data={faAngleLeft} /></span> Back</a
     >
     <br /><br />
@@ -332,7 +302,7 @@ import { createActivityLog } from "../../../utils/activity/log";
         <br /><br />
         <div class="columns">
             <div class="column">
-                <h3 class="my-0">Edit Stock Release</h3>
+                <h3 class="my-0">Edit Waybill</h3>
                 <p class="gray py-0">Complete the form below and click save.</p>
             </div>
             <div class="column has-text-right">
@@ -362,57 +332,47 @@ import { createActivityLog } from "../../../utils/activity/log";
             <div class="columns">
                 <div class="column">
                     <div class="field">
-                        <label for="" class="gray">Purchase Order (*)</label>
+                        <label for="" class="gray">Stock Release (*)</label>
                         <div class="control">
                             <Select
-                                items={purchase_orders}
-                                on:select={getPurchaseOrderItems}
-                                bind:value={$purchase_order.value}
+                                items={stock_releases}
+                                on:select={getStockReleaseItems}
+                                bind:value={$stock_release.value}
                                 listAutoWidth={true}
                             />
                         </div>
-                        {#if $formChildItem.hasError("purchase_order.required")}
-                            <p class="help is-danger">Purchase Order is required</p>
+                        {#if $formChildItem.hasError("stock_release.required")}
+                            <p class="help is-danger">
+                                Purchase Order is required
+                            </p>
                         {/if}
                     </div>
                 </div>
-               
             </div>
 
             <div class="columns">
                 <div class="column">
                     <div class="field">
-                        <label for="" class="gray">Item (*)</label>
+                        <label for="" class="gray">Stock Release Item (*)</label
+                        >
                         <div class="control">
                             <Select
-                                on:select={getRemaining}
-                                items={purchase_order_items}
-                                bind:value={$purchase_order_item.value}
+                                on:select={getWaybillItems}
+                                items={stock_release_items}
+                                bind:value={$stock_release_item.value}
+                                hasError={waybill_items.length > 0}
                             />
                         </div>
-                        {#if $formChildItem.hasError("purchase_order_item.required")}
-                            <p class="help is-danger">Purchase Order Item is required</p>
+                        {#if $formChildItem.hasError("stock_release_item.required")}
+                            <p class="help is-danger">
+                                Waybill Item is required
+                            </p>
                         {/if}
                     </div>
                 </div>
             </div>
 
             <div class="columns">
-                <div class="column">
-                    <label for="" class="gray">Quantity</label><br />
-                    <input
-                        type="number"
-                        placeholder="Unit Price"
-                        class="input"
-                        class:is-danger= {
-                            remaining - $quantity.value < 0
-                        }
-                        bind:value={$quantity.value}
-                    />
-                    {#if $formChildItem.hasError("quantity.required")}
-                        <p class="help is-danger">Quantity is required</p>
-                    {/if}
-                </div>
                 <div class="column">
                     <div class="field">
                         <label for="" class="gray">Remark</label><br />
@@ -427,280 +387,90 @@ import { createActivityLog } from "../../../utils/activity/log";
                 </div>
             </div>
 
-
-            <div class="columns">
-                 <div class="column has-text-right">
-                    <br />
-                    <span class="has-text-weight-bold">Amount In Stock- </span>
-                    {numberWithCommas(remaining)}
-                    <br>
-                    <span class="has-text-weight-bold">Differnece - </span>
-                    {numberWithCommas(remaining - $quantity.value)}
-                </div>
-            </div>
-
-            {#if stock_items}
-            <h5>Stock History</h5>
-            <hr />
-                {#each stock_items as s}
-                <div class="columns has-text-weight-bold">
-                    <div class="column is-narrow">
-                        {s.attributes.stock.data.id}
+            {#if waybill_items}
+                <h5>Waybill History</h5>
+                <hr />
+                {#each waybill_items as s}
+                    <div class="columns has-text-weight-bold">
+                        <div class="column is-narrow">
+                            {s.attributes.stock_release_item.data?.attributes
+                                .stock_release.data.id}
+                        </div>
+                        <div class="column">
+                            {s.attributes.stock_release_item.data?.attributes
+                                .stock_release.data.attributes.date}
+                        </div>
+                        <div class="column">
+                            {s.attributes.stock_release_item.data?.attributes
+                                .stock_release.data.attributes.consortium_member
+                                ?.data.attributes.name}
+                        </div>
                     </div>
-                    <div class="column">
-                        {s.attributes.stock.data.attributes.date}
+                    <div class="columns">
+                        <div class="column is-narrow gray">
+                            {s.id}
+                        </div>
+
+                        <div class="column is-3">
+                            <span class=""
+                                >{s.attributes.stock_release_item.data
+                                    ?.attributes.purchase_order_item?.data
+                                    ?.attributes.item?.data?.attributes.name} - ({s
+                                    .attributes.stock_release_item.data
+                                    ?.attributes.purchase_order_item?.data
+                                    ?.id})</span
+                            >
+                            <br />
+                            <span class="gray"
+                                >{s.attributes.stock_release_item.data
+                                    ?.attributes.purchase_order_item?.data
+                                    ?.attributes.item?.data?.attributes
+                                    .category}</span
+                            >
+                        </div>
+
+                        <div class="column has-text-centered">
+                            <span class="is-small tag">Unit</span> <br />
+                            {s.attributes.stock_release_item.data?.attributes
+                                .purchase_order_item?.data?.attributes.unit}
+                        </div>
+
+                        <div class="column has-text-centered">
+                            <span class="is-small tag">Pieces</span> <br />
+                            {s.attributes.stock_release_item.data?.attributes
+                                .purchase_order_item?.data?.attributes.pieces}
+                        </div>
+
+                        <div class="column has-text-centered">
+                            <span class="is-small tag">Quantity</span> <br />
+                            {s.attributes.stock_release_item.data?.attributes
+                                .purchase_order_item?.data?.attributes.quantity}
+                        </div>
+
+                        <div class="column has-text-centered">
+                            <span class="is-small tag">Unit Price</span> <br />
+                            {s.attributes.stock_release_item.data?.attributes
+                                .purchase_order_item?.data?.attributes
+                                .unitPrice}
+                        </div>
+
+                        <div class="column has-text-centered">
+                            <span class="is-small tag">Currency</span> <br />
+                            {s.attributes.stock_release_item.data?.attributes
+                                .purchase_order_item?.data?.attributes.currency}
+                        </div>
+
+                        <div class="column has-text-centered">
+                            <span class="is-small tag">Quantity</span> <br />
+                            {s.attributes.stock_release_item.data?.attributes
+                                .quantity}
+                        </div>
+                        <div class="column has-text-centered">
+                            <span class="is-small tag">Remark</span> <br />
+                            {s.attributes.remark}
+                        </div>
                     </div>
-                    <div class="column">
-                        {s.attributes.stock.data.attributes.consortium_member?.data.attributes.name}
-                    </div>
-                    <div class="column">
-                        {s.attributes.stock.data.attributes.warehouse?.data.attributes.name}
-                    </div>
-                </div>
-                <div class="columns">
-                            <div
-                                class="column is-narrow gray"
-                            >
-                                {s.id}
-                            </div>
-                        
-                            <div class="column is-3">
-                                <span
-                                    class=""
-                                    >{s.attributes
-                                        .purchase_order_item
-                                        ?.data
-                                        ?.attributes.item?.data?.attributes
-                                        .name}  - ({s.attributes
-                                        .purchase_order_item
-                                        ?.data
-                                        ?.id})</span
-                                >
-                                <br />
-                                <span class="gray"
-                                    >{s.attributes
-                                        .purchase_order_item
-                                        ?.data
-                                        ?.attributes.item?.data?.attributes
-                                        .category}</span
-                                >
-
-                            </div>
-                        
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Unit</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.unit}
-                            </div>
-
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Pieces</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.pieces}
-                            </div>
-
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Quantity</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.quantity}
-                            </div>
-
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Unit Price</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.unitPrice}
-                            </div>
-
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Currency</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.currency}
-                            </div>
-                        
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Received</span
-                                > <br />
-                                {s.attributes.received}
-                            </div>
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Remark</span
-                                > <br />
-                                {s.attributes.remark}
-                            </div>
-
-
-                </div>
-                <hr>
-                {/each}
-            {/if}
-
-
-
-            {#if stock_release_items}
-            <h5>Stock Release History</h5>
-            <hr />
-                {#each stock_release_items as s}
-                <div class="columns has-text-weight-bold">
-                    <div class="column is-narrow">
-                        {s.attributes.stock_release.data.id}
-                    </div>
-                    <div class="column">
-                        {s.attributes.stock_release.data.attributes.date}
-                    </div>
-                    <div class="column">
-                        {s.attributes.stock_release.data.attributes.consortium_member?.data.attributes.name}
-                    </div>
-                </div>
-                <div class="columns">
-                            <div
-                                class="column is-narrow gray"
-                            >
-                                {s.id}
-                            </div>
-                        
-                            <div class="column is-3">
-                                <span
-                                    class=""
-                                    >{s.attributes
-                                        .purchase_order_item
-                                        ?.data
-                                        ?.attributes.item?.data?.attributes
-                                        .name}  - ({s.attributes
-                                        .purchase_order_item
-                                        ?.data
-                                        ?.id})</span
-                                >
-                                <br />
-                                <span class="gray"
-                                    >{s.attributes
-                                        .purchase_order_item
-                                        ?.data
-                                        ?.attributes.item?.data?.attributes
-                                        .category}</span
-                                >
-
-                            </div>
-                        
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Unit</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.unit}
-                            </div>
-
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Pieces</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.pieces}
-                            </div>
-
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Quantity</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.quantity}
-                            </div>
-
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Unit Price</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.unitPrice}
-                            </div>
-
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Currency</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.currency}
-                            </div>
-                        
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Quantity</span
-                                > <br />
-                                {s.attributes.quantity}
-                            </div>
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Remark</span
-                                > <br />
-                                {s.attributes.remark}
-                            </div>
-
-
-                </div>
-                <hr>
+                    <hr />
                 {/each}
             {/if}
         </form>
