@@ -1,0 +1,112 @@
+{
+    "title": {
+      "index": "ስሙኒ: ማስታወቂያዎችን ይመልከቱ ገንዘብ ያግኙ!",
+      "simuni": "ስሙኒ"
+    },
+    "nav": {
+      "login": "መግቢያ",
+      "advertise": "ያስተዋውቁ",
+      "join_consumer": "ተመዝገቡ እና 5 ብር ያግኙ",
+      "join_advertiser": "ተመዝገቡ እና ያስተዋውቁ",
+
+      "dashboard": "ዳሽቦርድ",
+      "profile": "መገለጫ",
+      "logout": "ውጣ"
+
+
+    },
+    "messages": {
+      "error": "Error: {status}",
+      "success": "Great success!",
+      "high_five": "High five",
+      "try_editing": "Try editing this file (src/routes/index.svelte) to test live reloading."
+    },
+    "languages": {
+      "en": "English",
+      "am": "አማርኛ",
+      "pt_BR": "Português",
+      "es_ES": "Espanol",
+      "ar": "عربى"
+    },
+    "direction": "ltr",
+    "login": {
+      "title": "መግቢያ",
+      "phone": "ስልክ",
+      "password": "ፓስወርድ",
+      "iam": "እኔ",
+      "consumer": "ተመልካች ነኝ",
+      "advertiser": "አስተዋዋቂ ነኝ",
+      "login": "ግባ",
+      "no_account": "አካውንት የለዎትም?",
+      "sign_up": "ይመዝገቡ",
+      "forgot_password": "ፓስውርድዎትን ረስተውታል?"
+     },
+     "consumer_form": {
+        "full_name": "ሙሉ ስም",
+        "email": "ኢሜይል (optional)",
+        "phone": "ስልክ",
+        "password": "ፓስወርድ",
+        "confirm_password": "ፓስወርድዎን ደግመው ይጻፉ",
+        "dob": "የትውልድ ቀን",
+        "country": "ሃገር",
+        "city": "ከተማ",
+        "reference_code": "Reference Code",
+        "privacy_policy": "አንብቤ ተስማምቻለው ",
+        "privacy_policy_title": "የግላዊነት ፕሊሲ",
+        "already_have_accoung": "አካውንት አለዎት?",
+        "register": "መዝግብ",
+        "edit": "መግለጫ ይለውጡ",
+        "save": "ለውጥ",
+        "5_reward": "በመመዝገብዎ ብቻ <b>5 ብር</b> ያገኛሉ"
+     },
+
+     "advertiser_form": {
+      "first_name": "የመጀመሪያ ስም",
+      "last_name": "የአባት ስም",
+      "organization_name": "የድርጅት ስም",
+      "full_name": "ሙሉ ስም",
+      "email": "ኢሜይል",
+      "phone": "ስልክ",
+      "password": "ፓስወርድ",
+      "confirm_password": "ፓስወርድዎን ደግመው ይጻፉ",
+      "address": "አድራሻ",
+      "i_accept": "የሚከተለውን እቀበላለሁ ",
+      "terms": "አተገባበሩና ​​መመሪያው",
+      "terms_description": "በዚህ ሳጥን ላይ ምልክት በማድረግ በአገልግሎታችን ተስማምተዋል። መረጃውን እዚህ ውል ውስጥ ሞልተን እንነግርዎታለን።",
+      "create_account": "አካውንት ይፍጠሩ",
+      "company_info": "የድርጅት መረጃ",
+      "account_info": "የአካውንት መረጃ",
+      "edit": "መግለጫ ይለውጡ",
+      "save": "ለውጥ",
+      "advertiser_registration": "አስተዋዋቂ መመዝገቢያ",
+      "profile_picture": "ምስል"
+   },
+   "consumer_dashboard": {
+    "total_earned": "ጠቅላላ ያገኙት ",
+    "birr": "ብር",
+    "withdraw": "ብር አውጣ",
+    "no_ads": "ምንም ማስታወቂያዎች ለጊዜው የሉም።",
+    "next": "ቀጥል",
+    "question": "ጥያቄ",
+    "watch_again": "ድጋሚ ይመልከቱ",
+    "done": "ጨርሻለው",
+    "incorrect_answer": "መልሱን ተሳስተዋል!",
+    "correct_answer": "እለለለለለለለ!",
+    "you_have_earned": "ያገኙት መጠን",
+    "like": "ወድጄዋለው"
+   },
+   "advertiser_dashboard": {
+    "balance": "ቀሪ ሂሳብ ",
+    "birr": "ብር",
+    "post_ad": "ማስታወቂያ ይለጥፉ",
+    "edit_campaign": "ማስታወቂያውን ይለውጡ",
+    "likes": "ወዳጆች",
+    "views": "እይታዎች",
+    "budget_spent": "የወጣው በጀት",
+    "rewarded": "ተሸልሟል",
+    "download_report": "ሙሉ ዘገባ አውርድ",
+    "spent": "የወጣ",
+    "total_budget": "ሙሉ በጀት",
+    "views_likes_demographic": "እይታዎች እና መውደዶች በስነሕዝብ"
+   }
+  }
