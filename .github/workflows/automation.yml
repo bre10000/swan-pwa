@@ -22,12 +22,17 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: '16.x'
+
+
     - run: npm install
+      working-directory: ./src
     - run: npm run export-github
+      working-directory: ./src
     - name: Build and Deploy
       uses: JamesIves/github-pages-deploy-action@releases/v3
-      working-directory: ./src
       with:
         ACCESS_TOKEN: ${{ secrets.PAGE_DEPLOY }}
         BRANCH: gh-pages
         FOLDER: ./src/build
+
+      
