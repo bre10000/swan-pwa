@@ -302,7 +302,7 @@
             console.log("Get Stock Items ", response);
 
             let stocks = 0;
-            stock_items = response.data;
+            stock_items = response.data.filter( x => x.attributes.stock.data );
             response.data.forEach(element => {
                 stocks += parseInt(element.attributes.received);
             });
@@ -346,7 +346,7 @@
             console.log("Get Stock Release Items ", response);
 
             let stocks = 0;
-            stock_release_items = response.data;
+            stock_release_items = response.data.filter( x => x.attributes.stock_release.data );
             response.data.forEach(element => {
                 stocks += parseInt(element.attributes.quantity);
             });

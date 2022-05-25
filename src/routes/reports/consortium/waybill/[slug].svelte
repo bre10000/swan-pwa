@@ -10,8 +10,8 @@
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
     import { numberWithCommas } from "../../../../lib";
-    import { exportToCsvAlternate } from "../../../../utils/export/csvGenerator";
-    import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternate";
+import { exportToCsvAlternate } from "../../../../utils/export/csvGenerator";
+import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternate";
 
     export let slug;
 
@@ -21,10 +21,10 @@
         let total = 0;
 
         items.forEach((element2) => {
-            element2.attributes.stock_items.data?.forEach((element) => {
+            element2.attributes.waybill_items.data?.forEach((element) => {
                 total +=
-                    element.attributes.purchase_order_item.data?.attributes
-                        .unitPrice * element.attributes.received;
+                    element.attributes.stock_release_item.data?.attributes.purchase_order_item.data?.attributes
+                        .unitPrice * element.attributes.stock_release_item.data?.attributes.quantity;
             });
         });
 
@@ -35,12 +35,13 @@
         try {
             let params = {
                 populate: [
-                    "stocks",
-                    "stocks.stock_items",
-                    "stocks.warehouse",
-                    "stocks.stock_items.purchase_order_item",
-                    "stocks.stock_items.purchase_order_item.item",
-                    "stocks.stock_items.purchase_order_item.purchase_order",
+                    "waybills",
+                    "waybills.waybill_items",
+                    "waybills.waybill_items.stock_release_item",
+                    "waybills.waybill_items.stock_release_item.stock_release",
+                    "waybills.waybill_items.stock_release_item.purchase_order_item",
+                    "waybills.waybill_items.stock_release_item.purchase_order_item.item",
+                    "waybills.waybill_items.stock_release_item.purchase_order_item.purchase_order"
                 ],
             };
             params = qs.stringify(params, {
@@ -57,6 +58,7 @@
         }
     }
 
+
     const columns = [
         {
             key: "id",
@@ -69,16 +71,24 @@
             selected: true,
         },
         {
-            key: "warehouse",
-            title: "Warehouse",
+            key: "destination",
+            title: "Destination",
             sortable: true,
-            filterValue: (v) => v.first_name.charAt(0).toLowerCase(),
+            filterValue: (v) => v.last_name.charAt(0).toLowerCase(),
             filterType: "string",
             selected: true,
         },
         {
             key: "consortium_member",
             title: "Consortium Member",
+            sortable: true,
+            filterValue: (v) => v.last_name.charAt(0).toLowerCase(),
+            filterType: "string",
+            selected: true,
+        },
+        {
+            key: "category",
+            title: "Category",
             sortable: true,
             filterValue: (v) => v.last_name.charAt(0).toLowerCase(),
             filterType: "string",
@@ -108,6 +118,12 @@
             selected: true,
         },
         {
+            key: "srfNo",
+            title: "SRF No.",
+            sortable: true,
+            selected: true,
+        },
+        {
             key: "item",
             title: "ITEM",
             sortable: true,
@@ -125,12 +141,7 @@
             sortable: true,
             selected: true,
         },
-        {
-            key: "quantity",
-            title: "Quantity",
-            sortable: true,
-            selected: true,
-        },
+
         {
             key: "currency",
             title: "Currency",
@@ -144,8 +155,8 @@
             selected: true,
         },
         {
-            key: "received",
-            title: "Received",
+            key: "quantity",
+            title: "Quantity",
             sortable: true,
             selected: true,
         },
@@ -163,13 +174,16 @@
         },
     ];
 
+
+
     function getPopulatedDataPdf(rowss) {
         let array = [];
         rowss.forEach((element) => {
             array.push([
                 element.id,
-                element.attributes.warehouse.data.attributes.name,
+                element.attributes.destination,
                 consortium.attributes.name,
+                element.attributes.category,
                 element.attributes.date,
                 "-",
                 "-",
@@ -183,23 +197,35 @@
                 "-"
             ]);
 
-            element.attributes.stock_items.data.forEach((elementC) => {
+            element.attributes.waybill_items.data.forEach((elementC) => {
                 array.push([
                     "-",
                     "-",
                     "-",
                     "-",
+                    "-",
                     elementC.id,
-                    elementC.attributes.purchase_order_item.data.attributes.purchase_order.data.attributes.poNumber,
-                    elementC.attributes.purchase_order_item.data.attributes.item.data.attributes.name,
-                    elementC.attributes.purchase_order_item.data.attributes.unit,
-                    elementC.attributes.purchase_order_item.data.attributes.pieces,
-                    elementC.attributes.purchase_order_item.data.attributes.quantity,
-                    elementC.attributes.purchase_order_item.data.attributes.currency,
-                    elementC.attributes.purchase_order_item.data.attributes.unitPrice,
-                    elementC.attributes.received,
+                    elementC.attributes.stock_release_item.data.attributes.purchase_order_item.data.attributes
+                        .purchase_order.data.attributes.poNumber,
+                    elementC.attributes.stock_release_item.data.attributes
+                        .stock_release.data.id,
+                    elementC.attributes.stock_release_item.data.attributes
+                        .purchase_order_item.data.attributes.item.data
+                        .attributes.name,
+                    elementC.attributes.stock_release_item.data.attributes
+                        .purchase_order_item.data.attributes.unit,
+                    elementC.attributes.stock_release_item.data.attributes
+                        .purchase_order_item.data.attributes.pieces,
+                    elementC.attributes.stock_release_item.data.attributes
+                        .purchase_order_item.data.attributes.currency,
+                    elementC.attributes.stock_release_item.data.attributes
+                        .purchase_order_item.data.attributes.unitPrice,
+                    elementC.attributes.stock_release_item.data.attributes
+                        .quantity,
                     elementC.attributes.remark,
-                    elementC.attributes.purchase_order_item.data.attributes.unitPrice * elementC.attributes.received,
+                    elementC.attributes.stock_release_item.data.attributes
+                        .quantity * elementC.attributes.stock_release_item.data.attributes
+                        .purchase_order_item.data.attributes.unitPrice,
                 ]);
             });
         });
@@ -219,20 +245,21 @@
                 "-",
                 "-",
                 "-",
+                "-",
                 numberWithCommas(
-                            getTotal(consortium.attributes.stocks.data)
+                            getTotal(consortium.attributes.waybills.data)
                         )
             ]);
-
 
         return array;
     }
 
+
     function exportcsv() {
         let now = new Date();
-        let fname = `"SWAN Partner Stocks - "${consortium.attributes.name} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+        let fname = `"SWAN Partner Waybill - "${consortium.attributes.name} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
-        let array = getPopulatedDataPdf(consortium.attributes.stocks.data);
+        let array = getPopulatedDataPdf(consortium.attributes.waybills.data);
 
         array = [columns.concat(columnsDetails).map((x) => x.title), ...array];
         exportToCsvAlternate(fname, array);
@@ -241,8 +268,8 @@
     function exportPDF() {
         // exportToPDF("Stocks", rows, columns);
         exportToPDFAlternate(
-            "Partner Stocks - " + consortium.attributes.name,
-            getPopulatedDataPdf(consortium.attributes.stocks.data),
+            "Partner Waybill - " + consortium.attributes.name,
+            getPopulatedDataPdf(consortium.attributes.waybills.data),
             columns.concat(columnsDetails)
         );
     }
@@ -268,7 +295,7 @@
         <div class="columns">
             <div class="column">
                 <h3 class="my-0 is-size-5 has-text-weight-bold">
-                    Print Consortium Member Stock Report
+                    Print Consortium Member Waybill Report
                 </h3>
             </div>
 
@@ -299,7 +326,7 @@
                     on:click={() => {
                         window.print();
                     }}
-                    class="button is-dark px-5 ml-3 py-2 has-text-weight-bold"
+                    class="button is-dark px-5 py-2 ml-3 has-text-weight-bold"
                 >
                     <span class="icon">
                         <Icon data={faPrint} />
@@ -321,75 +348,77 @@
             <br />
 
             <h3 class="is-size-5">
-                Consortium Member Stock -
+                Partner Waybill / Dispatch -
                 <span class="has-text-weight-bold"
                     >{consortium.attributes.name}</span
                 >
             </h3>
             <hr />
 
-            <p class="card-header-title">Stock Items</p>
+            <p class="card-header-title">Waybill Items</p>
 
             <table class="table is-bordered is-fullwidth is-narrow">
                 <tr class="has-background-black has-text-white">
-                    <td>Stock No.</td>
+                    <td>Waybill No.</td>
                     <th class="has-text-white">Description</th>
                     <th class="has-text-white">Category</th>
                     <th class="has-text-white">Unit</th>
                     <th class="has-text-white">Pcs/Package</th>
                     <th class="has-text-white">Currency</th>
                     <th class="has-text-white">Unit Price</th>
-                    <th class="has-text-white">Received</th>
+                    <th class="has-text-white">Quantity</th>
                     <th class="has-text-white">Remark</th>
                     <th class="has-text-white">Total</th>
                 </tr>
 
-                {#each consortium.attributes.stocks.data as item, index}
+                {#each consortium.attributes.waybills.data as item, index}
                     <tr class="has-text-weight-bold">
                         <td>{item.id}</td>
                         <td>{item.attributes.date}</td>
                         <td
-                            >{item.attributes.warehouse.data?.attributes
-                                .name}</td
+                            >{item.attributes.destination}</td
                         >
-                        <td colspan="7" />
+                        <td
+                            >{item.attributes.category}</td
+                        >
+                        <td colspan="6" />
                     </tr>
-                    {#each item.attributes.stock_items.data as stock, index}
+                    {#each item.attributes.waybill_items.data as stock, index}
                         <tr>
                             <td>{index + 1}</td>
                             <td
-                                >{stock.attributes.purchase_order_item.data
+                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
                                     ?.attributes.item.data?.attributes.name}</td
                             >
                             <td>
-                                {stock.attributes.purchase_order_item.data
+                                {stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
                                     ?.attributes.item.data?.attributes.category}
                             </td>
                             <td
-                                >{stock.attributes.purchase_order_item.data
+                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
                                     ?.attributes.unit}</td
                             >
                             <td
-                                >{stock.attributes.purchase_order_item.data
+                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
                                     ?.attributes.pieces}</td
                             >
 
                             <td
-                                >{stock.attributes.purchase_order_item.data
+                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
                                     ?.attributes.currency}</td
                             >
                             <td
-                                >{stock.attributes.purchase_order_item.data
+                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
                                     ?.attributes.unitPrice}</td
                             >
-                            <td>{stock.attributes.received}</td>
+                            <td>{stock.attributes.stock_release_item.data?.attributes.quantity}</td>
 
                             <td>{stock.attributes.remark}</td>
                             <td
                                 >{numberWithCommas(
-                                    stock.attributes.purchase_order_item.data
+                                    stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
                                         ?.attributes.unitPrice *
-                                        stock.attributes.received
+                                        stock.attributes.stock_release_item.data?.attributes.quantity
                                 )}</td
                             >
                         </tr>
@@ -401,7 +430,7 @@
                     <th colspan="8" />
                     <th
                         >{numberWithCommas(
-                            getTotal(consortium.attributes.stocks.data)
+                            getTotal(consortium.attributes.waybills.data)
                         )}</th
                     >
                 </tr>
@@ -414,7 +443,7 @@
     {/if}
 </div>
 
-<br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 
 <style>
     .card {
@@ -441,7 +470,7 @@
             transform: scale(0.90);
             transform-origin: top center;
         }
-
+        
         .card {
             box-shadow: none !important;
         }

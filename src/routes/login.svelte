@@ -63,12 +63,13 @@
 </svelte:head>
 <br><br>
 <main class="container px-5 ">
+  <br><br>
   <div class="card login-card is-rounded">
     <div class="columns is-justify-content-center">
       <div class="column has-text-centered has-border-right-gray is-hidden-mobile">
         <br><br>
-        <h1 class="is-size-1 has-text-weight-bold" style="line-height: 1;">SWAN</h1>
-        <p class="is-size-6 gray">Humanitarian Consortium</p>
+        <h1 class="is-size-1" style="line-height: 1;">SWAN</h1>
+        <p class="is-size-7 gray">Humanitarian Consortium</p>
         <br><br>
         <div class="columns px-6 is-align-items-center is-multiline">
           <div class="column p-5 is-half">
@@ -86,7 +87,8 @@
         </div>
       </div>
       <div class="column is-6 has-text-centered p-6 signin-form">
-        <img src="./images/logo/swan_logo.svg" alt="SWAN Logo" width="150">
+        <br><br>
+        <img src="./images/logo/swan_logo.svg" alt="SWAN Logo" width="250">
 
         {#if loginForm}
           <!-- svelte-ignore component-name-lowercase -->

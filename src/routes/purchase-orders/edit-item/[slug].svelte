@@ -348,10 +348,10 @@ import { createActivityLog } from "../../../utils/activity/log";
                     <br />
                     <span class="has-text-weight-bold">Total - </span>
                     {numberWithCommas(
-                        parseInt($unitPrice.value) * parseInt($quantity.value)
+                        $unitPrice.value * parseInt($quantity.value)
                     )
                         ? numberWithCommas(
-                              parseInt($unitPrice.value) *
+                              $unitPrice.value *
                                   parseInt($quantity.value)
                           )
                         : 0}

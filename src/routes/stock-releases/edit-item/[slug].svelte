@@ -71,10 +71,10 @@ import { createActivityLog } from "../../../utils/activity/log";
                 },
             });
 
-            console.log("Edit Stock Release Request  ", response);
+            console.log("Edit Stock Release Item Request  ", response);
 
             if (response.data?.id) {
-                toast.push("Stock Release Edited Successfully!", {
+                toast.push("Stock Release Item Edited Successfully!", {
                     duration: 20000,
                     theme: {
                         "--toastBackground": "#48BB78",
@@ -82,17 +82,17 @@ import { createActivityLog } from "../../../utils/activity/log";
                     },
                 });
 
-                createActivityLog("Stock Release", response.data, "Edit", response.data.id)
+                createActivityLog("Stock Release Item", response.data, "Edit", response.data.id)
 
                 goto("stock-releases/edit/" + stockId)
             }
         } catch (e) {
-            console.log("Error Edit Stock Release   ", e);
+            console.log("Error Edit Stock Release Item   ", e);
 
             errors = e.error?.details.errors;
 
             toast.push(
-                "Stock Release Could Not Be Edited! \n\n" + e.error?.message,
+                "Stock Release Item Could Not Be Edited! \n\n" + e.error?.message,
                 {
                     duration: 20000,
                     theme: {
@@ -201,7 +201,7 @@ import { createActivityLog } from "../../../utils/activity/log";
             console.log("Get Stock Items ", response);
 
             let stocks = 0;
-            stock_items = response.data;
+            stock_items = response.data.filter( x => x.attributes.stock.data );
             response.data.forEach(element => {
                 stocks += parseInt(element.attributes.received);
             });
@@ -245,7 +245,7 @@ import { createActivityLog } from "../../../utils/activity/log";
             console.log("Get Stock Release Items ", response);
 
             let stocks = 0;
-            stock_release_items = response.data;
+            stock_release_items = response.data.filter( x => x.attributes.stock_release.data );
             response.data.forEach(element => {
                 if(element.id != slug)
                 stocks += parseInt(element.attributes.quantity);
@@ -319,7 +319,7 @@ import { createActivityLog } from "../../../utils/activity/log";
 </script>
 
 <svelte:head>
-    <title>Edit Stock Release</title>
+    <title>Edit Stock Release Item</title>
 </svelte:head>
 
 <br /><br />
@@ -332,7 +332,7 @@ import { createActivityLog } from "../../../utils/activity/log";
         <br /><br />
         <div class="columns">
             <div class="column">
-                <h3 class="my-0">Edit Stock Release</h3>
+                <h3 class="my-0">Edit Stock Release Item</h3>
                 <p class="gray py-0">Complete the form below and click save.</p>
             </div>
             <div class="column has-text-right">

@@ -60,10 +60,10 @@ import { createActivityLog } from "../../../utils/activity/log";
                 },
             });
 
-            console.log("Edit Waybill Request  ", response);
+            console.log("Edit Waybill Item Request  ", response);
 
             if (response.data?.id) {
-                toast.push("Waybill Edited Successfully!", {
+                toast.push("Waybill Item Edited Successfully!", {
                     duration: 20000,
                     theme: {
                         "--toastBackground": "#48BB78",
@@ -71,12 +71,12 @@ import { createActivityLog } from "../../../utils/activity/log";
                     },
                 });
 
-                createActivityLog("Waybill", response.data, "Edit", response.data.id)
+                createActivityLog("Waybill Item", response.data, "Edit", response.data.id)
 
                 goto("waybills/edit/" + waybillId)
             }
         } catch (e) {
-            console.log("Error Edit Waybill   ", e);
+            console.log("Error Edit Waybill Item  ", e);
 
             errors = e.error?.details?.errors;
 
@@ -289,7 +289,7 @@ import { createActivityLog } from "../../../utils/activity/log";
 </script>
 
 <svelte:head>
-    <title>Edit Waybill</title>
+    <title>Edit Waybill Item</title>
 </svelte:head>
 
 <br /><br />
@@ -302,7 +302,7 @@ import { createActivityLog } from "../../../utils/activity/log";
         <br /><br />
         <div class="columns">
             <div class="column">
-                <h3 class="my-0">Edit Waybill</h3>
+                <h3 class="my-0">Edit Waybill Item</h3>
                 <p class="gray py-0">Complete the form below and click save.</p>
             </div>
             <div class="column has-text-right">

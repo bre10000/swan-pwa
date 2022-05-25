@@ -362,6 +362,10 @@
 								>
 								{#if col.key == 'id'}
 									{@html row[col.key] ? row[col.key] : "-"}
+									{:else if col.key == 'userName' }
+									{@html row.attributes.users_permissions_user.data?.attributes.name ? row.attributes.users_permissions_user.data?.attributes.name : "-"}
+								{:else if col.key == 'email'}
+									{@html row.attributes.users_permissions_user.data?.attributes[col.key] ? row.attributes.users_permissions_user.data?.attributes[col.key] : "-"}
 								{:else}	
 									{@html row.attributes[col.key] ? row.attributes[col.key] : "-"}
 								{/if}

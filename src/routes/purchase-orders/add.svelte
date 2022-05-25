@@ -368,7 +368,7 @@
                         Total
                     </div>
                     <br />
-                    {numberWithCommas(child.unitPrice * child.quantity)}
+                    {numberWithCommas(child.unitPrice * parseInt(child.quantity))}
                 </div>
                 <div class="column has-text-right">
                     <button
@@ -545,9 +545,9 @@
                     <br />
                     <span class="has-text-weight-bold">Total - </span>
                     {numberWithCommas(
-                        parseInt($unitPrice.value) * parseInt($quantity.value)
+                        $unitPrice.value * parseInt($quantity.value)
                     ) ? numberWithCommas(
-                        parseInt($unitPrice.value) * parseInt($quantity.value)
+                        $unitPrice.value * parseInt($quantity.value)
                     ) : 0}
                 </div>
             </div>

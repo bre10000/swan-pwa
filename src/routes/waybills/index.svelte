@@ -353,7 +353,9 @@
         rowss.forEach((element) => {
             array.push([
                 element.id,
+                element.attributes.destination,
                 element.attributes.consortium_member.data.attributes.name,
+                element.attributes.category,
                 element.attributes.date,
                 "-",
                 "-",
@@ -367,6 +369,8 @@
 
             element.attributes.waybill_items.data.forEach((elementC) => {
                 array.push([
+                    "-",
+                    "-",
                     "-",
                     "-",
                     "-",

@@ -1,9 +1,9 @@
 // const server_ip = 'https://account.simuni.ml'
-const www_ip = 'https:/swanstockportal.ml/'
-const api_url = 'http://localhost:1337/api'
-const account_url = 'http://localhost:1337/api'
+const www_ip = 'https://floating-hamlet-15488.herokuapp.com/'
+const api_url = 'https://floating-hamlet-15488.herokuapp.com/api'
+const account_url = 'https://floating-hamlet-15488.herokuapp.com/api'
 
-const image_url = "http://localhost:1337"
+const image_url = "https://floating-hamlet-15488.herokuapp.com"
 const host = www_ip
 const currency = { symbol: '$', code: 'USD' }
 export {
