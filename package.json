@@ -8,7 +8,7 @@
     "build": "sapper build --legacy",
     "export": "sapper export --legacy",
     "export-normal": "sapper export ./build",
-    "export-github": "sapper export  --basepath swan-pwa --legacy",
+    "export-github": "sapper export  --basepath swan-pwa",
     "start": "node __sapper__/build",
     "css-build": "node-sass --omit-source-map-url --output-style compressed src/styles/global.scss static/css/global.css",
     "css-watch": "npm run css-build -- --watch"
