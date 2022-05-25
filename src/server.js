@@ -1,35 +1,35 @@
 import sirv from 'sirv';
-import polka from 'polka';
+import express from 'express';
 import compression from 'compression';
 import * as sapper from '@sapper/server';
-import { api_url } from './config';
+import helmet from 'helmet';
+import { v4 as uuidv4 } from 'uuid';
+import polka from 'polka';
 
 const { PORT, NODE_ENV } = process.env;
 const dev = NODE_ENV === 'development';
 
-// const { createProxyMiddleware } = require('http-proxy-middleware')
-
-// const sitemapProxy = createProxyMiddleware('/sitemap-hs.xml', {
-// 	target:  api_url,
-// 	changeOrigin: true,
-// })
-
-polka() // You can also use Express
+polka()
+	// .use((req, res, next) => {
+	// 	res.locals.nonce = uuidv4();
+	// 	next();
+	// })
+	// .use(helmet({
+	// 	contentSecurityPolicy: {
+	// 		directives: {
+	// 			scriptSrc: [
+	// 				"'self'",
+	// 				(req, res) => `'nonce-${res.locals.nonce}'`
+	// 			]
+	// 		}
+	// 	}
+	// }))
 	.use(
-		'swan-pwa',
 		compression({ threshold: 0 }),
 		sirv('static', { dev }),
-		// sitemapProxy,
-		// authenticationMiddleware,
-		sapper.middleware({
-			session: (req, res) => ({
-				user: req.user || {},
-				token: req.token,
-				cart: req.cart || {},
-				settings: req.settings || {},
-			}),
-		})
+		sapper.middleware()
 	)
 	.listen(PORT, err => {
 		if (err) console.log('error', err);
 	});
+
