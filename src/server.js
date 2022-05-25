@@ -25,6 +25,7 @@ polka()
 	// 	}
 	// }))
 	.use(
+		'/swan-pwa',
 		compression({ threshold: 0 }),
 		sirv('static', { dev }),
 		sapper.middleware()
