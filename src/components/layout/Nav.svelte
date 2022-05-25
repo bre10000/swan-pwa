@@ -138,10 +138,10 @@
         <div class="dropdown-content" style="width: 15rem;">
           <br />
           <figure class="image is-128x128" style="margin: 0 auto;">
-            {#if $user.data.avatar?.url}
+            {#if $user.data && $user.data.avatar.url}
               <img
                 class="is-rounded"
-                src="{image_url}{$user.data.avatar?.url}"
+                src="{image_url}{$user.data.avatar.url}"
                 alt=""
               />
             {:else}
