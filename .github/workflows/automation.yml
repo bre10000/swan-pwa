@@ -26,7 +26,8 @@ jobs:
     - run: npm run export-github
     - name: Build and Deploy
       uses: JamesIves/github-pages-deploy-action@releases/v3
+      working-directory: ./src
       with:
         ACCESS_TOKEN: ${{ secrets.PAGE_DEPLOY }}
         BRANCH: gh-pages
-        FOLDER: build
+        FOLDER: ./src/build
