@@ -6,7 +6,7 @@
     "dev": "sapper dev --port 5555",
     "dev:sass": "npm run css-watch & sapper dev",
     "build": "sapper build --legacy",
-    "export": "sapper export --basepath swan-pwa --legacy",
+    "export": "sapper export --basepath swan-pwa",
     "export-normal": "sapper export ./build",
     "export-github": "sapper export  --basepath ./build --legacy",
     "start": "node __sapper__/build",
