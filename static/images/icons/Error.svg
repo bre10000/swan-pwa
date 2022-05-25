@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2186" height="939" viewBox="0 0 2186 939">
+  <defs>
+    <style>
+      .cls-1, .cls-4 {
+        fill: #ffe7e7;
+      }
+
+      .cls-1, .cls-7 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2, .cls-3 {
+        fill: none;
+        stroke-width: 10px;
+      }
+
+      .cls-2 {
+        stroke: #ff380a;
+      }
+
+      .cls-3 {
+        stroke: #ffe7e7;
+      }
+
+      .cls-5, .cls-7 {
+        fill: #ff380a;
+      }
+
+      .cls-6 {
+        fill: #fd9d8f;
+      }
+
+      .cls-8 {
+        fill: #fec1bc;
+      }
+    </style>
+  </defs>
+  <g id="Artboard_1_copy_3" data-name="Artboard 1 copy 3">
+    <path class="cls-1" d="M13093,1799s31.5-6.09,27-51c-3.2-32.19-41-31-41-31l9-40h142l42,10,36,28s-68.9-3.12-67,31c2.8,51.6,48,50,48,50Z" transform="translate(-11801 -1611)"/>
+    <path id="Shape_9_copy_2" data-name="Shape 9 copy 2" class="cls-1" d="M12179.9,2439.51s38.9-7.53,33.4-63.02c-4-39.78-50.7-38.31-50.7-38.31l11.2-49.43h175.4l351.9,12.36,44.5,34.6L12733,2443Z" transform="translate(-11801 -1611)"/>
+    <path id="Shape_9_copy" data-name="Shape 9 copy" class="cls-1" d="M12918,2208s31.5-6.09,27-51c-3.2-32.19-41-31-41-31l9-40h402l42,10,36,28s-68.9-3.12-67,31c2.8,51.6,48,50,48,50Z" transform="translate(-11801 -1611)"/>
+    <circle class="cls-2" cx="802" cy="191.185" r="62.6"/>
+    <circle id="Ellipse_5_copy" data-name="Ellipse 5 copy" class="cls-3" cx="1570.25" cy="783.42" r="42.85"/>
+    <rect id="Rounded_Rectangle_9" data-name="Rounded Rectangle 9" class="cls-4" x="7" y="828" width="851" height="106" rx="50" ry="50"/>
+    <rect id="Rounded_Rectangle_9_copy" data-name="Rounded Rectangle 9 copy" class="cls-4" x="235" y="621" width="851" height="106" rx="50" ry="50"/>
+    <rect id="Rounded_Rectangle_9_copy_2" data-name="Rounded Rectangle 9 copy 2" class="cls-4" x="661" y="407" width="1288.4" height="106" rx="50" ry="50"/>
+    <rect id="Rounded_Rectangle_9_copy_3" data-name="Rounded Rectangle 9 copy 3" class="cls-4" x="1117.5" y="591" width="694.5" height="106" rx="50" ry="50"/>
+    <rect id="Rounded_Rectangle_9_copy_4" data-name="Rounded Rectangle 9 copy 4" class="cls-4" x="1191.5" width="391.5" height="106" rx="50" ry="50"/>
+    <path id="Rounded_Rectangle_9_copy_6" data-name="Rounded Rectangle 9 copy 6" class="cls-1" d="M13486.8,1651.29h36.1a45.28,45.28,0,1,1,0,90.56h-36.1A45.28,45.28,0,0,1,13486.8,1651.29Z" transform="translate(-11801 -1611)"/>
+    <path id="Rounded_Rectangle_9_copy_7" data-name="Rounded Rectangle 9 copy 7" class="cls-1" d="M13889.3,2056.43h16.6a45.28,45.28,0,1,1,0,90.56h-16.6A45.28,45.28,0,1,1,13889.3,2056.43Z" transform="translate(-11801 -1611)"/>
+    <rect id="Rounded_Rectangle_9_copy_5" data-name="Rounded Rectangle 9 copy 5" class="cls-4" x="1256.5" y="184" width="489.1" height="106" rx="50" ry="50"/>
+    <rect id="Rounded_Rectangle_8" data-name="Rounded Rectangle 8" class="cls-5" x="2141" y="303" width="11" height="79" rx="5.5" ry="5.5"/>
+    <rect id="Rounded_Rectangle_8_copy" data-name="Rounded Rectangle 8 copy" class="cls-5" x="2107" y="337" width="79" height="11" rx="5.5" ry="5.5"/>
+    <circle id="Ellipse_6_copy_2" data-name="Ellipse 6 copy 2" class="cls-6" cx="1060.9" cy="633.785" r="280.4"/>
+    <path class="cls-7" d="M12811,1913c171.3-2.7,272,93.16,311,223,20.5,68.17,6.7,157.3-19,208-7,13.75-15.4,40.53-32,43-5.9-1.73-7.9-2.54-7-13,16.2-30.03,32.5-58.84,42-97,40.3-161.76-74.3-286.26-178-327-29.4-11.56-72.5-22.16-115-17-19.6,2.38-53.8,10.05-63,6-0.3-.67-1.7-2.33-2-3-1.2-2.18-3.8-7.76,1-12C12770.8,1916.02,12790.6,1915.52,12811,1913Zm-103,26c9.9-1.64,13.8,2.59,15,5,2.7,5.48,2.3,9.16-2,11-69.7,14.96-141.9,110.61-163,178-2.8,9.09-12.7,89.52-14,91-19.8,8.32-19.7-18.03-17-34,5.3-31.49,9.3-60.15,20-86,25.5-61.96,68.1-112.28,122-146C12682,1951.33,12695,1945.67,12708,1939Zm-112,440c13,6.57,36.1,42.24,51,54,38.5,30.39,81.8,51.67,140,63,45.8,8.92,102.2.49,137-13,17.2-6.69,43.9-22.43,61-24,4.1,0.04,7.4,3.97,3,12-22.5,31.04-133.8,56.57-194,46-79.9-14.03-133.6-42.57-180-89-12-11.98-25.6-23.55-32-41C12580.4,2379.48,12587.7,2374.36,12596,2379Zm452,19c9-2.93,13.3.66,12,13-8.1,12.76-29.9,39.74-47,42-4.5-.43-10-5.5-6-14C13020.5,2423.67,13034.7,2409.09,13048,2398Z" transform="translate(-11801 -1611)"/>
+    <circle id="Ellipse_6_copy" data-name="Ellipse 6 copy" class="cls-8" cx="1037.85" cy="602.595" r="267.55"/>
+    <path id="Rounded_Rectangle_10_copy" data-name="Rounded Rectangle 10 copy" class="cls-1" d="M12911.5,2091a9.745,9.745,0,0,1,3.4,13.45l-134.5,226.03a9.829,9.829,0,0,1-16.9-10.04l134.6-226.03A9.717,9.717,0,0,1,12911.5,2091Z" transform="translate(-11801 -1611)"/>
+    <path id="Rounded_Rectangle_10" data-name="Rounded Rectangle 10" class="cls-7" d="M12917.5,2105a9.745,9.745,0,0,1,3.4,13.45l-134.5,226.03a9.829,9.829,0,0,1-16.9-10.04l134.6-226.03A9.717,9.717,0,0,1,12917.5,2105Z" transform="translate(-11801 -1611)"/>
+  </g>
+</svg>

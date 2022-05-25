@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<!-- <meta name="robots" content="noindex"> -->
+
+	<!-- <meta
+      name="robots"
+      content="max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+    /> -->
+	<meta charset="utf-8" />
+	<!-- <meta http-equiv="Content-Security-Policy"
+		content="default-src 'self'; connect-src 'self';font-src 'self' https://fonts.googleapis.com; img-src 'self' data: https:; style-src 'self' ; script-src 'self' https://floating-hamlet-15488.herokuapp.com" /> -->
+
+
+
+	<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+	<title>SWAN - Warehouse Portal</title>
+	<meta data-hid="description" name="description" content="SWAN Warehouse Portal" />
+	<meta data-hid="og:title" name="og_title" content="Simuni" />
+	<meta data-hid="og:title" name="og_title" property="og:title" content="SWAN Warehouse Portal" />
+	<!-- Twitter -->
+	<meta name="twitter:title" content="SWAN Warehouse Portal" />
+	<meta name="twitter:description" content="SWAN Warehouse Portal" />
+
+	<!-- <link rel="canonical" href={`${host}`} /> -->
+	<!-- <link rel="alternate" hreflang="en" href={`${host}`} /> -->
+	<!-- <meta name="theme-color" content="#333333"> -->
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap" rel="stylesheet">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+	%sapper.base%
+
+	<!-- <link rel="stylesheet" href="global.css"> -->
+	<link rel="stylesheet" href="/assets/global.css">
+	<link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+	<link rel="icon" type="image/png" href="favicon.png">
+	<link rel="apple-touch-icon" href="logo-192.png">
+
+	<!-- Sapper creates a <script> tag containing `src/client.js`
+	     and anything else it needs to hydrate the app and
+	     initialise the router -->
+	%sapper.scripts%
+
+	<!-- Sapper generates a <style> tag containing critical CSS
+	     for the current page. CSS for the rest of the app is
+	     lazily loaded when it precaches secondary pages -->
+	%sapper.styles%
+
+	<!-- This contains the contents of the <svelte:head> component, if
+	     the current page has one -->
+	%sapper.head%
+</head>
+
+<body>
+	<!-- The application will be rendered inside this element,
+	     because `src/client.js` references it -->
+	<div id="sapper">%sapper.html%</div>
+
+
+
+	<script src="/assets/js/bulma-collapsible.min.js"></script>
+
+</body>
+
+</html>
