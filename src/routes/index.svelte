@@ -10,9 +10,9 @@ import { user } from "../store/user";
     }
 
     if (!value.loggedIn && value.fetched) {
-      goto("/login");
+      goto("login");
     } else if(value.loggedIn && value.fetched) {
-      goto("/dashboard")
+      goto("dashboard")
     } 
   });
 

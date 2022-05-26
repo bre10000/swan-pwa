@@ -69,7 +69,7 @@
     }
 
     if (!value.loggedIn && value.fetched) {
-      goto("/login");
+      goto("login");
     } else if(value.loggedIn && value.fetched) {
       name.set(value.data.name);
       emailValue.set(value.data.email);

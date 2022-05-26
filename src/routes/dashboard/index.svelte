@@ -19,7 +19,7 @@
     }
 
     if (!value.loggedIn && value.fetched) {
-      goto("/login");
+      goto("login");
     }
   });
 

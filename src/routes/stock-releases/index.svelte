@@ -24,7 +24,7 @@ import { createActivityLog } from "../../utils/activity/log";
         }
 
         if (!value.loggedIn && value.fetched) {
-            goto("/login");
+            goto("login");
         } else if (value.data) {
             getItems();
         }
@@ -430,7 +430,7 @@ import { createActivityLog } from "../../utils/activity/log";
             </h3>
         </div>
         <div class="column has-text-right">
-            <a href="/stock-releases/add" class="button is-dark px-5">
+            <a href="stock-releases/add" class="button is-dark px-5">
                 <span class="icon">
                     <Icon data={faPlus} />
                 </span>

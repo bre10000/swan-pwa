@@ -23,7 +23,7 @@ import { exportToPDFAlternate } from "../../utils/export/exportPDFAlternate";
         }
 
         if (!value.loggedIn && value.fetched) {
-            goto("/login");
+            goto("login");
         } else if (value.data) {
             getItems();
         }

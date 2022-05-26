@@ -12,7 +12,7 @@
     await sessionStore.logout();
     await user.logout();
 
-    goto('/login')
+    goto('login')
   }
 
   onMount(() => {
