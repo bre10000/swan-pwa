@@ -9,11 +9,11 @@ import polka from 'polka';
 const { PORT, NODE_ENV } = process.env;
 const dev = NODE_ENV === 'development';
 
-const url = dev ? '/' : 'swan-pwa'; // <<-
+// const url = dev ? '/' : 'swan-pwa'; // <<-
 
 polka()
     .use(
-        url, 
+        // url, 
 		// 'swan-pwa',
 		compression({ threshold: 0 }),
 		sirv('static', { dev }),
