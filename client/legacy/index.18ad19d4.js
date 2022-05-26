@@ -1,0 +1,1 @@
+function r(r){if(!r)return r;r=(r=Math.round(100*r)/100).toString();for(var t=/(-?\d+)(\d{3})/;t.test(r);)r=r.replace(t,"$1,$2");return r}function t(r,t){var n=[];return r.forEach((function(r){var u=[r.id];t.forEach((function(t){"id"!=t&&u.push(r.attributes[t])})),n.push(u)})),n}export{t as g,r as n};
