@@ -1,0 +1,1 @@
+import{S as s,i as e,s as t,u as o,g as a,o as n}from"./client.304cf8bb.js";function c(s){const e=o.subscribe((s=>{!s.loggedIn&&s.fetched?a("/login"):s.loggedIn&&s.fetched&&a("/dashboard")}));return n(e),[]}class r extends s{constructor(s){super(),e(this,s,c,null,t,{})}}export{r as default};
