@@ -9,23 +9,12 @@ import polka from 'polka';
 const { PORT, NODE_ENV } = process.env;
 const dev = NODE_ENV === 'development';
 
+const url = dev ? '/' : 'swan-pwa'; // <<-
+
 polka()
-	// .use((req, res, next) => {
-	// 	res.locals.nonce = uuidv4();
-	// 	next();
-	// })
-	// .use(helmet({
-	// 	contentSecurityPolicy: {
-	// 		directives: {
-	// 			scriptSrc: [
-	// 				"'self'",
-	// 				(req, res) => `'nonce-${res.locals.nonce}'`
-	// 			]
-	// 		}
-	// 	}
-	// }))
-	.use(
-		'swan-pwa',
+    .use(
+        url, 
+		// 'swan-pwa',
 		compression({ threshold: 0 }),
 		sirv('static', { dev }),
 		sapper.middleware()

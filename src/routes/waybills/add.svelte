@@ -60,7 +60,11 @@
         }
 
         try {
+            
+
+
             let response = await post({
+
                 path: "waybills?populate=%2A",
                 data: {
                     data: {
@@ -119,9 +123,16 @@
 
     async function saveItems(waybill) {
         try {
+            let params = {
+                populate : ['stock_release_item', 'stock_release_item.purchase_order_item', , 'stock_release_item.purchase_order_item.item', , 'stock_release_item.purchase_order_item.purchase_order']
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+
             childItems.forEach(async (element) => {
                 let response = await post({
-                    path: "waybill-items?populate=%2A",
+                    path: "waybill-items?" + params,
                     data: {
                         data: {
                             waybill: waybill.id,

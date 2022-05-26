@@ -72,8 +72,16 @@
         }
 
         try {
+
+            let params = {
+                populate : [ 'consortium_member', 'waybill_items', 'waybill_items.stock_release_item', 'waybill_items.stock_release_item.purchase_order_item', , 'waybill_items.stock_release_item.purchase_order_item.item', , 'waybill_items.stock_release_item.purchase_order_item.purchase_order']
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+
             let response = await put({
-                path: "waybills/" + slug + "?populate=%2A",
+                path: "waybills/" + slug + "?" + params,
                 data: {
                     data: {
                         destination: $destination.value,
@@ -132,9 +140,17 @@
 
     async function saveItems(waybill) {
         try {
+
+            let params = {
+                populate : ['stock_release_item', 'stock_release_item.purchase_order_item', , 'stock_release_item.purchase_order_item.item', , 'stock_release_item.purchase_order_item.purchase_order']
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+
             childItems.forEach(async (element) => {
                 let response = await post({
-                    path: "waybill-items?populate=%2A",
+                    path: "waybill-items?" + params,
                     data: {
                         data: {
                             waybill: waybill.id,
@@ -374,11 +390,6 @@
                     stock_release_item: {
                         id: {
                             $in: [event.detail.data?.id],
-                        },
-                    },
-                    waybill: {
-                        id: {
-                            $notIn: [null],
                         },
                     },
                 },
@@ -733,6 +744,12 @@
                         ?.attributes.name} <br />
                     <span class="gray is-size-7">{child.attributes.remark}</span
                     >
+                </div>
+                <div class="column has-text-centered">
+                    <div class="tag is-rounded is-small">SRF #</div>
+                    <br />
+                    {child.attributes.stock_release_item.data?.attributes
+                        .stock_release.data?.id}
                 </div>
                 <div class="column has-text-centered">
                     <div class="tag is-rounded is-small">PO#</div>

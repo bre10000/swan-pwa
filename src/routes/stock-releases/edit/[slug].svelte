@@ -67,8 +67,15 @@ import { createActivityLog } from "../../../utils/activity/log";
         }
 
         try {
+            let params = {
+                populate : [ 'consortium_member', 'stock_release_items', 'stock_release_items.purchase_order_item', , 'stock_release_items.purchase_order_item.item', , 'stock_release_items.purchase_order_item.purchase_order']
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+
             let response = await put({
-                path: "stock-releases/" + slug + "?populate=%2A",
+                path: "stock-releases/" + slug + "?" + params,
                 data: {
                     data: {
                         consortium_member: $consortium_member.value.value,
@@ -112,9 +119,15 @@ import { createActivityLog } from "../../../utils/activity/log";
 
     async function saveItems(stock_release) {
         try {
+            let params = {
+                populate : ['stock_release', 'stock_release.consortium_member', 'purchase_order_item', 'purchase_order_item.item', , 'purchase_order_item.purchase_order']
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
             childItems.forEach(async (element) => {
                 let response = await post({
-                    path: "stock-items?populate=%2A",
+                    path: "stock-release-items?" + params,
                     data: {
                         data: {
                             stock_release: stock_release.id,
@@ -418,7 +431,7 @@ import { createActivityLog } from "../../../utils/activity/log";
                         populate: "*",
                     },
                     stock_release_items: {
-                        populate: ['purchase_order_item', 'purchase_order_item.item', 'purchase_order_item.purchase_order'],
+                        populate: ['stock_release', 'stock_release.consortium_member', 'purchase_order_item', 'purchase_order_item.item', 'purchase_order_item.purchase_order'],
                     },
                 },
             };
@@ -540,6 +553,11 @@ import { createActivityLog } from "../../../utils/activity/log";
                     <div class="tag is-rounded has-text-weight-bold is-large">
                         {child.id}
                     </div>
+                </div>
+                <div class="column has-text-centered">
+                    <div class="tag is-rounded is-small">SRF #</div>
+                    <br />
+                    {child.attributes.stock_release.data?.id}
                 </div>
                 <div class="column has-text-centered">
                     <div class="tag is-rounded is-small">PO#</div>

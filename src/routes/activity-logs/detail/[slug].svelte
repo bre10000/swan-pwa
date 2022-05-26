@@ -463,12 +463,12 @@
                             <div class="column has-text-centered">
                                 <div class="tag is-rounded is-small">PO#</div>
                                 <br />
-                                {child.attributes.purchase_order_item.data
+                                {child.attributes.purchase_order_item?.data
                                     ?.attributes.purchase_order.data?.attributes
                                     .poNumber}
                             </div>
                             <div class="column is-3">
-                                {child.attributes.purchase_order_item.data
+                                {child.attributes.purchase_order_item?.data
                                     ?.attributes.item?.data?.attributes.name}
                                 <br />
                                 <span class="gray is-size-7"
@@ -478,7 +478,7 @@
                             <div class="column has-text-centered">
                                 <div class="tag is-rounded is-small">Unit</div>
                                 <br />
-                                {child.attributes.purchase_order_item.data
+                                {child.attributes.purchase_order_item?.data
                                     ?.attributes.unit}
                             </div>
                             <div class="column has-text-centered">
@@ -486,7 +486,7 @@
                                     Pieces
                                 </div>
                                 <br />
-                                {child.attributes.purchase_order_item.data
+                                {child.attributes.purchase_order_item?.data
                                     ?.attributes.pieces}
                             </div>
                             <div class="column has-text-centered">
@@ -495,7 +495,7 @@
                                 </div>
                                 <br />
                                 {numberWithCommas(
-                                    child.attributes.purchase_order_item.data
+                                    child.attributes.purchase_order_item?.data
                                         ?.attributes.quantity
                                 )}
                             </div>
@@ -504,7 +504,7 @@
                                     Currency
                                 </div>
                                 <br />
-                                {child.attributes.purchase_order_item.data
+                                {child.attributes.purchase_order_item?.data
                                     ?.attributes.currency}
                             </div>
                             <div class="column has-text-centered">
@@ -513,7 +513,7 @@
                                 </div>
                                 <br />
                                 {numberWithCommas(
-                                    child.attributes.purchase_order_item.data
+                                    child.attributes.purchase_order_item?.data
                                         ?.attributes.unitPrice
                                 )}
                             </div>
@@ -521,10 +521,10 @@
                                 <div class="tag is-rounded is-small">Total</div>
                                 <br />
                                 {numberWithCommas(
-                                    child.attributes.purchase_order_item.data
+                                    child.attributes.purchase_order_item?.data
                                         ?.attributes.unitPrice *
                                         child.attributes.purchase_order_item
-                                            .data?.attributes.quantity
+                                            ?.data?.attributes.quantity
                                 )}
                             </div>
                             <div class="column has-text-centered">
@@ -548,6 +548,12 @@
                         >
                             {activity_log.attributes.data.id}
                         </div>
+                    </div>
+                    <div class="column has-text-centered">
+                        <div class="tag is-rounded is-small">SRF #</div>
+                        <br />
+                        {activity_log.attributes.data.attributes
+                            .stock_release?.data?.id}
                     </div>
                     <div class="column has-text-centered">
                         <div class="tag is-rounded is-small">PO#</div>

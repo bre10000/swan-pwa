@@ -49,8 +49,15 @@ import { createActivityLog } from "../../../utils/activity/log";
         }
 
         try {
+            let params = {
+                populate : ['stock_release_item', 'stock_release_item.purchase_order_item', , 'stock_release_item.purchase_order_item.item', , 'stock_release_item.purchase_order_item.purchase_order']
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+
             let response = await put({
-                path: "waybill-items/" + slug + "?populate=%2A",
+                path: "waybill-items/" + slug + "?" + params,
                 data: {
                     data: {
                         // waybill: waybillId,

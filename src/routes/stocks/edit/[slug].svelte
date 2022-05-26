@@ -67,8 +67,15 @@ import { createActivityLog } from "../../../utils/activity/log";
         }
 
         try {
+            let params = {
+                populate : [ 'consortium_member', 'warehouse', 'stock_items', 'stock_items.purchase_order_item', , 'stock_items.purchase_order_item.item', , 'stock_items.purchase_order_item.purchase_order']
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+
             let response = await put({
-                path: "stocks/" + slug + "?populate=%2A",
+                path: "stocks/" + slug + "?" + params,
                 data: {
                     data: {
                         warehouse: $warehouse.value,
@@ -113,9 +120,16 @@ import { createActivityLog } from "../../../utils/activity/log";
 
     async function saveItems(stock) {
         try {
+            let params = {
+                populate : ['stock', 'stock.consortium_member', 'purchase_order_item', 'purchase_order_item.item' , 'purchase_order_item.purchase_order']
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+
             childItems.forEach(async (element) => {
                 let response = await post({
-                    path: "stock-items?populate=%2A",
+                    path: "stock-items?" + params,
                     data: {
                         data: {
                             stock: stock.id,

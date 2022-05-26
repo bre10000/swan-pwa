@@ -102,9 +102,16 @@
 
     async function saveItems(stock) {
         try {
+
+            let params = {
+                populate : ['stock', 'stock.consortium_member', 'purchase_order_item', 'purchase_order_item.item' , 'purchase_order_item.purchase_order']
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
             childItems.forEach(async (element) => {
                 let response = await post({
-                    path: "stock-items?populate=%2A",
+                    path: "stock-items?" + params,
                     data: {
                         data: {
                             stock: stock.id,
