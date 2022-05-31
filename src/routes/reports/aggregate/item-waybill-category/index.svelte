@@ -480,6 +480,9 @@
                     {$consortium_member.value.attributes.address_1} -
                     {$consortium_member.value.attributes.address_2}
                 </p>
+                <p class="has-text-centered">
+                    {$consortium_member.value.attributes.website} - {$consortium_member.value.attributes.phone}
+                </p>
             {/if}
 
 

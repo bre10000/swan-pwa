@@ -109,6 +109,11 @@
                     .data?.attributes.address_1} - {stock.attributes.consortium_member
                     .data?.attributes.address_2}
             </p>
+            <p class="has-text-centered">
+                {stock.attributes.consortium_member
+                    .data?.attributes.website} - {stock.attributes.consortium_member
+                    .data?.attributes.phone}
+            </p>
             <hr>
             <h3 class="is-size-5">
                 

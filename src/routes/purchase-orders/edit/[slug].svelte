@@ -67,8 +67,17 @@ import { createActivityLog } from "../../../utils/activity/log";
         }
 
         try {
+            let params = {
+                populate : [ 'consortium_member', 'purchase_order_items', 'purchase_order_items.item']
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+
+
+
             let response = await put({
-                path: "purchase-orders/" + slug + "?populate=%2A",
+                path: "purchase-orders/" + slug + "?" + params,
                 data: {
                     data: {
                         poNumber: $poNumber.value,

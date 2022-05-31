@@ -26,7 +26,7 @@
 
 	let app;
 
-	console.log("Version - 0.0.1");
+	console.log("Version - 0.0.2");
 
 	function has(nodeList, selector) {
 		return Array.from(nodeList).filter(e => e.querySelector(selector))

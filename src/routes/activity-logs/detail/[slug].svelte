@@ -89,6 +89,11 @@
                         >
                     </div>
                     <div class="column has-text-centered">
+                        <div class="tag is-rounded is-small">PO #</div>
+                        <br />
+                        {activity_log.attributes.data.attributes.purchase_order.data?.id}
+                    </div>
+                    <div class="column has-text-centered">
                         <div class="tag is-rounded is-small">Unit</div>
                         <br />
                         {activity_log.attributes.data.attributes.unit}

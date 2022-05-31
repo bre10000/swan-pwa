@@ -74,6 +74,14 @@ import { exportToPDFAlternate } from "../../utils/export/exportPDFAlternate";
             selected: true,
         },
         {
+            key: "entityID",
+            title: "Edited ID",
+            sortable: true,
+            filterValue: (v) => v.first_name.charAt(0).toLowerCase(),
+            filterType: "string",
+            selected: true,
+        },
+        {
             key: "action",
             title: "Action",
             sortable: true,
@@ -193,6 +201,7 @@ import { exportToPDFAlternate } from "../../utils/export/exportPDFAlternate";
                 element.attributes.users_permissions_user.data?.attributes.name,
                 element.attributes.users_permissions_user.data?.attributes.email,
                 element.attributes.type,
+                element.attributes.entityID,
                 element.attributes.action,
                 element.attributes.date,
             ]);
