@@ -1,6 +1,6 @@
 // const server_ip = 'https://account.simuni.ml'
 const server_ip = 'http://localhost:1337'
-const www_ip = 'https://floating-hamlet-15488.herokuapp.com'
+const www_ip = 'https://swan-stock-portal.herokuapp.com'
 
 
 const api_url = (process.env.NODE_ENV === 'production'
