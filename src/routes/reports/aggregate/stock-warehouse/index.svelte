@@ -2,6 +2,7 @@
     import { get } from "../../../../lib/api";
     import {
         faAngleLeft,
+faSave,
         faFileExcel,
         faFilePdf,
         faPrint,
@@ -278,10 +279,10 @@
                         .data.attributes.name,
                     elementC.attributes.purchase_order_item.data.attributes.item
                         .data.attributes.category,
-                    elementC.attributes.purchase_order_item.data.attributes
-                        .unit,
-                    elementC.attributes.purchase_order_item.data.attributes
-                        .pieces,
+                        elementC.attributes.purchase_order_item.data.attributes.item
+                        .data.attributes.unit,
+                        elementC.attributes.purchase_order_item.data.attributes.item
+                        .data.attributes.pieces,
                     elementC.attributes.purchase_order_item.data.attributes
                         .quantity,
                     elementC.attributes.purchase_order_item.data.attributes
@@ -323,7 +324,7 @@
 
     function exportcsv() {
         let now = new Date();
-        let fname = `"SWAN Stock by Warehouse - " ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+        let fname = `SWAN Stock by Warehouse - " ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
         let array = getPopulatedDataPdf(stock_items);
 
@@ -490,7 +491,7 @@
                 </div>
                 <div class="column is-flex is-align-items-end">
                     <button
-                        disabled={!$formItem.valid || !$formItem.dirty}
+                        disabled={!$formItem.valid && !$formItem.dirty}
                         on:click|preventDefault={filter}
                         class="button is-dark px-5 py-2 has-text-weight-bold"
                         >Filter</button
@@ -507,6 +508,9 @@
     {#if stock_items}
         <div class="card p-6">
             <br />
+            <div class="has-text-centered is-flex is-align-items-center">
+                <img src="./images/logo/swan_consortium.svg" width="150" alt="SWAN Humaniterian Consortium" style="margin: 0 auto;">
+            </div>
             {#if $consortium_member.value}
                 <h3 class="has-text-centered has-text-weight-bold">
                     {$consortium_member.value.attributes.name}
@@ -575,11 +579,13 @@
                             >
                             <td
                                 >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.unit}</td
+                                    ?.attributes.item.data?.attributes.unit ? stock.attributes.purchase_order_item.data
+                                    ?.attributes.item.data?.attributes.unit : "-"}</td
                             >
                             <td
                                 >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.pieces}</td
+                                    ?.attributes.item.data?.attributes.pieces ? stock.attributes.purchase_order_item.data
+                                    ?.attributes.item.data?.attributes.pieces : "-"}</td
                             >
 
                             <td

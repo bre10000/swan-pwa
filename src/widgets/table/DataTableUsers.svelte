@@ -23,6 +23,7 @@
 	} from "@fortawesome/free-solid-svg-icons";
 	import SelectedColumns from "./sub-components/SelectedColumns.svelte";
 	import { prevent_default, stop_propagation } from "svelte/internal";
+	import { image_url } from "../../config";
 
 	const dispatch = createEventDispatcher();
 	export let columns;
@@ -33,17 +34,11 @@
 	export let iconAsc = "▲";
 	export let iconDesc = "▼";
 
-
-	export let pagesCount = 10;
-	export let current_page = 1;
-	export let last_page;
-	export let per_page = 10;
-
 	export let pagination;
 
 	export let options = {
 		title: "Data Table",
-		showSearch: true,
+		showSearch: false,
 		showFilterHeader: false,
 		showSelect: true,
 		showDetails: true,
@@ -51,10 +46,7 @@
 		showFooter: false,
 	};
 
-	let c_rows = rows;
-
 	let total = 0;
-	let page = current_page;
 
 	let filter_text = "";
 	let filterValues = {};
@@ -69,98 +61,47 @@
 		columnHeaders[col.title] = col;
 	});
 
-	$: if (filter_text && c_rows) {
-		if(filter_text == " ")
-			filter_text = ""
-		c_rows = rows
-			.filter(
-				(r) =>
-					searchByKey(r)
-			)
-			.map((r) =>
-				Object.assign({}, r, {
-					$sortOn: r[sortBy],
-				})
-			)
-			.sort((a, b) => {
-				if (a.$sortOn > b.$sortOn) return sortOrder;
-				else if (a.$sortOn < b.$sortOn) return -sortOrder;
-				return 0;
-			});
-	}
-
-
-	$: {
-		total = c_rows.length;
-		page = 1;
-		current_page = 1;
-		last_page = Math.round(c_rows.length / per_page);
-		pagesCount = last_page;
-	}
-
-
-	function searchByKey(r) {
-		let temp = false;
-		Object.keys(r).forEach(element => {
-			if(r[element]){
-				if ( r[element].toString().toLowerCase().includes(filter_text.toLowerCase()) )
-				temp = true
-			} else if (r[element]?.name){
-				if ( r[element].name.toString().toLowerCase().includes(filter_text.toLowerCase()) )
-				temp = true
-			}
-			
-		})
-		return temp
-	}
-
 	const calculateFilterValues = () => {
 		filterValues = {};
 		columns.forEach((c) => {
-			if ( c.filterType === "numeric" ) {
-				filterValues[c.key] = getNumericFilter(rows, c.key, c.interval)
-			} else if ( c.filterType === "string" ) {
-				filterValues[c.key] = getStringFilter(rows, c.key)
-			} else if ( c.filterType === "whole-string" ) {
-				filterValues[c.key] = getWholeStringFilter(rows, c.key)
-			} else if ( c.filterType === "array" ) {
-				filterValues[c.key] = c.filterValues
-			} 
+			if (c.filterType === "numeric") {
+				filterValues[c.key] = getNumericFilter(rows, c.key, c.interval);
+			} else if (c.filterType === "string") {
+				filterValues[c.key] = getStringFilter(rows, c.key);
+			} else if (c.filterType === "whole-string") {
+				filterValues[c.key] = getWholeStringFilter(rows, c.key);
+			} else if (c.filterType === "array") {
+				filterValues[c.key] = c.filterValues;
+			}
 		});
 	};
 
-
-	const updateSortOrder = (colKey) => {
-		if (colKey === sortBy) {
-			sortOrder = sortOrder === 1 ? -1 : 1;
-		} else {
-			sortOrder = 1;
-		}
-	};
-
 	const handleClickCol = (col) => {
-		updateSortOrder(col.key);
+		// updateSortOrder(col.key);
+		if (sortBy === col.key) {
+			sortOrder *= -1;
+		}
 		sortBy = col.key;
-		// dispatch("clickCol", {
-		// 	key: col.key,
-		// });
+		dispatch("clickCol", {
+			key: sortBy + ":" + (sortOrder == 1 ? "asc" : "desc"),
+		});
 	};
 
 	const handleClickRow = (row) => {
-		dispatch("clickRow", {row});
+		dispatch("clickRow", { row });
 	};
 
 	const selectRow = (row) => {
-		row.selected = true;
+		// row.selected = !row.selected;
 		dispatch("selectRow", row);
 	};
 	const selectAllRows = () => {
 		select_all = !select_all;
-		c_rows.forEach((element) => {
+		rows.forEach((element) => {
 			element.selected = select_all;
 		});
 		dispatch("selectAllRows", {
-			c_rows,
+			rows,
 			select_all,
 		});
 	};
@@ -205,16 +146,6 @@
 			newPage,
 		});
 	};
-
-	const downloadCSV = () => {
-		let now = new Date();
-		let fname = `${
-			options.title
-		} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
-
-		let tableKeys = Object.keys(columnByKey);
-		csvGenerator(c_rows, tableKeys, columnHeaders, fname);
-	};
 </script>
 
 <div class="container-fluid has-background-light table-container-main">
@@ -242,13 +173,13 @@
 						<Icon data={faFileCsv} scale="1" />
 					</span>
 					<span>Download CSV</span>
-				</button>
+				</button> -->
 				<button class="button">
 					<span class="icon">
 						<Icon data={faFilePdf} scale="1" />
 					</span>
 					<span>Download PDF</span>
-				</button> -->
+				</button>
 			</div>
 		</div>
 	{/if}
@@ -272,24 +203,26 @@
 						</th>
 					{/if}
 					{#each columns.filter((x) => x.selected) as col}
-						<th
-							class:isSortable={col.sortable}
-							on:click={() => handleClickCol(col)}
-						>
-							{col.title}
-							{#if sortBy === col.key}
-								<!-- {sortOrder === 1 ? iconAsc : iconDesc} -->
-								<!-- {#if sortOrder === 1}
-									<span class="ml-4">
-										<Icon data={faAngleUp} /></span
-									>
-								{:else}
-									<span class="ml-4"
-										><Icon data={faAngleDown} /></span
-									>
-								{/if} -->
-							{/if}
-						</th>
+						{#if (col.key !== "email") && (col.key !== "username")}
+							<th
+								class:isSortable={col.sortable}
+								on:click={() => handleClickCol(col)}
+							>
+								{col.title}
+								{#if sortBy === col.key}
+									<!-- {sortOrder === 1 ? iconAsc : iconDesc} -->
+									{#if sortOrder === 1}
+										<span class="ml-4">
+											<Icon data={faAngleUp} /></span
+										>
+									{:else}
+										<span class="ml-4"
+											><Icon data={faAngleDown} /></span
+										>
+									{/if}
+								{/if}
+							</th>
+						{/if}
 					{/each}
 					{#if options.showActions}
 						<th class="is-narrow"
@@ -344,15 +277,17 @@
 							<th class="is-narrow" />
 						{/if}
 						{#each columns.filter((x) => x.selected) as col}
-							<th
-								class:isSortable={col.sortable}
-								on:click={() => handleClickCol(col)}
-							>
-								{col.title}
-								{#if sortBy === col.key}
-									{sortOrder === 1 ? iconAsc : iconDesc}
-								{/if}
-							</th>
+							{#if (col.name !== "Email") && (col.name !== "Username")}
+								<th
+									class:isSortable={col.sortable}
+									on:click={() => handleClickCol(col)}
+								>
+									{col.title}
+									{#if sortBy === col.key}
+										{sortOrder === 1 ? iconAsc : iconDesc}
+									{/if}
+								</th>
+							{/if}
 						{/each}
 						{#if options.showActions}
 							<th class="is-narrow" />
@@ -362,10 +297,9 @@
 			{/if}
 
 			<tbody>
-				{#each c_rows as row, n}
+				{#each rows as row, n}
 					<tr
-						class:has-background-info={row.selected}
-						class:has-text-white={row.selected}
+						class:has-backround-lightgreen={row.selected}
 						on:click={() => {
 							handleClickRow(row);
 						}}
@@ -383,17 +317,56 @@
 							</td>
 						{/if}
 						{#each columns.filter((x) => x.selected) as col}
-							<td
-								on:click={() => {
-									handleClickCell(row, col.key);
-								}}
+							{#if (col.key !== "email") && (col.key !== "username")}
+								<td
+									on:click={() => {
+										handleClickCell(row, col.key);
+									}}
 								>
-								{#if col.key == 'role'}
-									{@html row[col.key].name ? row[col.key].name : "-"}
-								{:else}
-									{@html row[col.key] ? row[col.key] : "-"}
-								{/if}
-							</td>
+									{#if col.key == "role"}
+										{@html row[col.key]?.name
+											? row[col.key]?.name
+											: "-"}
+									{:else if col.key == "name"}
+										<div class="is-flex">
+											<figure class="image is-64x64">
+													{#if row["avatar"]?.url}
+														<img
+															class="is-rounded ml-0"
+															src="{image_url}{row['avatar']
+																?.url}"
+															alt=""
+														/>
+													{:else}
+														<img
+															class="is-rounded"
+															src="./images/profile/profile-placeholder.png"
+															alt=""
+														/>
+													{/if}
+											</figure>
+
+											<div class="is-flex-grow-1">
+												<p class="has-text-weight-bold mb-1 mt-1" style="line-height: 1;">{row["name"]}</p>
+												<p class="gray mb-1 is-size-7" style="line-height: 1;">{row["username"]}</p>
+												<p class="gray is-size-7" style="line-height: 1;">{row["email"]}</p>
+											</div>
+										</div>
+									{:else if col.key == "email" || col.key == "username"}
+										<!--  -->
+									{:else if col.key == "blocked"}
+										<span
+											class="tag has-text-weight-bold p-2 mx-2"
+											class:is-success={!row[col.key]}
+											class:is-danger={row[col.key]}
+										>
+											{row[col.key] ? "Blocked" : "Active"}
+										</span>
+									{:else}
+										{@html row[col.key] ? row[col.key] : "-"}
+									{/if}
+								</td>
+							{/if}
 						{/each}
 						{#if options.showActions}
 							<td class="has-text-right px-4">
@@ -479,7 +452,6 @@
 	</div>
 </div>
 
-<br><br>
 <div class="container-fluid py-4 px-5">
 	{#if pagination}
 		<Pagination
@@ -491,6 +463,12 @@
 </div>
 
 <style>
+	.has-backround-lightgreen {
+		background-color: #a6ffc4;
+	}
+	.has-backround-lightgreen:hover {
+		background-color: #77ffa4 !important;
+	}
 	input.checkbox {
 		/* transform: scale(1.5);		 */
 
@@ -502,7 +480,7 @@
 	}
 
 	input.checkbox:checked {
-		background-color: #2b75ff;
+		background-color: #1ed55b;
 		border: 1px solid transparent;
 		color: #ffffff;
 	}

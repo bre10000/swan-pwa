@@ -100,6 +100,11 @@ function getPopulatedArray(array, attributes){
   });
   return temp;
 }
+
+function checkInput(input) {
+  return  input !== undefined && (input !== "") && (input !== null)
+}
+
 export {
   constructURL,
   constructQry,
@@ -111,5 +116,6 @@ export {
   dateFormatDateMonth,
   addDays,
   numberWithCommas,
-  getPopulatedArray
+  getPopulatedArray,
+  checkInput
 }

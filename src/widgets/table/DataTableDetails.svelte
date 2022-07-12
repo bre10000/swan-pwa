@@ -25,6 +25,7 @@
 	} from "@fortawesome/free-solid-svg-icons";
 	import SelectedColumns from "./sub-components/SelectedColumns.svelte";
 	import { prevent_default, stop_propagation } from "svelte/internal";
+	import { checkInput, numberWithCommas } from "../../lib";
 
 	const dispatch = createEventDispatcher();
 	export let columns;
@@ -198,6 +199,32 @@
 		let tableKeys = Object.keys(columnByKey);
 		csvGenerator(c_rows, tableKeys, columnHeaders, fname);
 	};
+
+	function getStockBalance(item) {
+		let temp = 0;
+		if (item.attributes.stock_release_items?.data) {
+			item.attributes.stock_release_items?.data
+				?.filter((x) => checkInput(x.attributes.stock_release.data))
+				.forEach((element) => {
+					temp = temp + element.attributes.quantity;
+				});
+		}
+
+		return numberWithCommas(item.attributes.received - temp);
+	}
+
+	function getStockReleaseBalance(item) {
+		let temp = 0;
+		if (item.attributes.waybill_items?.data) {
+			item.attributes.waybill_items?.data
+				?.filter((x) => checkInput(x.attributes.waybill.data))
+				.forEach((element) => {
+					temp = temp + parseInt(element.attributes.quantity);
+				});
+		}
+
+		return numberWithCommas(item.attributes.quantity - temp);
+	}
 </script>
 
 <div class="container-fluid has-background-light table-container-main">
@@ -371,18 +398,40 @@
 									handleClickCell(row, col.key);
 								}}
 							>
-								{#if col.key == "id"}
-									<span class="hast-text-weight-bold">
+								{#if col.key == "id" && detailVariable == "stock_items"}
+									<span
+										class="has-text-info"
+										style="font-weight: 900;"
+									>
 										{@html row[col.key]
 											? row[col.key]
 											: "-"}
 									</span>
-								{:else if col.key == "consortium_member" || col.key == "warehouse"}
-									{@html row.attributes[col.key]?.data
-										?.attributes.name
-										? row.attributes[col.key]?.data
-												?.attributes.name
-										: "-"}
+								{:else if col.key == "id"}
+									<span class="has-text-info">
+										{@html row[col.key]
+											? row[col.key]
+											: "-"}
+									</span>
+								{:else if col.key == "consortium_member"}
+									<span
+										class="has-text-info"
+										style="font-weight: 600 !important;"
+									>
+										{@html row.attributes[col.key]?.data
+											?.attributes.name
+											? row.attributes[col.key]?.data
+													?.attributes.name
+											: "-"}
+									</span>
+								{:else if col.key == "warehouse"}
+									<span>
+										{@html row.attributes[col.key]?.data
+											?.attributes.name
+											? row.attributes[col.key]?.data
+													?.attributes.name
+											: "-"}
+									</span>
 								{:else}
 									{@html row.attributes[col.key]
 										? row.attributes[col.key]
@@ -486,23 +535,39 @@
 						{/if}
 					</tr>
 					{#if row.attributes[detailVariable]?.data}
-						{#each row.attributes[detailVariable].data as item}
-							<tr class="has-background-light">
+						{#each row.attributes[detailVariable].data as item, index}
+							<tr
+								class="has-background-light has-border-bottom-gray"
+							>
 								<td
 									colspan={columns.filter((x) => x.selected)
 										.length + 1}
 								>
 									{#if detailVariable == "purchase_order_items"}
 										<div class="columns">
+											<div
+												class="column is-narrow light-gray"
+											>
+												#{index + 1}
+											</div>
 											{#each columnsDetails as col}
-												{#if col.key == "id"}
+												{#if col.key == "item_id"}
 													<div
-														class="column is-narrow gray"
+														class:has-background-lightgreen={col.key ==
+															"item_id"}
+														class="column is-narrow gray has-text-centered px-4"
 													>
-														{item[col.key]}
+														<span
+															class="is-small tag is-info is-light"
+															>PO Item ID</span
+														> <br />
+
+														{item.id}
 													</div>
 												{:else if col.key == "item"}
-													<div class="column is-5">
+													<div
+														class="column is-4 px-4"
+													>
 														<span class=""
 															>{item.attributes[
 																col.key
@@ -516,6 +581,96 @@
 															]?.data?.attributes
 																.category}</span
 														>
+													</div>
+												{:else if col.key == "unit"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														<span class=""
+															>{item.attributes
+																.item?.data
+																?.attributes
+																.unit
+																? item
+																		.attributes
+																		.item
+																		?.data
+																		?.attributes
+																		.unit
+																: "-"}</span
+														>
+													</div>
+												{:else if col.key == "pieces"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														<span class=""
+															>{item.attributes
+																.item?.data
+																?.attributes
+																.pieces
+																? item
+																		.attributes
+																		.item
+																		?.data
+																		?.attributes
+																		.pieces
+																: "-"}</span
+														>
+													</div>
+												{:else if col.key == "unitPrice" || col.key == "quantity"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes[
+															col.key
+														]
+															? numberWithCommas(
+																	parseFloat(
+																		item
+																			.attributes[
+																			col
+																				.key
+																		]
+																	)
+															  )
+															: "-"}
+													</div>
+												{:else if col.key == "total"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.unitPrice
+															? numberWithCommas(
+																	parseFloat(
+																		item
+																			.attributes
+																			.unitPrice
+																	) *
+																		parseFloat(
+																			item
+																				.attributes
+																				.quantity
+																		)
+															  )
+															: "-"}
 													</div>
 												{:else}
 													<div
@@ -534,11 +689,23 @@
 										</div>
 									{:else if detailVariable == "stock_items"}
 										<div class="columns">
+											<div
+												class="column is-narrow light-gray"
+											>
+												#{index + 1} <br />
+												<i class="has-text-light"
+													>{item.id}</i
+												>
+											</div>
 											{#each columnsDetails as col}
 												{#if col.key == "id"}
 													<div
 														class="column is-narrow gray"
 													>
+														<span
+															class="is-small tag"
+															>Item ID</span
+														> <br />
 														{item[col.key]}
 													</div>
 												{:else if col.key == "item"}
@@ -550,24 +717,127 @@
 																?.attributes[
 																col.key
 															]?.data?.attributes
-																.name} - ({item
-																.attributes
-																.purchase_order_item
-																?.data
-																?.id})</span
-														>
-														<br />
-														<span class="gray"
-															>{item.attributes
-																.purchase_order_item
-																?.data
-																?.attributes[
-																col.key
-															]?.data?.attributes
-																.category}</span
-														>
+																.name} -
+															<span class="gray"
+																>{item
+																	.attributes
+																	.purchase_order_item
+																	?.data
+																	?.attributes[
+																	col.key
+																]?.data
+																	?.attributes
+																	.category}</span
+															>
+															<br />
+
+															<span
+																class="has-text-info has-text-weight-bold"
+															>
+																PO Item ID -
+																{item.attributes
+																	.purchase_order_item
+																	?.data?.id}
+															</span>
+														</span>
 													</div>
-												{:else if col.key != "received" && col.key != "poNumber"}
+												{:else if col.key == "unit"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.purchase_order_item
+															?.data?.attributes
+															.item?.data
+															?.attributes[
+															col.key
+														]
+															? item.attributes
+																	.purchase_order_item
+																	?.data
+																	?.attributes
+																	.item?.data
+																	?.attributes[
+																	col.key
+															  ]
+															: "-"}
+													</div>
+												{:else if col.key == "pieces"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.purchase_order_item
+															?.data?.attributes
+															.item?.data
+															?.attributes[
+															col.key
+														]
+															? numberWithCommas(
+																	item
+																		.attributes
+																		.purchase_order_item
+																		?.data
+																		?.attributes
+																		.item
+																		?.data
+																		?.attributes[
+																		col.key
+																	]
+															  )
+															: "-"}
+													</div>
+												{:else if col.key == "total"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.received
+															? numberWithCommas(
+																	parseFloat(
+																		item
+																			.attributes
+																			.received
+																	) *
+																		parseFloat(
+																			item
+																				.attributes
+																				.purchase_order_item
+																				?.data
+																				?.attributes
+																				.unitPrice
+																		)
+															  )
+															: "-"}
+													</div>
+												{:else if col.key == "poNumber"}
+													<div
+														class="column has-background-lightgreen has-text-centered"
+													>
+														<span
+															class="is-small tag is-info is-light"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.purchase_order_item
+															?.data?.attributes
+															.purchase_order.data
+															.attributes
+															.poNumber}
+													</div>
+												{:else if col.key != "received" && col.key != "poNumber" && col.key != "balance"}
 													<div
 														class="column has-text-centered"
 													>
@@ -580,6 +850,398 @@
 															?.data?.attributes[
 															col.key
 														]}
+													</div>
+												{:else if col.key == "balance"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{getStockBalance(item)}
+													</div>
+												{:else}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes[
+															col.key
+														]
+															? item.attributes[
+																	col.key
+															  ]
+															: "-"}
+													</div>
+												{/if}
+											{/each}
+										</div>
+									{:else if detailVariable == "stock_release_items"}
+										<div class="columns">
+											<div
+												class="column is-narrow light-gray"
+											>
+												#{index + 1} <br />
+												<i class="has-text-light"
+													>{item.id}</i
+												>
+											</div>
+											{#each columnsDetails as col}
+												{#if col.key == "id"}
+													<div
+														class="column is-narrow light-gray"
+													>
+														#{index + 1} <br />
+														<i
+															class="has-text-light"
+															>{item.id}</i
+														>
+													</div>
+												{:else if col.key == "item"}
+													<div
+														class="column is-3 is-narrow"
+														style="width: 300px;"
+													>
+														<span class=""
+															>{item.attributes
+																.purchase_order_item
+																?.data
+																?.attributes[
+																col.key
+															]?.data?.attributes
+																.name}
+
+															<span class="gray"
+																>{item
+																	.attributes
+																	.purchase_order_item
+																	?.data
+																	?.attributes[
+																	col.key
+																]?.data
+																	?.attributes
+																	.category}</span
+															> <br />
+															<span
+																class="has-text-info has-text-weight-bold"
+																>PO Item ID - {item
+																	.attributes
+																	.purchase_order_item
+																	?.data?.id}
+															</span>
+														</span>
+													</div>
+												{:else if col.key == "unit" || col.key == "pieces"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.purchase_order_item
+															?.data?.attributes
+															.item?.data
+															?.attributes[
+															col.key
+														]
+															? item.attributes
+																	.purchase_order_item
+																	?.data
+																	?.attributes
+																	.item?.data
+																	?.attributes[
+																	col.key
+															  ]
+															: "-"}
+													</div>
+												{:else if col.key == "unitPrice"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.purchase_order_item
+															?.data?.attributes[
+															col.key
+														]
+															? numberWithCommas(
+																	item
+																		.attributes
+																		.purchase_order_item
+																		?.data
+																		?.attributes[
+																		col.key
+																	]
+															  )
+															: "-"}
+													</div>
+												{:else if col.key == "currency"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.purchase_order_item
+															?.data?.attributes[
+															col.key
+														]
+															? item.attributes
+																	.purchase_order_item
+																	?.data
+																	?.attributes[
+																	col.key
+															  ]
+															: "-"}
+													</div>
+												{:else if col.key == "total"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.purchase_order_item
+															?.data?.attributes
+															.unitPrice
+															? numberWithCommas(
+																	parseFloat(
+																		item
+																			.attributes
+																			.purchase_order_item
+																			?.data
+																			?.attributes
+																			.unitPrice
+																	) *
+																		parseFloat(
+																			item
+																				.attributes
+																				.quantity
+																		)
+															  )
+															: "-"}
+													</div>
+												{:else if col.key == "poNumber"}
+													<div
+														class="column has-text-centered has-background-lightgreen"
+													>
+														<span
+															class="is-small tag is-info is-light"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.purchase_order_item
+															?.data?.attributes
+															?.purchase_order
+															.data.attributes
+															.poNumber}
+													</div>
+												{:else if col.key == "batch_number"}
+													<div
+														class="column has-text-centered has-background-lightgreen"
+													>
+														<span
+															class="is-small tag is-info is-light"
+															>{col.title}</span
+														> <br />
+														<span
+															class="has-text-info"
+															style="font-weight: 900;"
+														>
+															{item.attributes
+																.stock_item
+																?.data
+																?.attributes
+																?.stock.data.id
+																? item
+																		.attributes
+																		.stock_item
+																		?.data
+																		?.attributes
+																		?.stock
+																		.data.id
+																: "-"}
+														</span>
+													</div>
+												{:else if col.key == "quantity"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes[
+															col.key
+														]
+															? numberWithCommas(
+																	item
+																		.attributes[
+																		col.key
+																	]
+															  )
+															: "-"}
+													</div>
+
+													{:else if col.key == "remaining"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{getStockReleaseBalance(item)}
+													</div>
+												{:else}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes[
+															col.key
+														]
+															? item.attributes[
+																	col.key
+															  ]
+															: "-"}
+													</div>
+												{/if}
+											{/each}
+										</div>
+									{:else if detailVariable == "waybill_items"}
+										<div class="columns">
+											<div
+												class="column is-narrow light-gray"
+											>
+												#{index + 1} <br />
+												<i class="has-text-light"
+													>{item.id}</i
+												>
+											</div>
+											{#each columnsDetails as col}
+												{#if col.key == "id"}
+													<div
+														class="column is-narrow gray"
+													>
+														{item[col.key]}
+													</div>
+												{:else if col.key == "item"}
+													<div class="column is-3">
+														<span class=""
+															>{item.attributes
+																.stock_release_item
+																.data
+																?.attributes
+																.purchase_order_item
+																?.data
+																?.attributes[
+																col.key
+															]?.data?.attributes
+																.name} -
+														</span>
+														<span class="gray"
+															>{item.attributes
+																.stock_release_item
+																.data
+																?.attributes
+																.purchase_order_item
+																?.data
+																?.attributes[
+																col.key
+															]?.data?.attributes
+																.category}</span
+														>
+														<br />
+														<span
+															class="has-text-info has-text-weight-bold"
+														>
+															PO Item ID -
+															{item.attributes
+																.stock_release_item
+																.data
+																?.attributes
+																.purchase_order_item
+																?.data?.id}
+														</span>
+													</div>
+												{:else if col.key == "unit" || col.key == "pieces"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.stock_release_item
+															.data?.attributes
+															.purchase_order_item
+															?.data?.attributes
+															.item?.data
+															?.attributes[
+															col.key
+														]
+															? item.attributes
+																	.stock_release_item
+																	.data
+																	?.attributes
+																	.purchase_order_item
+																	?.data
+																	?.attributes
+																	.item?.data
+																	?.attributes[
+																	col.key
+															  ]
+															: "-"}
+													</div>
+												{:else if col.key == "total"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.quantity
+															? numberWithCommas(
+																	parseFloat(
+																		item
+																			.attributes
+																			.stock_release_item
+																			.data
+																			?.attributes
+																			.purchase_order_item
+																			?.data
+																			?.attributes
+																			.unitPrice
+																	) *
+																		parseFloat(
+																			item
+																				.attributes
+																				.quantity ? item
+																				.attributes
+																				.quantity : 0
+																		)
+															  )
+															: "-"}
 													</div>
 												{:else if col.key == "poNumber"}
 													<div
@@ -589,87 +1251,16 @@
 															class="is-small tag"
 															>{col.title}</span
 														> <br />
-														{
-															item.attributes
-																.purchase_order_item
-																?.data
-																?.attributes
-																.purchase_order
-																.data.attributes
-																.poNumber
-														}
-														
+														{item.attributes
+															.stock_release_item
+															.data?.attributes
+															.purchase_order_item
+															?.data?.attributes
+															?.purchase_order
+															.data.attributes
+															.poNumber}
 													</div>
-												{:else}
-													<div
-														class="column has-text-centered"
-													>
-														<span
-															class="is-small tag"
-															>{col.title}</span
-														> <br />
-														{item.attributes[
-															col.key
-														]}
-													</div>
-												{/if}
-											{/each}
-										</div>
-									{:else if detailVariable == "stock_release_items"}
-										<div class="columns">
-											{#each columnsDetails as col}
-												{#if col.key == "id"}
-													<div
-														class="column is-narrow gray"
-													>
-														{item[col.key]}
-													</div>
-												{:else if col.key == "item"}
-													<div class="column is-3">
-														<span class=""
-															>{item.attributes
-																.purchase_order_item
-																?.data
-																?.attributes[
-																col.key
-															]?.data?.attributes
-																.name} - ({item
-																.attributes
-																.purchase_order_item
-																?.data
-																?.id})</span
-														>
-														<br />
-														<span class="gray"
-															>{item.attributes
-																.purchase_order_item
-																?.data
-																?.attributes[
-																col.key
-															]?.data?.attributes
-																.category}</span
-														>
-													</div>
-													{:else if col.key == "poNumber"}
-													<div
-														class="column has-text-centered"
-													>
-														<span
-															class="is-small tag"
-															>{col.title}</span
-														> <br />
-														{
-															item.attributes
-																.purchase_order_item
-																?.data
-																?.attributes
-																?.purchase_order
-																.data.attributes
-																.poNumber
-														}
-														
-													</div>
-												{:else if col.key != "quantity"}
+												{:else if col.key == "currency"}
 													<div
 														class="column has-text-centered"
 													>
@@ -678,12 +1269,58 @@
 															>{col.title}</span
 														> <br />
 														{item.attributes
+															.stock_release_item
+															.data?.attributes
 															.purchase_order_item
-															?.data?.attributes[
-															col.key
-														]}
+															?.data?.attributes
+															.currency}
 													</div>
-												{:else}
+												{:else if col.key == "unitPrice"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.stock_release_item
+															.data?.attributes
+															.purchase_order_item
+															?.data?.attributes
+															.unitPrice
+															? item.attributes
+																	.stock_release_item
+																	.data
+																	?.attributes
+																	.purchase_order_item
+																	?.data
+																	?.attributes
+																	.unitPrice
+															: "-"}
+													</div>
+												{:else if col.key == "srfNo"}
+													<div
+														class="column has-text-centered"
+													>
+														<span
+															class="is-small tag"
+															>{col.title}</span
+														> <br />
+														{item.attributes
+															.stock_release_item
+															.data?.attributes
+															.stock_release.data
+															?.id
+															? item.attributes
+																	.stock_release_item
+																	.data
+																	?.attributes
+																	.stock_release
+																	.data?.id
+															: "-"}
+													</div>
+												{:else if col.key == "quantity"}
 													<div
 														class="column has-text-centered"
 													>
@@ -693,94 +1330,11 @@
 														> <br />
 														{item.attributes[
 															col.key
-														]}
-													</div>
-												{/if}
-											{/each}
-										</div>
-
-
-										{:else if detailVariable == "waybill_items"}
-										<div class="columns">
-											{#each columnsDetails as col}
-												{#if col.key == "id"}
-													<div
-														class="column is-narrow gray"
-													>
-														{item[col.key]}
-													</div>
-												{:else if col.key == "item"}
-													<div class="column is-3">
-														<span class=""
-															>{item.attributes.stock_release_item.data?.attributes
-																.purchase_order_item
-																?.data
-																?.attributes[
-																col.key
-															]?.data?.attributes
-																.name} - ({item.attributes.stock_release_item.data?.attributes
-																.purchase_order_item
-																?.data
-																?.id})</span
-														>
-														<br />
-														<span class="gray"
-															>{item.attributes.stock_release_item.data?.attributes
-																.purchase_order_item
-																?.data
-																?.attributes[
-																col.key
-															]?.data?.attributes
-																.category}</span
-														>
-													</div>
-													{:else if col.key == "poNumber"}
-													<div
-														class="column has-text-centered"
-													>
-														<span
-															class="is-small tag"
-															>{col.title}</span
-														> <br />
-														{
-															item.attributes.stock_release_item.data?.attributes
-																.purchase_order_item
-																?.data
-																?.attributes
-																?.purchase_order
-																.data.attributes
-																.poNumber
-														}
-														
-													</div>
-
-													{:else if col.key == "srfNo"}
-													<div
-														class="column has-text-centered"
-													>
-														<span
-															class="is-small tag"
-															>{col.title}</span
-														> <br />
-														{
-															item.attributes.stock_release_item.data?.attributes
-																.stock_release.data?.id
-														}
-														
-													</div>
-												{:else if col.key != "quantity"}
-													<div
-														class="column has-text-centered"
-													>
-														<span
-															class="is-small tag"
-															>{col.title}</span
-														> <br />
-														{item.attributes.stock_release_item.data?.attributes
-															.purchase_order_item
-															?.data?.attributes[
-															col.key
-														]}
+														]
+															? item.attributes[
+																	col.key
+															  ]
+															: "-"}
 													</div>
 												{:else}
 													<div
@@ -790,14 +1344,15 @@
 															class="is-small tag"
 															>{col.title}</span
 														> <br />
-														{item.attributes.stock_release_item.data?.attributes[
+														{item.attributes
+															.stock_release_item
+															.data?.attributes[
 															col.key
 														]}
 													</div>
 												{/if}
 											{/each}
 										</div>
-
 									{/if}
 								</td>
 							</tr>

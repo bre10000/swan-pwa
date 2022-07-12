@@ -2,6 +2,7 @@
     import { get } from "../../../../lib/api";
     import {
         faAngleLeft,
+        faSave,
         faFileExcel,
         faFilePdf,
         faPrint,
@@ -29,7 +30,7 @@
     let waybill_items;
 
     let consortium_members = [];
-    let categories = ['Health', 'Wash', 'ES/NFI'];
+    let categories = ["Health", "Wash", "ES/NFI"];
 
     function getTotal(items) {
         let total = 0;
@@ -118,7 +119,6 @@
 
         getItem(filter);
     }
-
 
     async function getConsortiumMembers() {
         try {
@@ -248,9 +248,11 @@
                     .purchase_order_item.data.attributes.item.data.attributes
                     .category,
                 elementC.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data.attributes.unit,
+                    .purchase_order_item.data.attributes.item.data.attributes
+                    .unit,
                 elementC.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data.attributes.pieces,
+                    .purchase_order_item.data.attributes.item.data.attributes
+                    .pieces,
                 elementC.attributes.stock_release_item.data?.attributes
                     .purchase_order_item.data.attributes.currency,
                 elementC.attributes.stock_release_item.data?.attributes
@@ -288,7 +290,7 @@
 
     function exportcsv() {
         let now = new Date();
-        let fname = `"SWAN Waybill by Category - " ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+        let fname = `SWAN Waybill by Category - ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
         let array = getPopulatedDataPdf(waybill_items);
 
@@ -472,6 +474,15 @@
         <div class="card p-6">
             <br />
 
+            <div class="has-text-centered is-flex is-align-items-center">
+                <img
+                    src="./images/logo/swan_consortium.svg"
+                    width="150"
+                    alt="SWAN Humaniterian Consortium"
+                    style="margin: 0 auto;"
+                />
+            </div>
+
             {#if $consortium_member.value}
                 <h3 class="has-text-centered has-text-weight-bold">
                     {$consortium_member.value.attributes.name}
@@ -481,10 +492,10 @@
                     {$consortium_member.value.attributes.address_2}
                 </p>
                 <p class="has-text-centered">
-                    {$consortium_member.value.attributes.website} - {$consortium_member.value.attributes.phone}
+                    {$consortium_member.value.attributes.website} - {$consortium_member
+                        .value.attributes.phone}
                 </p>
             {/if}
-
 
             <h3 class="is-size-5">Item Waybill by Category</h3>
             <hr />
@@ -547,12 +558,20 @@
                         <td
                             >{stock.attributes.stock_release_item.data
                                 ?.attributes.purchase_order_item.data
-                                ?.attributes.unit}</td
+                                ?.attributes.item.data?.attributes.unit
+                                ? stock.attributes.stock_release_item.data
+                                      ?.attributes.purchase_order_item.data
+                                      ?.attributes.item.data?.attributes.unit
+                                : "-"}</td
                         >
                         <td
                             >{stock.attributes.stock_release_item.data
                                 ?.attributes.purchase_order_item.data
-                                ?.attributes.pieces}</td
+                                ?.attributes.item.data?.attributes.pieces
+                                ? stock.attributes.stock_release_item.data
+                                      ?.attributes.purchase_order_item.data
+                                      ?.attributes.item.data?.attributes.pieces
+                                : "-"}</td
                         >
 
                         <td

@@ -12,17 +12,20 @@
     import { toast } from "@zerodevx/svelte-toast";
     import {
         faAngleLeft,
+        faSave,
         faEdit,
         faPlus,
         faTimes,
+        faHistory,
     } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
-    import { numberWithCommas } from "../../../lib";
+    import { checkInput, numberWithCommas } from "../../../lib";
     import Select from "svelte-select";
     import { DateInput } from "date-picker-svelte";
     import qs from "qs";
     import DeleteConfirmation from "../../../widgets/modals/DeleteConfirmation.svelte";
-import { createActivityLog } from "../../../utils/activity/log";
+    import { createActivityLog } from "../../../utils/activity/log";
+    import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.svelte";
 
     export let slug;
 
@@ -32,30 +35,20 @@ import { createActivityLog } from "../../../utils/activity/log";
 
     const formItem = form(warehouse, consortium_member, date);
 
-    const purchase_order = field("purchase_order", null, [required()]);
-    const purchase_order_item = field("purchase_order_item", null, [required()]);
-    const received = field("received", "", [required()]);
-
     let remark = "";
     let remaining = 0;
     let stock_items = [];
 
-    const formChildItem = form(
-        purchase_order,
-        purchase_order_item,
-        received
-    );
-
-    let childItems = [];
-    let childItemsExisting = [];
+    let formChildItems = [];
 
     let consortium_members = [];
     let warehouses = [];
     let purchase_orders = [];
     let purchase_order_items = [];
 
-
     let errors;
+
+    let unsavedItemsDialog;
 
     let currentItem;
     let showConfirmation = false;
@@ -66,9 +59,22 @@ import { createActivityLog } from "../../../utils/activity/log";
             return;
         }
 
+        if (!validateChildItems()) {
+            return;
+        }
+
         try {
             let params = {
-                populate : [ 'consortium_member', 'warehouse', 'stock_items', 'stock_items.purchase_order_item', , 'stock_items.purchase_order_item.item', , 'stock_items.purchase_order_item.purchase_order']
+                populate: [
+                    "consortium_member",
+                    "warehouse",
+                    "stock_items",
+                    "stock_items.purchase_order_item",
+                    ,
+                    "stock_items.purchase_order_item.item",
+                    ,
+                    "stock_items.purchase_order_item.purchase_order",
+                ],
             };
             params = qs.stringify(params, {
                 encodeValuesOnly: true,
@@ -96,7 +102,12 @@ import { createActivityLog } from "../../../utils/activity/log";
                     },
                 });
 
-                createActivityLog("Stock", response.data, "Edit", response.data.id)
+                createActivityLog(
+                    "Stock",
+                    response.data,
+                    "Edit",
+                    response.data.id
+                );
 
                 saveItems(response.data);
             }
@@ -105,50 +116,82 @@ import { createActivityLog } from "../../../utils/activity/log";
 
             errors = e.error?.details.errors;
 
-            toast.push(
-                "Stock Could Not Be Edited! \n\n" + e.error.message,
-                {
-                    duration: 20000,
-                    theme: {
-                        "--toastBackground": "#bb4848",
-                        "--toastBarBackground": "#852f2f",
-                    },
-                }
-            );
+            toast.push("Stock Could Not Be Edited! \n\n" + e.error.message, {
+                duration: 20000,
+                theme: {
+                    "--toastBackground": "#bb4848",
+                    "--toastBarBackground": "#852f2f",
+                },
+            });
         }
     }
 
     async function saveItems(stock) {
         try {
             let params = {
-                populate : ['stock', 'stock.consortium_member', 'purchase_order_item', 'purchase_order_item.item' , 'purchase_order_item.purchase_order']
+                populate: [
+                    "stock",
+                    "stock.consortium_member",
+                    "purchase_order_item",
+                    "purchase_order_item.item",
+                    "purchase_order_item.purchase_order",
+                ],
             };
             params = qs.stringify(params, {
                 encodeValuesOnly: true,
             });
 
-            childItems.forEach(async (element) => {
-                let response = await post({
-                    path: "stock-items?" + params,
-                    data: {
+            let response;
+
+            formChildItems.forEach(async (element) => {
+                if (element.createdAt) {
+                    response = await put({
+                        path: "stock-items/" + element.id + "?" + params,
                         data: {
-                            stock: stock.id,
-                            purchase_order_item: element.purchase_order_item.value,
-                            received: element.received,
-                            remark: element.remark
+                            data: {
+                                stock: stock.id,
+                                purchase_order_item:
+                                    element.purchase_order_item.value,
+                                received: element.received,
+                                remark: element.remark,
+                            },
                         },
-                    },
-                });
+                    });
 
-                console.log("Save Stock Items ", response);
+                    console.log("Edit Stock Items ", response);
 
-                if (response.data) {
-                    createActivityLog(
-                        "Stock Item",
-                        response.data,
-                        "Create",
-                        response.data.id
-                    );
+                    if (response.data) {
+                        createActivityLog(
+                            "Stock Item",
+                            response.data,
+                            "Edit",
+                            response.data.id
+                        );
+                    }
+                } else {
+                    response = await post({
+                        path: "stock-items?" + params,
+                        data: {
+                            data: {
+                                stock: stock.id,
+                                purchase_order_item:
+                                    element.purchase_order_item.value,
+                                received: element.received,
+                                remark: element.remark,
+                            },
+                        },
+                    });
+
+                    console.log("Save Stock Items ", response);
+
+                    if (response.data) {
+                        createActivityLog(
+                            "Stock Item",
+                            response.data,
+                            "Create",
+                            response.data.id
+                        );
+                    }
                 }
             });
 
@@ -158,65 +201,113 @@ import { createActivityLog } from "../../../utils/activity/log";
         }
     }
 
-    async function addItem() {
-        await formChildItem.validate();
-        if (!$formChildItem.valid || remaining - $received.value < 0) {
-            return;
+    function validateChildItems() {
+        formChildItems.forEach((element) => {
+            if (
+                checkInput(element.purchase_order) &&
+                checkInput(element.purchase_order_item) &&
+                checkInput(element.quantity) &&
+                checkInput(element.unitPrice) &&
+                checkInput(element.received) &&
+                checkInput(element.currency)
+            ) {
+                if (element.remaining  < element.formQuantity ) {
+                    element.error =
+                        "<b class='has-text-danger'> Received amount exceeds Purchase order Quantity </b>";
+                } else {
+                    element.error = null;
+                }
+            } else {
+                element.error =
+                    "<b> Required field/s are missing </b> <br> " +
+                    (checkInput(element.purchase_order)
+                        ? ""
+                        : " Purchase Order ") +
+                    (checkInput(element.purchase_order_item)
+                        ? ""
+                        : " Purchase Order Item") +
+                    (checkInput(element.quantity) ? "" : " Quantity ") +
+                    (checkInput(element.unitPrice) ? "" : " Unit Price ") +
+                    (checkInput(element.currency) ? "" : " Currency ") +
+                    (checkInput(element.received) ? "" : " Received ");
+            }
+        });
+
+        console.log("validate", { formChildItems });
+
+        formChildItems = formChildItems;
+
+        console.log(
+            "Validate Result",
+            formChildItems.filter((x) => checkInput(x.error))
+        );
+
+        if (formChildItems.filter((x) => checkInput(x.error)).length == 0) {
+            return true;
+        } else {
+            $formItem.valid = true;
+            formItem = formItem;
+            return false;
         }
+    }
 
-        console.log("Add Item ", $purchase_order_item.value)
-
-        childItems = [
-            ...childItems,
+    function addChildItem() {
+        formChildItems = [
+            ...formChildItems,
             {
-                index: childItems.length,
-                purchase_order_item: $purchase_order_item.value,
-                po_no: $purchase_order.value.data?.attributes.poNumber,
-                unit: $purchase_order_item.value.data?.attributes.unit,
-                pieces: $purchase_order_item.value.data?.attributes.pieces,
-                currency: $purchase_order_item.value.data?.attributes.currency,
-                quantity: $purchase_order_item.value.data?.attributes.quantity,
-                unitPrice: $purchase_order_item.value.data?.attributes.unitPrice,
-                received: $received.value,
-                remark: remark,
+                purchase_order: "",
+                purchase_order_item: "",
+                purchase_order_items: "",
+                currency: "",
+                unit: "",
+                quantity: "",
+                unitPrice: "",
+                received: "",
+                remark: "",
+                showHistory: false,
+
+                id: Date.now(),
             },
         ];
 
-        formChildItem.reset();
-        remark = "";
-        stock_items = [];
-        remaining = 0;
-
-        console.log(childItems);
-
-        toast.push("Stock Item Added Successfully!", {
-            duration: 20000,
-            theme: {
-                "--toastBackground": "#48BB78",
-                "--toastBarBackground": "#2F855A",
-            },
-        });
+        console.log("Form Child Items - ", { formChildItems });
     }
 
+    function removeChildItem(id, childItem) {
+        if (childItem.createdAt) {
+            showConfirmation = true;
+            currentItem = childItem;
+            return;
+        }
+        formChildItems = formChildItems.filter((x) => x.id != id);
 
-    function removeChildItem(index) {
-        childItems = childItems.filter(
-            (x) => x.index != childItems[index].index
-        );
+        formChildItems[index].purchase_order_items =
+                    purchase_order_items.map((x) => {
+                        return {
+                            value: x.id,
+                            label:
+                                x.attributes.item.data.attributes.name +
+                                "-" +
+                                "PO ITEM ID - " +
+                                x.id +
+                                " - " +
+                                x.attributes.item.data.attributes.category +
+                                "  - UNIT - " +
+                                x.attributes.item.data.attributes.unit +
+                                " - PCS (" +
+                                x.attributes.item.data.attributes.pieces +
+                                ")",
+                            data: x,
+                        };
+                    });
     }
-    function removeChildItemExisting(child) {
-        currentItem = child;
-        showConfirmation = true;
-    }
+
 
     async function deleteItem() {
         showConfirmation = false;
 
         try {
-            let response = await del(
-                "stock-items/" + currentItem.id,
-                null
-            );
+            let response = await del("stock-items/" + currentItem.id, null);
 
             console.log("Delete Stock Item Request  ", response);
 
@@ -229,7 +320,12 @@ import { createActivityLog } from "../../../utils/activity/log";
                     },
                 });
 
-                createActivityLog("Stock Item", currentItem, "Delete", currentItem.id)
+                createActivityLog(
+                    "Stock Item",
+                    currentItem,
+                    "Delete",
+                    currentItem.id
+                );
 
                 getItem();
             }
@@ -254,9 +350,8 @@ import { createActivityLog } from "../../../utils/activity/log";
             consortium_members = response.data.map((x) => {
                 return {
                     value: x.id,
-                    label:
-                        x.attributes.name,
-                    data: x
+                    label: x.attributes.name,
+                    data: x,
                 };
             });
         } catch (e) {
@@ -284,28 +379,22 @@ import { createActivityLog } from "../../../utils/activity/log";
     }
 
     async function getPurchaseOrders(event) {
-        purchase_order.set("");
-        purchase_order_item.set("");
-        remaining = 0;
-        stock_items = [];
-
         try {
             let params = {
                 populate: {
                     consortium_member: {
                         populate: "*",
-                        
                     },
                     purchase_order_items: {
                         populate: "*",
                     },
                 },
                 filters: {
-                            consortium_member: {
-                                id: {
-                                    $in: [$consortium_member.value.value],
-                                },
-                            }
+                    consortium_member: {
+                        id: {
+                            $in: [$consortium_member.value.value],
+                        },
+                    },
                 },
                 "pagination[limit]": -1,
             };
@@ -320,82 +409,157 @@ import { createActivityLog } from "../../../utils/activity/log";
                 return {
                     value: x.id,
                     label:
-                        "PO# - " +x.attributes.poNumber +
+                        "PO# - " +
+                        x.attributes.poNumber +
                         "  ------- Date   " +
                         x.attributes.date +
                         "    ID    " +
                         x.id,
-                    data: x
+                    data: x,
                 };
+            });
+
+            formChildItems.forEach((element) => {
+                getPurchaseOrderItems(
+                    { detail: element.purchase_order },
+                    element
+                );
+                getRemaining({ detail: element.purchase_order_item }, element);
             });
         } catch (e) {
             console.log("Error Purchase Orders ", e);
         }
     }
 
-    async function getPurchaseOrderItems(event) {
-        if(event.detail?.value) {
-            console.log( purchase_orders.filter( x => x.value == event.detail.value)[0].data?.attributes.purchase_order_items.data)
-            purchase_order_items = purchase_orders.filter( x => x.value == event.detail.value)[0].data?.attributes.purchase_order_items.data;
+    async function getPurchaseOrderItems(event, childItem) {
+        if (event.detail?.value && purchase_orders?.length > 0) {
+            purchase_order_items = purchase_orders.filter(
+                (x) => x.value == event.detail.value
+            )[0]?.data?.attributes.purchase_order_items?.data;
 
-            purchase_order_items = purchase_order_items.map((x) => {
-                return {
-                    value: x.id,
-                    label:
-                        x.attributes.item.data.attributes.name + '-'+  x.attributes.item.data.attributes.category +
-                        "  --- Unit - " +
-                        x.attributes.unit + " - Pieces - " +  x.attributes.pieces + " - Quantity - " +  x.attributes.quantity + " - Unit Price - " +  x.attributes.unitPrice + " - Currency - " + x.attributes.currency +
-                        "    ID    " +
-                        x.id,
-                        data: x
-                };
-            });
-
-            
+            if (purchase_order_items) {
+                let index = formChildItems.findIndex(
+                    (x) => x.id == childItem.id
+                );
+                formChildItems[index].purchase_order_items =
+                    purchase_order_items.map((x) => {
+                        return {
+                            value: x.id,
+                            label:
+                                x.attributes.item.data.attributes.name +
+                                "-" +
+                                "PO ITEM ID - " +
+                                x.id +
+                                " - " +
+                                x.attributes.item.data.attributes.category +
+                                "  - UNIT - " +
+                                x.attributes.item.data.attributes.unit +
+                                " - PCS (" +
+                                x.attributes.item.data.attributes.pieces +
+                                ")",
+                            data: x,
+                        };
+                    });
+            }
         }
     }
 
-    async function getRemaining(event) {
-        if(event.detail?.data) {
-            
-
+    async function getRemaining(event, childItem) {
+        console.log("Get Remaining ", event);
+        if (event.detail?.data) {
             try {
-            let params = {
-                populate: ['stock', 'stock.consortium_member', 'stock.warehouse' ,'purchase_order_item', 'purchase_order_item.item'],
-                filters: {
-                            purchase_order_item: {
-                                id: {
-                                    $in: [event.detail.data.id],
+                let params = {
+                    populate: [
+                        "stock",
+                        "stock.consortium_member",
+                        "stock.warehouse",
+                        "purchase_order_item",
+                        "purchase_order_item.item",
+                    ],
+                    filters: {
+                        $and: [
+                            {
+                                purchase_order_item: {
+                                    id: {
+                                        $in: [event.detail.data.id],
+                                    },
                                 },
-                            }
-                },
-                "pagination[limit]": -1,
-            };
-            params = qs.stringify(params, {
-                encodeValuesOnly: true,
-            });
-            let response = await get("stock-items", params);
+                            },
+                            {
+                                $not: {
+                                    stock: {
+                                        id: {
+                                            $in: slug,
+                                        },
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                    "pagination[limit]": -1,
+                };
+                params = qs.stringify(params, {
+                    encodeValuesOnly: true,
+                });
+                let response = await get("stock-items", params);
 
-            console.log("Get Stock Items ", response);
+                console.log("Get Stock Items ", response);
 
-            let stocks = 0;
-            stock_items = response.data.filter( x => x.attributes.stock.data );
-            response.data.forEach(element => {
-                stocks += parseInt(element.attributes.received);
-            });
+                let stocks = 0;
+                stock_items = response.data.filter(
+                    (x) => x.attributes.stock.data
+                );
+                stock_items.forEach((element) => {
+                    stocks += parseInt(element.attributes.received);
+                });
 
-            remaining =  parseInt(event.detail.data.attributes.quantity) - stocks;
+                let index = formChildItems.findIndex(
+                    (x) => x.id == childItem.id
+                );
+                console.log(
+                    parseInt(event.detail.data.attributes.quantity) - stocks
+                );
 
-            return;
-        } catch (e) {
-            console.log("Error Stock Items ", e);
+                formChildItems[index].remaining =
+                    parseInt(event.detail.data.attributes.quantity) - stocks;
+
+                formChildItems[index].stock_items = stock_items;
+                formChildItems[index].purchase_order_item = event.detail;
+                formChildItems[index].quantity =
+                    event.detail.data.attributes.quantity;
+                formChildItems[index].currency =
+                    event.detail.data.attributes.currency;
+                formChildItems[index].unit = event.detail.data.attributes.item
+                    ?.data?.attributes.unit
+                    ? event.detail.data.attributes.item?.data?.attributes.unit
+                    : "-";
+                formChildItems[index].unitPrice =
+                    event.detail.data.attributes.unitPrice;
+
+                formChildItems = formChildItems;
+
+                return;
+            } catch (e) {
+                console.log("Error Stock Items ", e);
+            }
         }
+    }
 
+    function refreshRemaining(event) {
+        let temp = 0;
+        formChildItems
+            .filter((x) => event.detail.data.id == x.purchase_order_item?.value)
+            .forEach((element) => {
+                temp += parseFloat(element.received);
+            });
 
-            
+        formChildItems.forEach((element) => {
+            element.formQuantity = temp;
+        });
 
-        }
-        remaining = 0;
+        formChildItems = formChildItems;
+
+        console.log("Refresh Remaining ", formChildItems);
     }
 
     async function getItem() {
@@ -409,7 +573,11 @@ import { createActivityLog } from "../../../utils/activity/log";
                         populate: "*",
                     },
                     stock_items: {
-                        populate: ['purchase_order_item', 'purchase_order_item.item' , 'purchase_order_item.purchase_order'],
+                        populate: [
+                            "purchase_order_item",
+                            "purchase_order_item.item",
+                            "purchase_order_item.purchase_order",
+                        ],
                     },
                 },
             };
@@ -422,25 +590,61 @@ import { createActivityLog } from "../../../utils/activity/log";
             console.log("Get Stock by ID ", response);
 
             warehouse.set(response.data.attributes.warehouse.data?.id);
-            consortium_member.set(
-                {
-                    value: response.data.attributes.consortium_member.data?.id,
-                    label: response.data.attributes.consortium_member.data?.attributes.name
-                }
-            );
+            consortium_member.set({
+                value: response.data.attributes.consortium_member.data?.id,
+                label: response.data.attributes.consortium_member.data
+                    ?.attributes.name,
+            });
             date.set(new Date(response.data.attributes.date));
 
-            childItemsExisting =
-                response.data.attributes.stock_items.data;
+            formChildItems = response.data.attributes.stock_items.data.map(
+                (x) => {
+                    return {
+                        id: x.id,
+                        purchase_order: {
+                            value: x.attributes.purchase_order_item.data
+                                ?.attributes.purchase_order.data.id,
+                            label: x.attributes.purchase_order_item.data
+                                ?.attributes.purchase_order.data.attributes
+                                .poNumber,
+                            data: x.attributes.purchase_order_item.data
+                                ?.attributes.purchase_order.data,
+                        },
+                        purchase_order_item: {
+                            value: x.attributes.purchase_order_item.data?.id,
+                            label: x.attributes.purchase_order_item.data
+                                ?.attributes.item.data.attributes.name,
+                            data: x.attributes.purchase_order_item.data,
+                        },
+                        purchase_order_items: [],
+                        currency:
+                            x.attributes.purchase_order_item.data?.attributes
+                                .currency,
+                        unit: x.attributes.purchase_order_item.data?.attributes
+                            .item.data.attributes.unit,
+                        quantity:
+                            x.attributes.purchase_order_item.data?.attributes
+                                .quantity,
+                        unitPrice:
+                            x.attributes.purchase_order_item.data?.attributes
+                                .unitPrice,
+                        received: x.attributes.received,
+                        remark: x.attributes.remark,
+                        showHistory: false,
+
+                        createdAt: x.attributes.createdAt,
+                    };
+                }
+            );
         } catch (e) {
             console.log("Error get Stock by ID ", e);
         }
     }
 
     $: if (slug) {
-        getItem();
         getConsortiumMembers();
         getWarehouses();
+        getItem();
     }
 </script>
 
@@ -450,7 +654,10 @@ import { createActivityLog } from "../../../utils/activity/log";
 
 <br /><br />
 <div class="container px-6">
-    <a href="stocks" class="has-text-dark"
+    <a
+        href="stocks"
+        on:click|preventDefault={() => (unsavedItemsDialog = true)}
+        class="has-text-dark"
         ><span class="icon is-small"><Icon data={faAngleLeft} /></span> Back</a
     >
     <br /><br />
@@ -463,10 +670,11 @@ import { createActivityLog } from "../../../utils/activity/log";
             </div>
             <div class="column has-text-right">
                 <button
-                    disabled={!$formItem.valid || !$formItem.dirty}
+                    disabled={!$formItem.valid && !$formItem.dirty}
                     on:click|preventDefault={add}
                     class="button is-dark my-2 px-5 py-2 has-text-weight-bold"
-                    >Save</button
+                    ><Icon data={faSave} />
+                    <span class="ml-2 has-text-white">Save</span></button
                 >
             </div>
         </div>
@@ -481,229 +689,71 @@ import { createActivityLog } from "../../../utils/activity/log";
                 </div>
             {/each}
         {/if}
-       <!-- svelte-ignore component-name-lowercase -->
-       <form>
-        <div class="columns">
-            <div class="column">
-                <div class="field">
-                    <label for="" class="gray">Warehouse</label><br />
-                    <div class="control select is-fullwidth">
-                        <select
-                            required
-                            name="category"
-                            bind:value={$warehouse.value}
-                        >
-                            {#each warehouses as c}
-                                <option value={c.id}
-                                    >{c.attributes.name}</option
-                                >
-                            {/each}
-                        </select>
-                    </div>
-                    {#if $formItem.hasError("warehouse.required")}
-                        <p class="help is-danger">
-                            Warehouse is required
-                        </p>
-                    {/if}
-                </div>
-            </div>
-
-            <div class="column">
-                <div class="field">
-                    <label for="" class="gray">Consortium Member (*)</label>
-                    <div class="control">
-                        <Select
-                            items={consortium_members}
-                            on:select={getPurchaseOrders}
-                            bind:value={$consortium_member.value}
-                            listAutoWidth={true}
-                        />
-                    </div>
-                    {#if $formItem.hasError("consortium_member.required")}
-                        <p class="help is-danger">Consortium Member is required</p>
-                    {/if}
-                </div>
-            </div>
-        </div>
-        <div class="columns">
-            <div class="column">
-                <div class="field">
-                    <label for="" class="gray">Date</label><br />
-                    <div class="control">
-                        <DateInput
-                            bind:value={$date.value}
-                            format="yyyy/MM/dd"
-                            placeholder="2000/31/12"
-                            closeOnSelection={true}
-                            min={new Date("1920/1/1")}
-                            class="input"
-                        />
-                    </div>
-                </div>
-            </div>
-            <div class="column" />
-        </div>
-
-        <br /><br />
-
-        <br />
-    </form>
-
-        <h5>Existing Items</h5>
-        <hr />
-        {#each childItemsExisting as child}
+        <!-- svelte-ignore component-name-lowercase -->
+        <form>
             <div class="columns">
-                <div class="column is-narrow">
-                    <div class="tag is-rounded has-text-weight-bold is-large">
-                        {child.id}
+                <div class="column">
+                    <div class="field">
+                        <label for="" class="gray">Warehouse</label><br />
+                        <div class="control select is-fullwidth">
+                            <select
+                                required
+                                name="category"
+                                bind:value={$warehouse.value}
+                            >
+                                {#each warehouses as c}
+                                    <option value={c.id}
+                                        >{c.attributes.name}</option
+                                    >
+                                {/each}
+                            </select>
+                        </div>
+                        {#if $formItem.hasError("warehouse.required")}
+                            <p class="help is-danger">Warehouse is required</p>
+                        {/if}
                     </div>
                 </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">PO#</div>
-                    <br />
-                    {child.attributes.purchase_order_item.data?.attributes.purchase_order.data?.attributes.poNumber}
-                </div>
-                <div class="column is-3">
-                    {child.attributes.purchase_order_item.data?.attributes.item?.data?.attributes.name} <br />
-                    <span class="gray is-size-7">{child.attributes.remark}</span
-                    >
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Unit</div>
-                    <br />
-                    {child.attributes.purchase_order_item.data?.attributes.unit}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Pieces</div>
-                    <br />
-                    {child.attributes.purchase_order_item.data?.attributes.pieces}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Quantity</div>
-                    <br />
-                    {numberWithCommas(child.attributes.purchase_order_item.data?.attributes.quantity)}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Currency</div>
-                    <br />
-                    {child.attributes.purchase_order_item.data?.attributes.currency}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Unit Price</div>
-                    <br />
-                    {numberWithCommas(child.attributes.purchase_order_item.data?.attributes.unitPrice)}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">
-                        Total
+
+                <div class="column">
+                    <div class="field">
+                        <label for="" class="gray">Consortium Member (*)</label>
+                        <div class="control">
+                            <Select
+                                items={consortium_members}
+                                on:select={getPurchaseOrders}
+                                bind:value={$consortium_member.value}
+                                listAutoWidth={true}
+                            />
+                        </div>
+                        {#if $formItem.hasError("consortium_member.required")}
+                            <p class="help is-danger">
+                                Consortium Member is required
+                            </p>
+                        {/if}
                     </div>
-                    <br />
-                    {numberWithCommas(
-                        child.attributes.purchase_order_item.data?.attributes.unitPrice * child.attributes.purchase_order_item.data?.attributes.quantity
-                    )}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small has-text-weight-bold">
-                        Received
-                    </div>
-                    <br />
-                    {numberWithCommas(
-                        child.attributes.received
-                    )}
-                </div>
-                <div class="column has-text-right is-flex">
-                    <a
-                        href="stocks/edit-item/{child.id}"
-                        class="button is-info"
-                    >
-                        <span class="icon">
-                            <Icon data={faEdit} />
-                        </span>
-                    </a>
-                    <button
-                        on:click={() => removeChildItemExisting(child)}
-                        class="button is-danger ml-2"
-                    >
-                        <span class="icon">
-                            <Icon data={faTimes} />
-                        </span>
-                    </button>
                 </div>
             </div>
-            <hr />
-        {/each}
-
-        <h5>New Items</h5>
-        <hr />
-        {#each childItems as child, index}
             <div class="columns">
-                <div class="column is-narrow">
-                    <div class="tag is-rounded has-text-weight-bold is-large">
-                        {index + 1}
+                <div class="column">
+                    <div class="field">
+                        <label for="" class="gray">Date</label><br />
+                        <div class="control">
+                            <DateInput
+                                bind:value={$date.value}
+                                format="yyyy/MM/dd"
+                                placeholder="2000/31/12"
+                                closeOnSelection={true}
+                                min={new Date("1920/1/1")}
+                                class="input"
+                            />
+                        </div>
                     </div>
                 </div>
-                <div class="column is-3">
-                    {child.purchase_order_item.label} <br />
-                    <span class="gray is-size-7">{child.remark}</span>
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">PO#</div>
-                    <br />
-                    {child.po_no}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Unit</div>
-                    <br />
-                    {child.unit}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Pieces</div>
-                    <br />
-                    {child.pieces}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Quantity</div>
-                    <br />
-                    {numberWithCommas(child.quantity)}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Currency</div>
-                    <br />
-                    {child.currency}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Unit Price</div>
-                    <br />
-                    {numberWithCommas(child.unitPrice)}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">
-                        Total
-                    </div>
-                    <br />
-                    {numberWithCommas(child.unitPrice * child.quantity)}
-                </div>
-
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small has-text-weight-bold">
-                        Received
-                    </div>
-                    <br />
-                    {numberWithCommas(child.received)}
-                </div>
-                <div class="column has-text-right">
-                    <button
-                        on:click={() => removeChildItem(index)}
-                        class="button is-danger"
-                    >
-                        <span class="icon">
-                            <Icon data={faTimes} />
-                        </span>
-                    </button>
-                </div>
+                <div class="column" />
             </div>
-            <hr />
-        {/each}
+
+            <br />
+        </form>
 
         <!-- svelte-ignore component-name-lowercase -->
         <form>
@@ -713,8 +763,8 @@ import { createActivityLog } from "../../../utils/activity/log";
                 </div>
                 <div class="column has-text-right">
                     <button
-                        disabled={!$formItem.valid || !$formItem.dirty}
-                        on:click|preventDefault={addItem}
+                        disabled={!$formItem.valid && !$formItem.dirty}
+                        on:click|preventDefault={addChildItem}
                         class="button is-success"
                     >
                         <span class="icon">
@@ -727,228 +777,353 @@ import { createActivityLog } from "../../../utils/activity/log";
                 </div>
             </div>
 
-            <div class="columns">
+            <div class="columns child-item">
+                <div
+                    class="column is-narrow has-text-weight-bold"
+                    style="width: 50px;"
+                >
+                    No.
+                </div>
+                <div class="column  is-narrow" style="width: 120px;">
+                    <label for="" class="gray">PO #</label>
+                </div>
+                <div class="column  is-narrow" style="width: 200px;">
+                    <label for="" class="gray">Item (*)</label>
+                </div>
                 <div class="column">
-                    <div class="field">
-                        <label for="" class="gray">Purchase Order (*)</label>
-                        <div class="control">
-                            <Select
-                                items={purchase_orders}
-                                on:select={getPurchaseOrderItems}
-                                bind:value={$purchase_order.value}
-                                listAutoWidth={true}
-                            />
+                    <label for="" class="gray">Currency</label>
+                </div>
+                <div class="column">
+                    <label for="" class="gray">Quantity</label>
+                </div>
+                <div class="column">
+                    <label for="" class="gray">Unit Price</label>
+                </div>
+                <div class="column">
+                    <label for="" class="gray">Received</label>
+                </div>
+                <div class="column">
+                    <label for="" class="gray">Remaining</label>
+                </div>
+                <div class="column">
+                    <span class="has-text-weight-bold">Total</span>
+                </div>
+                <div class="column">
+                    <label for="" class="gray">Remark</label>
+                </div>
+                <div
+                    class="column is-narrow has-text-weight-bold"
+                    style="width: 45px;"
+                />
+                <div
+                    class="column is-narrow has-text-weight-bold"
+                    style="width: 45px;"
+                />
+            </div>
+
+            {#each formChildItems as childItem, index}
+                <div class="columns child-item">
+                    <div class="column is-narrow" style="width: 50px;">
+                        <input
+                            type="text"
+                            class="input has-background-light border-radius-0 "
+                            disabled
+                            value={index + 1}
+                        />
+                    </div>
+                    <div class="column is-narrow" style="width: 120px;">
+                        <div class="field">
+                            <div class="control">
+                                <Select
+                                    items={purchase_orders}
+                                    on:select={(event) =>
+                                        getPurchaseOrderItems(event, childItem)}
+                                    bind:value={childItem.purchase_order}
+                                    listAutoWidth={true}
+                                />
+                            </div>
                         </div>
-                        {#if $formChildItem.hasError("purchase_order.required")}
-                            <p class="help is-danger">Purchase Order is required</p>
+                    </div>
+                    <div class="column is-narrow" style="width: 200px;">
+                        <div class="field">
+                            <div class="control">
+                                <Select
+                                    on:select={(event) =>
+                                        getRemaining(event, childItem)}
+                                    on:clear={() => {
+                                        formChildItems[
+                                            index
+                                        ].purchase_order_item = "";
+                                        formChildItems[index].stock_items =
+                                            null;
+                                        formChildItems = formChildItems;
+                                    }}
+                                    items={childItem.purchase_order_items}
+                                    value={childItem.purchase_order_item}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <input
+                            type="text"
+                            class="input has-background-light border-radius-0 "
+                            disabled
+                            value={childItem.currency
+                                ? childItem.currency
+                                : "-"}
+                        />
+                    </div>
+                    <div class="column">
+                        <input
+                            type="text"
+                            class="input has-background-light border-radius-0 "
+                            disabled
+                            value={childItem.quantity
+                                ? childItem.quantity
+                                : "-"}
+                        />
+                    </div>
+                    <div class="column">
+                        <input
+                            type="text"
+                            class="input has-background-light border-radius-0 "
+                            disabled
+                            value={childItem.quantity
+                                ? childItem.unitPrice
+                                : "-"}
+                        />
+                    </div>
+                    <div class="column">
+                        <input
+                            type="number"
+                            placeholder="Received"
+                            class="input border-radius-0 "
+                            class:is-danger={childItem.remaining -
+                                (childItem.received != ""
+                                    ? childItem.received
+                                    : 0) <
+                                0}
+                            on:change={() =>
+                                refreshRemaining({
+                                    detail: childItem.purchase_order_item,
+                                })}
+                            bind:value={childItem.received}
+                        />
+                    </div>
+                    <div class="column">
+                        <input
+                            type="text"
+                            class="input has-background-light border-radius-0 "
+                            disabled
+                            value={childItem.remaining
+                                ? childItem.remaining
+                                : "-"}
+                        />
+                    </div>
+
+                    <div class="column">
+                        <input
+                            type="text"
+                            class="input has-background-light border-radius-0 "
+                            disabled
+                            value={childItem.received
+                                ? numberWithCommas(
+                                      childItem.received * childItem.quantity
+                                  )
+                                : "-"}
+                        />
+                    </div>
+                    <div class="column">
+                        <div class="field">
+                            <div class="control is-fullwidth">
+                                <input
+                                    rows="1"
+                                    class="input has-background-light border-radius-0 "
+                                    bind:value={remark}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="column is-narrow has-text-weight-bold input"
+                        style="width: 45px;"
+                    >
+                        <!-- <button class="button is-info is-light ml-2"> <Icon data={faEdit}/></button> -->
+                        <button
+                            type="button border-radius-0"
+                            on:click|preventDefault={() => {
+                                removeChildItem(childItem.id, childItem);
+                            }}
+                            class="button is-danger"
+                        >
+                            <Icon data={faTimes} /></button
+                        >
+                    </div>
+                    <div
+                        class="column is-narrow has-text-weight-bold input"
+                        style="width: 45px;"
+                    >
+                        <button
+                            type="button"
+                            on:click={() =>
+                                (childItem.showHistory =
+                                    !childItem.showHistory)}
+                            class="button is-info"
+                        >
+                            <Icon data={faHistory} /></button
+                        >
+                    </div>
+                </div>
+                <div class="columns" class:is-hidden={!childItem.showHistory}>
+                    <div class="column mx-2 p-4 has-background-light">
+                        <br />
+
+                        {#if childItem.stock_items?.length > 0}
+                            <h6>
+                                <Icon data={faHistory} />
+
+                                <span class="mx-4"> Stock History </span>
+                            </h6>
+                            <hr />
+                            {#each stock_items as s}
+                                <div
+                                    class="columns has-text-weight-bold is-size-8"
+                                >
+                                    <div class="column is-narrow">
+                                        {s.attributes.stock.data.id}
+                                    </div>
+                                    <div class="column">
+                                        {s.attributes.stock.data.attributes
+                                            .date}
+                                    </div>
+                                    <div class="column">
+                                        {s.attributes.stock.data.attributes
+                                            .consortium_member?.data.attributes
+                                            .name}
+                                    </div>
+                                    <div class="column">
+                                        {s.attributes.stock.data.attributes
+                                            .warehouse?.data.attributes.name}
+                                    </div>
+                                </div>
+                                <div class="columns">
+                                    <div class="column is-narrow gray">
+                                        {s.id}
+                                    </div>
+
+                                    <div class="column is-3">
+                                        <span class=""
+                                            >{s.attributes.purchase_order_item
+                                                ?.data?.attributes.item?.data
+                                                ?.attributes.name} - ({s
+                                                .attributes.purchase_order_item
+                                                ?.data?.id})</span
+                                        >
+                                        <br />
+                                        <span class="gray"
+                                            >{s.attributes.purchase_order_item
+                                                ?.data?.attributes.item?.data
+                                                ?.attributes.category}</span
+                                        >
+                                    </div>
+
+                                    <div class="column has-text-centered">
+                                        <span class="is-small tag">Unit</span>
+                                        <br />
+                                        {s.attributes.purchase_order_item?.data
+                                            ?.attributes.item?.data?.attributes
+                                            .unit}
+                                    </div>
+
+                                    <div class="column has-text-centered">
+                                        <span class="is-small tag">Pieces</span>
+                                        <br />
+                                        {s.attributes.purchase_order_item?.data
+                                            ?.attributes.item?.data?.attributes
+                                            .pieces}
+                                    </div>
+
+                                    <div class="column has-text-centered">
+                                        <span class="is-small tag"
+                                            >Quantity</span
+                                        > <br />
+                                        {s.attributes.purchase_order_item?.data
+                                            ?.attributes.quantity}
+                                    </div>
+
+                                    <div class="column has-text-centered">
+                                        <span class="is-small tag"
+                                            >Unit Price</span
+                                        > <br />
+                                        {s.attributes.purchase_order_item?.data
+                                            ?.attributes.unitPrice}
+                                    </div>
+
+                                    <div class="column has-text-centered">
+                                        <span class="is-small tag"
+                                            >Currency</span
+                                        > <br />
+                                        {s.attributes.purchase_order_item?.data
+                                            ?.attributes.currency}
+                                    </div>
+
+                                    <div class="column has-text-centered">
+                                        <span class="is-small tag"
+                                            >Received</span
+                                        > <br />
+                                        {s.attributes.received}
+                                    </div>
+                                    <div class="column has-text-centered">
+                                        <span class="is-small tag">Remark</span>
+                                        <br />
+                                        {s.attributes.remark}
+                                    </div>
+                                </div>
+                                <hr />
+                            {/each}
+                        {:else if childItem.stock_items?.length == 0}
+                            <br /><br />
+                            <p class="has-text-centered">
+                                No stock history found
+                            </p>
+                            <br /><br />
+                        {:else}
+                            <br /><br />
+                            <p class="has-text-centered">Choose an Item</p>
+                            <br /><br />
                         {/if}
                     </div>
                 </div>
-               
-            </div>
 
-            <div class="columns">
-                <div class="column">
-                    <div class="field">
-                        <label for="" class="gray">Item (*)</label>
-                        <div class="control">
-                            <Select
-                                on:select={getRemaining}
-                                items={purchase_order_items}
-                                bind:value={$purchase_order_item.value}
-                            />
-                        </div>
-                        {#if $formChildItem.hasError("purchase_order_item.required")}
-                            <p class="help is-danger">Purchase Order Item is required</p>
-                        {/if}
-                    </div>
-                </div>
-            </div>
-
-            <div class="columns">
-                <div class="column">
-                    <label for="" class="gray">Received</label><br />
-                    <input
-                        type="number"
-                        placeholder="Unit Price"
-                        class="input"
-                        class:is-danger= {
-                            remaining - $received.value < 0
-                        }
-                        bind:value={$received.value}
-                    />
-                    {#if $formChildItem.hasError("received.required")}
-                        <p class="help is-danger">Received is required</p>
-                    {/if}
-                </div>
-                <div class="column">
-                    <div class="field">
-                        <label for="" class="gray">Remark</label><br />
-                        <div class="control is-fullwidth">
-                            <textarea
-                                rows="1"
-                                class="textarea"
-                                bind:value={remark}
-                            />
+                {#if childItem.error}
+                    <div class="columns px-3">
+                        <div
+                            class="column has-text-centered has-background-light has-text-danger p-4"
+                        >
+                            {@html childItem.error}
                         </div>
                     </div>
-                </div>
-            </div>
-
-
-            <div class="columns">
-                 <div class="column has-text-right">
-                    <br />
-                    <span class="has-text-weight-bold">Remaining Amount - </span>
-                    {numberWithCommas(remaining)}
-                    <br>
-                    <span class="has-text-weight-bold">Differnece - </span>
-                    {numberWithCommas(remaining - $received.value)}
-                </div>
-            </div>
-
-            {#if stock_items}
-            <h5>Stock History</h5>
-            <hr />
-                {#each stock_items as s}
-                <div class="columns has-text-weight-bold">
-                    <div class="column is-narrow">
-                        {s.attributes.stock.data.id}
-                    </div>
-                    <div class="column">
-                        {s.attributes.stock.data.attributes.date}
-                    </div>
-                    <div class="column">
-                        {s.attributes.stock.data.attributes.consortium_member?.data.attributes.name}
-                    </div>
-                    <div class="column">
-                        {s.attributes.stock.data.attributes.warehouse?.data.attributes.name}
-                    </div>
-                </div>
-                <div class="columns">
-                            <div
-                                class="column is-narrow gray"
-                            >
-                                {s.id}
-                            </div>
-                        
-                            <div class="column is-3">
-                                <span
-                                    class=""
-                                    >{s.attributes
-                                        .purchase_order_item
-                                        ?.data
-                                        ?.attributes.item?.data?.attributes
-                                        .name}  - ({s.attributes
-                                        .purchase_order_item
-                                        ?.data
-                                        ?.id})</span
-                                >
-                                <br />
-                                <span class="gray"
-                                    >{s.attributes
-                                        .purchase_order_item
-                                        ?.data
-                                        ?.attributes.item?.data?.attributes
-                                        .category}</span
-                                >
-
-                            </div>
-                        
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Unit</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.unit}
-                            </div>
-
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Pieces</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.pieces}
-                            </div>
-
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Quantity</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.quantity}
-                            </div>
-
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Unit Price</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.unitPrice}
-                            </div>
-
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Currency</span
-                                > <br />
-                                {s.attributes
-                                    .purchase_order_item
-                                    ?.data?.attributes.currency}
-                            </div>
-                        
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Received</span
-                                > <br />
-                                {s.attributes.received}
-                            </div>
-                            <div
-                                class="column has-text-centered"
-                            >
-                                <span
-                                    class="is-small tag"
-                                    >Remark</span
-                                > <br />
-                                {s.attributes.remark}
-                            </div>
-
-
-                </div>
-                <hr>
-                {/each}
-            {/if}
+                {/if}
+            {/each}
         </form>
 
         <br /><br />
     </div>
 </div>
-
+<br /><br /><br /><br /><br /><br /><br /><br />
 {#if showConfirmation}
     <DeleteConfirmation
         on:confirm={deleteItem}
         on:dismiss={() => (showConfirmation = false)}
+    />
+{/if}
+
+{#if unsavedItemsDialog}
+    <UnsavedConfirmation
+        on:confirm={() => goto("stocks")}
+        on:dismiss={() => (unsavedItemsDialog = false)}
     />
 {/if}
 
@@ -975,7 +1150,7 @@ import { createActivityLog } from "../../../utils/activity/log";
     }
 
     :global(.selectContainer .listContainer) {
-        width: 200% !important;
+        width: 400% !important;
         z-index: 10;
     }
     :global(.selectContainer .listContainer .listItem) {

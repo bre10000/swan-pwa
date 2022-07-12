@@ -6,7 +6,8 @@
 
 <script>
     import { get } from "../../../../lib/api";
-    import { faAngleLeft, faPrint } from "@fortawesome/free-solid-svg-icons";
+    import { faAngleLeft,
+faSave, faPrint } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
     import { numberWithCommas } from "../../../../lib";
@@ -109,6 +110,9 @@
     {#if stock}
         <div class="card p-6">
             <br />
+            <div class="has-text-centered is-flex is-align-items-center">
+                <img src="./images/logo/swan_consortium.svg" width="150" alt="SWAN Humaniterian Consortium" style="margin: 0 auto;">
+            </div>
             <h2 class="has-text-centered has-text-weight-bold">
                 SWAN Warehouse
             </h2>
@@ -287,14 +291,22 @@
                         >
                         <td></td>
                         <td
-                            >{item.attributes.stock_release_item.data
-                                ?.attributes.purchase_order_item.data
-                                ?.attributes.unit}</td
+                            >{item
+                                .attributes.stock_release_item.data?.attributes
+                                .purchase_order_item.data?.attributes.item.data
+                                ?.attributes.unit ? item
+                                .attributes.stock_release_item.data?.attributes
+                                .purchase_order_item.data?.attributes.item.data
+                                ?.attributes.unit : "-"}</td
                         >
                         <td
-                            >{item.attributes.stock_release_item.data
-                                ?.attributes.purchase_order_item.data
-                                ?.attributes.pieces}</td
+                            >{item
+                                .attributes.stock_release_item.data?.attributes
+                                .purchase_order_item.data?.attributes.item.data
+                                ?.attributes.pieces ? item
+                                .attributes.stock_release_item.data?.attributes
+                                .purchase_order_item.data?.attributes.item.data
+                                ?.attributes.pieces : "-"}</td
                         >
                         <td
                             >{item.attributes.stock_release_item.data

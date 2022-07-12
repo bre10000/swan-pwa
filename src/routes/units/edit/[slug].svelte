@@ -1,42 +1,45 @@
+<script context="module">
+    export async function preload(params) {
+        return { slug: parseInt(params.params.slug) };
+    }
+</script>
+
 <script>
     import { form, field } from "svelte-forms";
     import { required } from "svelte-forms/validators";
-    import { post } from "../../lib/api";
+    import { get, post, put } from "../../../lib/api";
     import { goto } from "@sapper/app";
     import { toast } from "@zerodevx/svelte-toast";
-import Icon from "svelte-awesome/components/Icon.svelte";
-import { faAngleLeft, faSave } from "@fortawesome/free-solid-svg-icons";
+    import { faAngleLeft, faSave } from "@fortawesome/free-solid-svg-icons";
+    import Icon from "svelte-awesome/components/Icon.svelte";
+    import qs from "qs";
+
+    export let slug;
 
     const name = field("name", "", [required()]);
-    const description = field("description", "", []);
-    const address = field("address", "", []);
+    const formItem = form(name);
 
-    let gpsLocation;
-
-    const formItem = form(name, description, address);
+    let units = [];
 
     async function add() {
         await formItem.validate()
         if(!$formItem.valid){
             return;
         }
-        
         try {
-            let response = await post({
-                path: "warehouses/",
+            let response = await put({
+                path: "units/" + slug,
                 data: {
                     data: {
                         name: $name.value,
-                        description: $description.value,
-                        address: $address.value,
                     },
                 },
             });
 
-            console.log("Add Warehouse Request  ", response);
+            console.log("Add Unit Request  ", response);
 
             if (response.data?.id) {
-                toast.push("Warehouse Added Successfully!", {
+                toast.push("Unit Edited Successfully!", {
                     duration: 20000,
                     theme: {
                         "--toastBackground": "#48BB78",
@@ -44,26 +47,45 @@ import { faAngleLeft, faSave } from "@fortawesome/free-solid-svg-icons";
                     },
                 });
 
-                goto("warehouses");
+                goto("units");
             }
         } catch (e) {
-            console.log("Error Add Warehouse   ", e);
+            console.log("Error Add Unit   ", e);
         }
+    }
+
+    async function getItem() {
+        try {
+            let response = await get("units/" + slug, null);
+
+            console.log("Get Unit by ID ", response);
+
+            name.set(response.data.attributes.name);
+        } catch (e) {
+            console.log("Error get Unit by ID ", e);
+        }
+    }
+
+    
+
+    $: if (slug) {
+        getItem();
     }
 </script>
 
 <svelte:head>
-  <title>Add Warehouse</title>
+    <title>Edit Unit</title>
 </svelte:head>
 
 <br /><br />
 <div class="container px-6">
-    <a href="warehouses" class="has-text-dark"><span class="icon is-small"><Icon data={faAngleLeft}/></span> Back</a>
-    <br><br>
-    
+    <a href="units" class="has-text-dark"
+        ><span class="icon is-small"><Icon data={faAngleLeft} /></span> Back</a
+    >
+    <br /><br />
     <div class="card px-6">
         <br /><br />
-        <h3 class="my-0">Add Warehouse</h3>
+        <h3 class="my-0">Edit Unit</h3>
         <p class="gray py-0">Complete the form below and click save.</p>
         <br />
 
@@ -86,26 +108,12 @@ import { faAngleLeft, faSave } from "@fortawesome/free-solid-svg-icons";
                         {/if}
                     </div>
                 </div>
-                
-            </div>
-            <div class="columns">
                 <div class="column">
-                    <div class="field">
-                        <label for="" class="gray">Description</label><br />
-                        <div class="control">
-                            <textarea bind:value={$description.value} name="description" class="textarea" rows="3"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="column">
-                    <div class="field">
-                        <label for="" class="gray">Address</label><br />
-                        <div class="control">
-                            <textarea bind:value={$address.value} name="address" class="textarea" rows="3"></textarea>
-                        </div>
-                    </div>
+                   
                 </div>
             </div>
+
+            
 
             <div class="container-fluid has-text-centered py-2">
                 <button

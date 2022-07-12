@@ -7,16 +7,20 @@
     import Icon from "svelte-awesome/components/Icon.svelte";
     import {
         faAngleLeft,
+        faSave,
+        faCross,
         faCrosshairs,
+        faEdit,
         faPlus,
         faTimes,
     } from "@fortawesome/free-solid-svg-icons";
     import { onMount } from "svelte";
     import { DateInput } from "date-picker-svelte";
     import Select from "svelte-select";
-    import { numberWithCommas } from "../../lib";
-    import { createActivityLog } from '../../utils/activity/log';
+    import { checkInput, numberWithCommas } from "../../lib";
+    import { createActivityLog } from "../../utils/activity/log";
     import qs from "qs";
+import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte";
 
     const poNumber = field("poNumber", "", [required()]);
     const consortium_member = field("consortium_member", "", [required()]);
@@ -24,33 +28,21 @@
 
     const formItem = form(poNumber, consortium_member, date);
 
-    const item = field("item", null, [required()]);
-    const unit = field("unit", "", [required()]);
-    const pieces = field("pieces", "", [required()]);
-    const currency = field("currency", "", [required()]);
-    const quantity = field("quantity", "", [required()]);
-    const unitPrice = field("unitPrice", "", [required()]);
-    let remark = "";
-
-    const formChildItem = form(
-        item,
-        unit,
-        pieces,
-        currency,
-        quantity,
-        unitPrice
-    );
-
-    let childItems = [];
+    let formChildItems = [];
 
     let consortium_members = [];
     let items = [];
 
     let errors;
 
+    let unsavedItemsDialog ;
+
     async function add() {
         await formItem.validate();
         if (!$formItem.valid) {
+            return;
+        }
+        if(!validateChildItems()) {
             return;
         }
 
@@ -76,7 +68,12 @@
                         "--toastBarBackground": "#2F855A",
                     },
                 });
-                createActivityLog("Purchase Order", response.data, "Create", response.data.id)
+                createActivityLog(
+                    "Purchase Order",
+                    response.data,
+                    "Create",
+                    response.data.id
+                );
 
                 saveItems(response.data);
             }
@@ -100,77 +97,108 @@
 
     async function saveItems(po) {
         try {
-            childItems.forEach(async (element) => {
+            formChildItems.forEach(async (element) => {
                 let response = await post({
                     path: "purchase-order-items?populate=%2A",
                     data: {
                         data: {
-                            unit: element.unit,
-                            pieces: element.pieces,
                             quantity: element.quantity,
                             unitPrice: element.unitPrice,
                             currency: element.currency,
                             remark: element.remark,
 
                             purchase_order: po.id,
-                            item: element.item.value
+                            item: element.item.value,
                         },
                     },
                 });
 
-                console.log("Save Purchase Order Items ", response)
+                console.log("Save Purchase Order Items ", response);
 
-                if(response.data) {
-                    createActivityLog("Purchase Order Item", response.data, "Create", response.data.id)
+                if (response.data) {
+                    createActivityLog(
+                        "Purchase Order Item",
+                        response.data,
+                        "Create",
+                        response.data.id
+                    );
                 }
             });
 
-            goto("purchase-orders")
-
+            goto("purchase-orders");
         } catch (e) {
-            console.log("Error Purchase Order Items ", e)
+            console.log("Error Purchase Order Items ", e);
         }
     }
 
-    async function addItem() {
-        await formChildItem.validate();
-        if (!$formChildItem.valid) {
-            return;
-        }
+    function addChildItem() {
 
-        childItems = [
-            ...childItems,
+        formChildItems = [
+            ...formChildItems,
             {
-                index: childItems.length,
-                item: $item.value,
-                unit: $unit.value,
-                pieces: $pieces.value,
-                quantity: $quantity.value,
-                currency: $currency.value,
-                unitPrice: $unitPrice.value,
-                remark: remark,
+                category: "",
+                item: "",
+                items: [],
+                currency: "",
+                quantity: "",
+                unitPrice: "",
+                remark: "",
+
+                id: Date.now(),
             },
         ];
 
-        formChildItem.reset();
-        remark = "";
-
-        console.log(childItems);
-
-        toast.push("Purchase Order Item Added Successfully!", {
-            duration: 20000,
-            theme: {
-                "--toastBackground": "#48BB78",
-                "--toastBarBackground": "#2F855A",
-            },
-        });
+        console.log("Form Child Items - ", { formChildItems });
     }
 
-    function removeChildItem(index) {
-        childItems = childItems.filter(
-            (x) => x.index != childItems[index].index
+    function removeChildItem(id) {
+        formChildItems = formChildItems.filter(
+            (x) => x.id != id
         );
     }
+
+    function filterItems(event, id) {
+        let index = formChildItems.findIndex(
+            (x) => x.id == id
+        );
+        formChildItems[index].items = items.filter( x => x.category == event.target.value );
+
+    }
+    function selectItem(event, id) {
+        let index = formChildItems.findIndex(
+            (x) => x.id == id
+        );
+        formChildItems[index].item = event?.detail
+
+    }
+
+    function validateChildItems() {
+            
+
+            formChildItems.forEach(element => {
+                if((checkInput(element.item) && checkInput(element.quantity) && checkInput(element.unitPrice) && checkInput(element.currency))) {
+                    element.error = null
+                } else {
+                    element.error = "<b> Required field/s are missing </b> <br> " + (checkInput(element.item)? "" : " Item ") + (checkInput(element.quantity)? "" : " Quantity ") + (checkInput(element.unitPrice)? "" : " Unit Price ") + (checkInput(element.currency)? "" : " Currency ")
+
+                }
+            });
+
+            console.log("validate", {formChildItems})
+
+            formChildItems = formChildItems;
+
+            console.log("Validate Result", formChildItems.filter( x => checkInput(x.error)))
+
+            if( formChildItems.filter( x => checkInput(x.error)).length == 0 ) {
+                return true;
+            } else {
+                $formItem.valid = true;
+                formItem = formItem;
+                return false;
+            }
+    }
+
 
     async function getConsortiumMembers() {
         try {
@@ -206,6 +234,8 @@
                 return {
                     value: x.id,
                     label: x.attributes.name + "-" + x.attributes.category,
+                    name: x.attributes.name,
+                    category: x.attributes.category
                 };
             });
         } catch (e) {
@@ -216,6 +246,7 @@
     onMount(() => {
         getConsortiumMembers();
         getItems();
+        addChildItem();
     });
 </script>
 
@@ -225,7 +256,7 @@
 
 <br /><br />
 <div class="container px-6">
-    <a href="purchase-orders" class="has-text-dark"
+    <a href="purchase-orders" on:click|preventDefault={() => unsavedItemsDialog = true} class="has-text-dark"
         ><span class="icon is-small"><Icon data={faAngleLeft} /></span> Back</a
     >
     <br /><br />
@@ -239,10 +270,11 @@
             </div>
             <div class="column has-text-right">
                 <button
-                    disabled={!$formItem.valid || !$formItem.dirty}
+                    disabled={!$formItem.valid && !$formItem.dirty}
                     on:click|preventDefault={add}
                     class="button is-dark my-2 px-5 py-2 has-text-weight-bold"
-                    >Save</button
+                    ><Icon data={faSave} />
+                    <span class="ml-2 has-text-white">Save</span></button
                 >
             </div>
         </div>
@@ -265,7 +297,7 @@
                         <label for="" class="gray">PO# (*)</label>
                         <div class="control">
                             <input
-                                class="input"
+                                class="input has-background-light"
                                 required
                                 bind:value={$poNumber.value}
                                 type="text"
@@ -285,7 +317,8 @@
                         <div class="control select is-fullwidth">
                             <select
                                 required
-                                name="category"
+                                class="has-background-light"
+                                name="consortium_member"
                                 bind:value={$consortium_member.value}
                             >
                                 {#each consortium_members as c}
@@ -314,7 +347,7 @@
                                 placeholder="2000/31/12"
                                 closeOnSelection={true}
                                 min={new Date("1920/1/1")}
-                                class="input"
+                                class="input has-background-light"
                             />
                         </div>
                     </div>
@@ -322,67 +355,8 @@
                 <div class="column" />
             </div>
 
-            <br /><br />
-
             <br />
         </form>
-
-        {#each childItems as child, index}
-            <div class="columns">
-                <div class="column is-narrow">
-                    <div class="tag is-rounded has-text-weight-bold is-large">
-                        {index + 1}
-                    </div>
-                </div>
-                <div class="column is-3">
-                    {child.item.label} <br />
-                    <span class="gray is-size-7">{child.remark}</span>
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Unit</div>
-                    <br />
-                    {child.unit}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Pieces</div>
-                    <br />
-                    {child.pieces}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Quantity</div>
-                    <br />
-                    {numberWithCommas(child.quantity)}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Currency</div>
-                    <br />
-                    {child.currency}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small">Unit Price</div>
-                    <br />
-                    {numberWithCommas(child.unitPrice)}
-                </div>
-                <div class="column has-text-centered">
-                    <div class="tag is-rounded is-small has-text-weight-bold">
-                        Total
-                    </div>
-                    <br />
-                    {numberWithCommas(child.unitPrice * parseInt(child.quantity))}
-                </div>
-                <div class="column has-text-right">
-                    <button
-                        on:click={() => removeChildItem(index)}
-                        class="button is-danger"
-                    >
-                        <span class="icon">
-                            <Icon data={faTimes} />
-                        </span>
-                    </button>
-                </div>
-            </div>
-            <hr />
-        {/each}
 
         <!-- svelte-ignore component-name-lowercase -->
         <form>
@@ -392,8 +366,8 @@
                 </div>
                 <div class="column has-text-right">
                     <button
-                        disabled={!$formItem.valid || !$formItem.dirty}
-                        on:click|preventDefault={addItem}
+                        type="button"
+                        on:click|preventDefault={addChildItem}
                         class="button is-success"
                     >
                         <span class="icon">
@@ -405,168 +379,185 @@
                     </button>
                 </div>
             </div>
-
-            <div class="columns">
+            <div class="columns child-item">
+                <div
+                    class="column is-narrow has-text-weight-bold"
+                    style="width: 50px;"
+                >
+                    No.
+                </div>
+                <div class="column  is-narrow" style="width: 120px;">
+                    <label for="" class="gray">Category</label>
+                </div>
+                <div class="column  is-narrow" style="width: 300px;">
+                    <label for="" class="gray">Item (*)</label>
+                </div>
                 <div class="column">
-                    <div class="field">
-                        <label for="" class="gray">Item (*)</label>
-                        <div class="control">
-                            <Select
-                                {items}
-                                bind:value={$item.value}
-                                listAutoWidth={true}
-                            />
+                    <label for="" class="gray">Quantity</label>
+                </div>
+                <div class="column">
+                    <label for="" class="gray">Currency</label>
+                </div>
+                <div class="column">
+                    <label for="" class="gray">Unit Price</label>
+                </div>
+                <div class="column">
+                    <span class="has-text-weight-bold">Total</span>
+                </div>
+                <div class="column">
+                    <label for="" class="gray">Remark</label>
+                </div>
+                <div
+                    class="column is-narrow has-text-weight-bold"
+                    style="width: 55px;"
+                />
+            </div>
+
+            {#each formChildItems as childItem, index}
+                <div class="columns child-item" class:is-danger={childItem.error}>
+                    <div class="column is-narrow" style="width: 50px;">
+                        <input
+                            type="text"        
+                            class="input has-background-light border-radius-0 "
+                            disabled
+                            value={index + 1}
+                        />
+                    </div>
+                    <div class="column  is-narrow" style="width: 120px;">
+                        <div class="control select is-fullwidth">
+                            <select on:change={(event) => filterItems(event, childItem.id)} bind:value={childItem.category} class="border-radius-0 ">
+                                <option>Health</option>
+                                <option>Wash</option>
+                                <option>ES/NFI</option>
+                            </select>
                         </div>
-                        {#if $formChildItem.hasError("item.required")}
-                            <p class="help is-danger">Item is required</p>
-                        {/if}
                     </div>
-                </div>
-
-                <div class="column">
-                    <div class="field">
-                        <label for="" class="gray">Remark</label><br />
-                        <div class="control is-fullwidth">
-                            <textarea
-                                rows="1"
-                                class="textarea"
-                                bind:value={remark}
-                            />
+                    <div class="column  is-narrow" style="width: 300px;">
+                        <div class="field">
+                            <div class="control">
+                                <Select
+                                    items={childItem.items}
+                                    value={childItem.item}
+                                    on:select={(event) => selectItem(event, childItem.id)}
+                                    listAutoWidth={true}
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="columns">
-                <div class="column">
-                    <label for="" class="gray">Unit</label><br />
-                    <div class="control select is-fullwidth">
-                        <select bind:value={$unit.value}>
-                            <option>Ampule</option>
-                            <option>Bag</option>
-                            <option>Bolus</option>
-                            <option>Bottle</option>
-                            <option>Box</option>
-                            <option>Carton</option>
-                            <option>Capsule</option>
-                            <option>Day</option>
-                            <option>Drum</option>
-                            <option>Dozen</option>
-                            <option>Kit</option>
-                            <option>Liter</option>
-                            <option>Meter</option>
-                            <option>Pack</option>
-                            <option>Pad</option>
-                            <option>Pair</option>
-                            <option>Pages</option>
-                            <option>Pcs</option>
-                            <option>Ream</option>
-                            <option>Kg</option>
-                            <option>Refill</option>
-                            <option>Roll</option>
-                            <option>Quintal</option>
-                            <option>Sachet</option>
-                            <option>Set</option>
-                            <option>Spots</option>
-                            <option>Strip</option>
-                            <option>Suppository</option>
-                            <option>Tab</option>
-                            <option>Tin</option>
-                            <option>Trip</option>
-                            <option>Tube</option>
-                            <option>Vial</option>
-                        </select>
-                    </div>
-                    {#if $formChildItem.hasError("unit.required")}
-                        <p class="help is-danger">Unit is required</p>
-                    {/if}
-                </div>
-                <div class="column">
-                    <label for="" class="gray">Pieces</label><br />
-                    <input
-                        bind:value={$pieces.value}
-                        type="number"
-                        placeholder="Piece"
-                        class="input"
-                    />
-                    {#if $formChildItem.hasError("pieces.required")}
-                        <p class="help is-danger">Pieces is required</p>
-                    {/if}
-                </div>
-                <div class="column">
-                    <label for="" class="gray">Quantity</label><br />
-                    <input
-                        bind:value={$quantity.value}
-                        type="number"
-                        placeholder="Quantity"
-                        class="input"
-                    />
-                    {#if $formChildItem.hasError("quantity.required")}
-                        <p class="help is-danger">Quantity is required</p>
-                    {/if}
-                </div>
-            </div>
 
-            <div class="columns">
-                <div class="column">
-                    <label for="" class="gray">Currency</label><br />
-                    <div class="control select is-fullwidth">
-                        <select bind:value={$currency.value}>
-                            <option>ETB (ETB)</option>
-                            <option>USD (US$)</option>
-                            <option>EUR (€)</option>
-                            <option>JPY (¥)</option>
-                            <option>GBP (£)</option>
-                            <option>AUD (A$)</option>
-                            <option>CAD (C$)</option>
-                            <option>CHF (Fr)</option>
-                            <option>CNY </option>
-                            <option>SEK (kr)</option>
-                            <option>NZD (NZ$)</option>
-                            <option>MXN ($)</option>
-                        </select>
+                    <div class="column">
+                        <input
+                            bind:value={childItem.quantity}
+                            type="number"
+                            placeholder="Quantity"
+                            class="input has-background-light border-radius-0 "
+                        />
+                        
                     </div>
-                    {#if $formChildItem.hasError("currency.required")}
-                        <p class="help is-danger">Currency is required</p>
-                    {/if}
+
+                    <div class="column">
+                        <div class="control select is-fullwidth">
+                            <select
+                                class="border-radius-0"
+                                bind:value={childItem.currency}
+                            >
+                                <option>ETB (ETB)</option>
+                                <option>USD (US$)</option>
+                                <option>EUR (€)</option>
+                                <option>JPY (¥)</option>
+                                <option>GBP (£)</option>
+                                <option>AUD (A$)</option>
+                                <option>CAD (C$)</option>
+                                <option>CHF (Fr)</option>
+                                <option>CNY </option>
+                                <option>SEK (kr)</option>
+                                <option>NZD (NZ$)</option>
+                                <option>MXN ($)</option>
+                            </select>
+                        </div>
+                        
+                    </div>
+                    <div class="column">
+                        <input
+                            type="number"
+                            placeholder="Unit Price"
+                            class="input has-background-light border-radius-0 "
+                            bind:value={childItem.unitPrice}
+                        />
+                        
+                    </div>
+                    <div class="column">
+                        <input
+                            type="text"
+                            placeholder="Unit Price"
+                            class="input has-background-light border-radius-0 "
+                            disabled
+                            value={numberWithCommas(
+                                childItem.unitPrice*
+                                    parseInt(childItem.quantity)
+                            )
+                                ? numberWithCommas(
+                                      childItem.unitPrice *
+                                          parseInt(childItem.quantity)
+                                  )
+                                : 0}
+                        />
+                    </div>
+
+                    <div class="column">
+                        <div class="field">
+                            <div class="control is-fullwidth">
+                                <input
+                                    type="text"
+                                    placeholder="Remark"
+                                    class="input has-background-light"
+                                    bind:value={childItem.remark}
+                                    style="border-right: 1px solid lightgray !important;"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="column is-narrow has-text-weight-bold input"
+                        style="width: 45px;"
+                    >
+                        <!-- <button class="button is-info is-light ml-2"> <Icon data={faEdit}/></button> -->
+                        <button type="button border-radius-0" on:click|preventDefault={() => {removeChildItem(childItem.id)}} class="button is-danger">
+                            <Icon data={faTimes} /></button
+                        >
+                    </div>
                 </div>
-                <div class="column">
-                    <label for="" class="gray">Unit Price</label><br />
-                    <input
-                        type="number"
-                        placeholder="Unit Price"
-                        class="input"
-                        bind:value={$unitPrice.value}
-                    />
-                    {#if $formChildItem.hasError("unitPrice.required")}
-                        <p class="help is-danger">Unit Price is required</p>
-                    {/if}
-                </div>
-                <div class="column has-text-right">
-                    <br />
-                    <span class="has-text-weight-bold">Total - </span>
-                    {numberWithCommas(
-                        $unitPrice.value * parseInt($quantity.value)
-                    ) ? numberWithCommas(
-                        $unitPrice.value * parseInt($quantity.value)
-                    ) : 0}
-                </div>
-            </div>
+                {#if childItem.error}
+                    <div class="columns px-3">
+                        <div class="column has-text-centered has-background-light has-text-danger p-4">
+                            {@html childItem.error}
+                        </div>
+                    </div>
+                {/if}
+            {/each}
         </form>
 
         <br /><br />
     </div>
+
+    <br /><br /><br /><br /><br />
 </div>
 
 <br /><br /><br /><br /><br />
 
+
+{#if unsavedItemsDialog}
+    <UnsavedConfirmation
+        on:confirm={() => goto('purchase-orders')}
+        on:dismiss={() => (unsavedItemsDialog = false)}
+    />
+{/if}
+
+
 <style>
     .card {
         overflow: visible !important;
-    }
-
-    .input,
-    .select {
-        border-radius: 5px;
     }
 
     :global(body .date-time-field input) {
@@ -581,12 +572,28 @@
         padding: 0.5rem;
     }
 
+    
+
     :global(.selectContainer .listContainer) {
-        width: 200% !important;
+        width: 400% !important;
         z-index: 10;
     }
+
+    :global(.selectContainer input) {
+        border: 1px solid lightgray !important;
+        border-right: 0px solid lightgray !important;
+        border-radius: 0px;
+        font-size: 0.9rem !important;
+        height: 36px !important;
+        /* background-color: #f5f5f5!important; */
+    }
+    :global(.selectContainer) {
+        height: 36px !important;
+    }
+
     :global(.selectContainer .listContainer .listItem) {
         font-size: 14px;
+        border-radius: 0px;
     }
 
     :global(.button.is-success svg *, .button.is-danger svg *) {

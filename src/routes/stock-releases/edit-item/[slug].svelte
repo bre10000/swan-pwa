@@ -12,6 +12,7 @@
     import { toast } from "@zerodevx/svelte-toast";
     import {
         faAngleLeft,
+faSave,
         faEdit,
         faPlus,
         faTimes,
@@ -347,7 +348,7 @@ import { createActivityLog } from "../../../utils/activity/log";
                     disabled={!$formChildItem.valid || !$formChildItem.dirty}
                     on:click|preventDefault={add}
                     class="button is-dark my-2 px-5 py-2 has-text-weight-bold"
-                    >Save</button
+                    ><Icon data={faSave}/>  <span class="ml-2 has-text-white">Save</span></button
                 >
             </div>
         </div>

@@ -2,6 +2,7 @@
     import { get } from "../../../../lib/api";
     import {
         faAngleLeft,
+        faSave,
         faFileExcel,
         faFilePdf,
         faPrint,
@@ -35,9 +36,9 @@
 
         items.forEach((element) => {
             total +=
-                element.attributes.stock_release_item.data?.attributes.purchase_order_item.data?.attributes
-                    .unitPrice *
-                    element.attributes.stock_release_item.data?.attributes.quantity;
+                element.attributes.stock_release_item.data?.attributes
+                    .purchase_order_item.data?.attributes.unitPrice *
+                element.attributes.stock_release_item.data?.attributes.quantity;
         });
 
         return total;
@@ -105,16 +106,14 @@
         };
 
         if ($start.value != $end.value) {
-            filter.$and.push(
-                {
-                    waybill: {
-                        date: {
-                            $gte: $start.value,
-                            $lte: $end.value,
-                        }
-                    }
-                }
-            )
+            filter.$and.push({
+                waybill: {
+                    date: {
+                        $gte: $start.value,
+                        $lte: $end.value,
+                    },
+                },
+            });
         }
 
         getItem(filter);
@@ -222,7 +221,7 @@
             sortable: true,
             selected: true,
         },
-        
+
         {
             key: "currency",
             title: "Currency",
@@ -253,37 +252,41 @@
     function getPopulatedDataPdf(rowss) {
         let array = [];
 
-        
-            rowss.forEach((elementC) => {
-                array.push([
-                    elementC.attributes.waybill.data.id,
-                    elementC.attributes.waybill.data.attributes.consortium_member
-                        .data.attributes.name,
-                    elementC.attributes.waybill.data.attributes.destination,
-                    elementC.attributes.waybill.data.attributes.date,
-                    elementC.id,
-                    elementC.attributes.stock_release_item.data?.attributes.purchase_order_item.data.attributes
-                        .purchase_order.data.attributes.poNumber,
-                        elementC.attributes.stock_release_item.data?.attributes.purchase_order_item.data.attributes.item
-                        .data.attributes.name,
-                        elementC.attributes.stock_release_item.data?.attributes.purchase_order_item.data.attributes.item
-                        .data.attributes.category,
-                        elementC.attributes.stock_release_item.data?.attributes.purchase_order_item.data.attributes
-                        .unit,
-                        elementC.attributes.stock_release_item.data?.attributes.purchase_order_item.data.attributes
-                        .pieces,
-                        elementC.attributes.stock_release_item.data?.attributes.purchase_order_item.data.attributes
-                        .currency,
-                        elementC.attributes.stock_release_item.data?.attributes.purchase_order_item.data.attributes
-                        .unitPrice,
-                        elementC.attributes.stock_release_item.data?.attributes.quantity,
-                    
-                        elementC.attributes.stock_release_item.data?.attributes.purchase_order_item.data.attributes
-                        .unitPrice *
-                        elementC.attributes.stock_release_item.data?.attributes.quantity,
-                ]);
+        rowss.forEach((elementC) => {
+            array.push([
+                elementC.attributes.waybill.data.id,
+                elementC.attributes.waybill.data.attributes.consortium_member
+                    .data.attributes.name,
+                elementC.attributes.waybill.data.attributes.destination,
+                elementC.attributes.waybill.data.attributes.date,
+                elementC.id,
+                elementC.attributes.stock_release_item.data?.attributes
+                    .purchase_order_item.data.attributes.purchase_order.data
+                    .attributes.poNumber,
+                elementC.attributes.stock_release_item.data?.attributes
+                    .purchase_order_item.data.attributes.item.data.attributes
+                    .name,
+                elementC.attributes.stock_release_item.data?.attributes
+                    .purchase_order_item.data.attributes.item.data.attributes
+                    .category,
+                elementC.attributes.stock_release_item.data?.attributes
+                    .purchase_order_item.data.attributes.item.data.attributes
+                    .unit,
+                elementC.attributes.stock_release_item.data?.attributes
+                    .purchase_order_item.data.attributes.item.data.attributes
+                    .pieces,
+                elementC.attributes.stock_release_item.data?.attributes
+                    .purchase_order_item.data.attributes.currency,
+                elementC.attributes.stock_release_item.data?.attributes
+                    .purchase_order_item.data.attributes.unitPrice,
+                elementC.attributes.stock_release_item.data?.attributes
+                    .quantity,
 
-            
+                elementC.attributes.stock_release_item.data?.attributes
+                    .purchase_order_item.data.attributes.unitPrice *
+                    elementC.attributes.stock_release_item.data?.attributes
+                        .quantity,
+            ]);
         });
 
         array.push([
@@ -292,7 +295,7 @@
             "-",
             "-",
             "-",
-           
+
             "-",
             "-",
             "-",
@@ -309,7 +312,7 @@
 
     function exportcsv() {
         let now = new Date();
-        let fname = `"SWAN Item Search - " ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+        let fname = `SWAN Item Search - " ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
         let array = getPopulatedDataPdf(waybill_items);
 
@@ -476,7 +479,7 @@
                 </div>
                 <div class="column is-flex is-align-items-end">
                     <button
-                        disabled={!$formItem.valid || !$formItem.dirty}
+                        disabled={!$formItem.valid && !$formItem.dirty}
                         on:click|preventDefault={filter}
                         class="button is-dark px-5 py-2 has-text-weight-bold"
                         >Filter</button
@@ -493,6 +496,15 @@
     {#if waybill_items}
         <div class="card p-6">
             <br />
+
+            <div class="has-text-centered is-flex is-align-items-center">
+                <img
+                    src="./images/logo/swan_consortium.svg"
+                    width="150"
+                    alt="SWAN Humaniterian Consortium"
+                    style="margin: 0 auto;"
+                />
+            </div>
             {#if $consortium_member.value}
                 <h3 class="has-text-centered has-text-weight-bold">
                     {$consortium_member.value.attributes.name}
@@ -502,7 +514,8 @@
                     {$consortium_member.value.attributes.address_2}
                 </p>
                 <p class="has-text-centered">
-                    {$consortium_member.value.attributes.website} - {$consortium_member.value.attributes.phone}
+                    {$consortium_member.value.attributes.website} - {$consortium_member
+                        .value.attributes.phone}
                 </p>
             {/if}
 
@@ -517,90 +530,101 @@
             {/if}
             <!-- <p class="card-header-title">Stock Items</p> -->
 
-                <!-- <p class="card-header-title"></p> -->
+            <!-- <p class="card-header-title"></p> -->
 
-                <table class="table is-bordered is-fullwidth is-narrow">
-                    <tr class="has-background-black has-text-white">
-                        <td>No.</td>
-                        <th class="has-text-white">Consortium Member</th>
-                        <th class="has-text-white">Destination</th>
-                        <th class="has-text-white">Date</th>
-                        <th class="has-text-white">Description</th>
-                        <th class="has-text-white">Category</th>
-                        <th class="has-text-white">Unit</th>
-                        <th class="has-text-white">Pcs/Package</th>
+            <table class="table is-bordered is-fullwidth is-narrow">
+                <tr class="has-background-black has-text-white">
+                    <td>No.</td>
+                    <th class="has-text-white">Consortium Member</th>
+                    <th class="has-text-white">Destination</th>
+                    <th class="has-text-white">Date</th>
+                    <th class="has-text-white">Description</th>
+                    <th class="has-text-white">Category</th>
+                    <th class="has-text-white">Unit</th>
+                    <th class="has-text-white">Pcs/Package</th>
 
-                        <th class="has-text-white">Unit Price</th>
-                        <th class="has-text-white">Quantity</th>
+                    <th class="has-text-white">Unit Price</th>
+                    <th class="has-text-white">Quantity</th>
 
-                        <th class="has-text-white">Total</th>
-                    </tr>
+                    <th class="has-text-white">Total</th>
+                </tr>
 
-                    {#each waybill_items as stock, index}
-                        <tr>
-                            <td>{index + 1}</td>
-                            <td>
-                                {stock.attributes.waybill.data?.attributes
-                                    .consortium_member.data?.attributes.name}
-                            </td>
-                            <td>
-                                {stock.attributes.waybill.data?.attributes
-                                    .destination}
-                            </td>
-                            <td>
-                                {stock.attributes.waybill.data?.attributes.date}
-                            </td>
-                            <td
-                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
-                                    ?.attributes.item.data?.attributes.name} - ({stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
-                                    ?.id})</td
-                            >
-                            <td
-                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
-                                    ?.attributes.item.data?.attributes.category} </td
-                            >
-                            <td
-                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
-                                    ?.attributes.unit}</td
-                            >
-                            <td
-                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
-                                    ?.attributes.pieces}</td
-                            >
+                {#each waybill_items as stock, index}
+                    <tr>
+                        <td>{index + 1}</td>
+                        <td>
+                            {stock.attributes.waybill.data?.attributes
+                                .consortium_member.data?.attributes.name}
+                        </td>
+                        <td>
+                            {stock.attributes.waybill.data?.attributes
+                                .destination}
+                        </td>
+                        <td>
+                            {stock.attributes.waybill.data?.attributes.date}
+                        </td>
+                        <td
+                            >{stock.attributes.stock_release_item.data
+                                ?.attributes.purchase_order_item.data
+                                ?.attributes.item.data?.attributes.name} - ({stock
+                                .attributes.stock_release_item.data?.attributes
+                                .purchase_order_item.data?.id})</td
+                        >
+                        <td
+                            >{stock.attributes.stock_release_item.data
+                                ?.attributes.purchase_order_item.data
+                                ?.attributes.item.data?.attributes.category}
+                        </td>
+                        <td
+                            >{stock.attributes.stock_release_item.data
+                                ?.attributes.purchase_order_item.data
+                                ?.attributes.item.data?.attributes.unit
+                                ? stock.attributes.stock_release_item.data
+                                      ?.attributes.purchase_order_item.data
+                                      ?.attributes.item.data?.attributes.unit
+                                : "-"}</td
+                        >
+                        <td
+                            >{stock.attributes.stock_release_item.data
+                                ?.attributes.purchase_order_item.data
+                                ?.attributes.item.data?.attributes.pieces
+                                ? stock.attributes.stock_release_item.data
+                                      ?.attributes.purchase_order_item.data
+                                      ?.attributes.item.data?.attributes.pieces
+                                : "-"}</td
+                        >
 
-                            <td
-                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
-                                    ?.attributes.unitPrice}</td
-                            >
-                            <td
-                                >{stock.attributes.stock_release_item.data?.attributes.quantity}</td
-                            >
+                        <td
+                            >{stock.attributes.stock_release_item.data
+                                ?.attributes.purchase_order_item.data
+                                ?.attributes.unitPrice}</td
+                        >
+                        <td
+                            >{stock.attributes.stock_release_item.data
+                                ?.attributes.quantity}</td
+                        >
 
-                            <td
-                                >{numberWithCommas(
-                                    stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
-                                        ?.attributes.unitPrice *
-                                        stock.attributes.stock_release_item.data?.attributes.quantity
-                                )}
-                                {stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
-                                    ?.attributes.currency}</td
-                            >
-                        </tr>
-                    {/each}
-
-                    <tr class="">
-                        <th>Total</th>
-                        <th colspan="9" />
-                        <th
+                        <td
                             >{numberWithCommas(
-                                getTotal(
-                                    waybill_items)
-                            )}</th
+                                stock.attributes.stock_release_item.data
+                                    ?.attributes.purchase_order_item.data
+                                    ?.attributes.unitPrice *
+                                    stock.attributes.stock_release_item.data
+                                        ?.attributes.quantity
+                            )}
+                            {stock.attributes.stock_release_item.data
+                                ?.attributes.purchase_order_item.data
+                                ?.attributes.currency}</td
                         >
                     </tr>
-                </table>
+                {/each}
 
-           
+                <tr class="">
+                    <th>Total</th>
+                    <th colspan="9" />
+                    <th>{numberWithCommas(getTotal(waybill_items))}</th>
+                </tr>
+            </table>
 
             <br /><br />
 

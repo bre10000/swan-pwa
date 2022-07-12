@@ -24,6 +24,6 @@ export const exportToPDF = (name, rows, columns) => {
     });
 
     doc.save(
-        `"SWAN "${name} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.pdf`
+        `SWAN ${name} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.pdf`
     );
 }

@@ -13,6 +13,7 @@
     faFile,
     faIndustry,
     faList,
+    faRuler,
     faSignOutAlt,
     faSitemap,
     faTachometerAlt,
@@ -35,7 +36,7 @@
   export let segment;
 </script>
 
-<aside class="menu p-4 has-border-right-gray">
+<aside class="menu p-4 has-border-right-gray has-background-light">
   <div class="has-border-bottom-gray has-text-centered">
     <img src="./images/logo/swan_logo_horizontal.svg" width="180" alt="" />
   </div>
@@ -91,6 +92,11 @@
     <li>
       <a href="items" class:is-active={segment == "items"}
         ><Icon data={faList} /> Items</a
+      >
+    </li>
+    <li>
+      <a href="units" class:is-active={segment == "units"}
+        ><Icon data={faRuler} /> Units</a
       >
     </li>
     <li>
@@ -187,7 +193,7 @@
 
   .menu-list .is-active {
     background-color: rgb(234, 228, 255);
-    color: blue;
+    color: #0000BF;
     font-weight: bold;
   }
 
@@ -195,7 +201,7 @@
     font-weight: normal;
   }
   :global(.menu-list a.is-active svg *) {
-    color: blue !important;
+    color: #0000BF !important;
   }
 
   :global(.menu-list a svg *, .menu-list a *) {

@@ -6,7 +6,8 @@
 
 <script>
     import { get } from "../../../../lib/api";
-    import { faAngleLeft, faPrint } from "@fortawesome/free-solid-svg-icons";
+    import { faAngleLeft,
+faSave, faPrint } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
     import { numberWithCommas } from "../../../../lib";
@@ -104,12 +105,21 @@
         <div class="card p-6">
             <br />
 
-            <h3 class="is-size-5">
-                <span class="has-text-weight-bold"
-                    >{stock.attributes.consortium_member.data?.attributes.name}:</span
-                >
-                Truck Driver Receive Order for SWAN Warehouse
-            </h3>
+            <div class="columns">
+                <div class="column is-narrow mr-5">
+                    <img src="./images/logo/swan_consortium.svg" width="150" alt="SWAN Humaniterian Consortium">
+                </div>
+                <div class="column is-flex is-align-items-center">
+                    <h3 class="is-size-5">
+                        <span class="has-text-weight-bold"
+                            >{stock.attributes.consortium_member.data?.attributes.name}:</span
+                        >
+                        Truck Driver Receive Order for SWAN Warehouse
+                    </h3>
+                </div>
+            </div>
+
+            
             <hr />
 
             <div class="columns">
@@ -175,9 +185,9 @@
                             >{item.attributes.purchase_order_item.data?.attributes.item.data?.attributes.name} - {item.attributes.purchase_order_item.data?.attributes.item.data?.attributes.category}</td
                         >
                         <td>{item.attributes.purchase_order_item.data?.attributes.purchase_order.data?.attributes.poNumber}</td>
-                        <td>{item.attributes.purchase_order_item.data?.attributes.quantity}</td>
+                        <td>{numberWithCommas(item.attributes.purchase_order_item.data?.attributes.quantity)}</td>
                         <td>{item.attributes.purchase_order_item.data?.attributes.currency}</td>
-                        <td>{item.attributes.received}</td>
+                        <td>{numberWithCommas(item.attributes.received)}</td>
                         
                         <td>{numberWithCommas(item.attributes.purchase_order_item.data?.attributes.unitPrice)}</td>
                         <td

@@ -16,21 +16,9 @@
     import DataTableDetails from "../../widgets/table/DataTableDetails.svelte";
     import { exportToCsvAlternate } from "../../utils/export/csvGenerator";
     import { exportToPDFAlternate } from "../../utils/export/exportPDFAlternate";
-import { createActivityLog } from "../../utils/activity/log";
-
-    const unsubscribe = user.subscribe((value) => {
-        if (!process.browser) {
-            return;
-        }
-
-        if (!value.loggedIn && value.fetched) {
-            goto("login");
-        } else if (value.data) {
-            getItems();
-        }
-    });
-
-    onDestroy(unsubscribe);
+    import { createActivityLog } from "../../utils/activity/log";
+    import { Moon } from "svelte-loading-spinners";
+    import { numberWithCommas } from "../../lib";
 
     let query = "";
     let sortBy = "";
@@ -38,7 +26,11 @@ import { createActivityLog } from "../../utils/activity/log";
     let currentItem;
     let showConfirmation = false;
 
-    let rows = [];
+    let rows;
+
+    let filters = [];
+
+    let field, queryF;
 
     const columns = [
         {
@@ -79,8 +71,8 @@ import { createActivityLog } from "../../utils/activity/log";
 
     const columnsDetails = [
         {
-            key: "id",
-            title: "ID",
+            key: "item_id",
+            title: "PO Item ID",
             sortable: true,
             selected: true,
         },
@@ -109,14 +101,21 @@ import { createActivityLog } from "../../utils/activity/log";
             selected: true,
         },
         {
-            key: "currency",
-            title: "Currency",
+            key: "unitPrice",
+            title: "Unit Price",
+            sortable: true,
+            selected: true,
+        },
+
+        {
+            key: "total",
+            title: "Total",
             sortable: true,
             selected: true,
         },
         {
-            key: "unitPrice",
-            title: "Unit Price",
+            key: "currency",
+            title: "Currency",
             sortable: true,
             selected: true,
         },
@@ -137,6 +136,7 @@ import { createActivityLog } from "../../utils/activity/log";
     };
 
     async function getItems(filters, sort, page) {
+        rows = null;
         try {
             let params = {
                 filters: filters ? filters : {},
@@ -215,8 +215,13 @@ import { createActivityLog } from "../../utils/activity/log";
                     },
                 });
 
-                createActivityLog("Purchase Order", currentItem, "Delete", response.data.id)
-                
+                createActivityLog(
+                    "Purchase Order",
+                    currentItem,
+                    "Delete",
+                    response.data.id
+                );
+
                 search();
             }
         } catch (e) {
@@ -226,51 +231,156 @@ import { createActivityLog } from "../../utils/activity/log";
 
     function getQS() {
         return {
-            $or: [
+            $and: [
+                ...filters.map((x) => x.value),
                 {
-                    poNumber: {
-                        $containsi: query,
-                    },
-                },
-                {
-                    date: {
-                        $containsi: query,
-                    },
-                },
-                {
-                    consortium_member: {
-                        name: {
-                            $containsi: query,
-                        },
-                    },
-                },
-                {
-                    purchase_order_items: {
-                        item: {
-                            name: {
+                    $or: [
+                        {
+                            poNumber: {
                                 $containsi: query,
                             },
                         },
-                    },
-                },
-                {
-                    purchase_order_items: {
-                        item: {
-                            category: {
+                        {
+                            date: {
                                 $containsi: query,
                             },
                         },
-                    },
-                },
-                {
-                    purchase_order_items: {
-                        unit: {
-                            $containsi: query,
+                        {
+                            consortium_member: {
+                                name: {
+                                    $containsi: query,
+                                },
+                            },
                         },
-                    },
+                        {
+                            purchase_order_items: {
+                                id: {
+                                        $containsi: query,
+                                },
+                            },
+                        },
+                        {
+                            purchase_order_items: {
+                                item: {
+                                    name: {
+                                        $containsi: query,
+                                    },
+                                },
+                            },
+                        },
+                        {
+                            purchase_order_items: {
+                                item: {
+                                    category: {
+                                        $containsi: query,
+                                    },
+                                },
+                            },
+                        },
+                        {
+                            purchase_order_items: {
+                                item: {
+                                    unit: {
+                                        $containsi: query,
+                                    },
+                                },
+                            },
+                        },
+                    ],
                 },
             ],
         };
+    }
+
+    function addFilter() {
+        if (field && queryF) {
+            if (
+                field == "consortium_member" ||
+                field == "quantity" ||
+                field == "currency" ||
+                field == "unit_price" ||
+                field == "item_id"
+            ) {
+                let parent;
+                field = field.includes("item_id") ? "id" : field;
+                let field2 = field;
+
+                if (field == "consortium_member") {
+                    parent = "consortium_member";
+                } else {
+                    parent = "purchase_order_items";
+                }
+
+                field = field.includes("name") ? "name" : field;
+
+                field = field.includes("consortium_member") ? "name" : field;
+
+                let temp = {
+                    index: filters.length,
+                    value: {},
+                    name: field2,
+                    query: queryF,
+                };
+                temp.value[parent] = {};
+                temp.value[parent][field] = {
+                    $containsi: queryF,
+                };
+
+                filters = [temp, ...filters];
+            } else if (
+                field == "item" ||
+                field == "unit" ||
+                field == "pieces"
+            ) {
+                let grandparent, parent;
+                let field2 = field;
+
+                grandparent = "purchase_order_items";
+                parent = "item";
+
+                field = field.includes("item") ? "name" : field;
+
+                let temp = {
+                    index: filters.length,
+                    value: {},
+                    name: field2,
+                    query: queryF,
+                };
+
+                temp.value[grandparent] = {};
+                temp.value[grandparent][parent] = {};
+                temp.value[grandparent][parent][field] = {
+                    $containsi: queryF,
+                };
+                console.log("Custom Filter", temp);
+
+                filters = [temp, ...filters];
+            } else {
+                let temp = {
+                    index: filters.length,
+                    value: {},
+                    name: field,
+                    query: queryF,
+                };
+
+                temp.value[field] = {
+                    $containsi: queryF,
+                };
+
+                filters = [temp, ...filters];
+            }
+
+            field = "";
+            queryF = "";
+
+            search();
+            console.log({ filters });
+        }
+    }
+
+    function removeFilter(f) {
+        filters = [...filters.filter((x) => x.index !== f.index)];
+        search();
     }
 
     function getPopulatedDataPdf(rowss) {
@@ -298,11 +408,15 @@ import { createActivityLog } from "../../utils/activity/log";
                     "-",
                     elementC.id,
                     elementC.attributes.item.data.attributes.name,
-                    elementC.attributes.unit,
-                    elementC.attributes.pieces,
-                    elementC.attributes.quantity,
+                    elementC.attributes.item.data.attributes.unit,
+                    elementC.attributes.item.data.attributes.pieces,
+                    numberWithCommas(elementC.attributes.quantity),
+                    numberWithCommas(elementC.attributes.unitPrice),
+                    numberWithCommas(
+                        elementC.attributes.quantity *
+                            elementC.attributes.unitPrice
+                    ),
                     elementC.attributes.currency,
-                    elementC.attributes.unitPrice,
                 ]);
             });
         });
@@ -311,7 +425,7 @@ import { createActivityLog } from "../../utils/activity/log";
 
     function exportcsv() {
         let now = new Date();
-        let fname = `"SWAN "${"Purchase Orders"} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+        let fname = `SWAN ${"Purchase Orders"} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
         let array = getPopulatedDataPdf(rows);
 
@@ -348,7 +462,7 @@ import { createActivityLog } from "../../utils/activity/log";
             let response = await get("purchase-orders", params);
 
             let now = new Date();
-            let fname = `"SWAN "${"Purchase Orders"} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+            let fname = `SWAN ${"Purchase Orders"} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
             let array = getPopulatedDataPdf(response.data);
 
@@ -386,6 +500,20 @@ import { createActivityLog } from "../../utils/activity/log";
             );
         } catch (e) {}
     }
+
+    const unsubscribe = user.subscribe((value) => {
+        if (!process.browser) {
+            return;
+        }
+
+        if (!value.loggedIn && value.fetched) {
+            goto("login");
+        } else if (value.data) {
+            getItems();
+        }
+    });
+
+    onDestroy(unsubscribe);
 </script>
 
 <svelte:head>
@@ -396,7 +524,7 @@ import { createActivityLog } from "../../utils/activity/log";
 <div class="container px-6">
     <div class="columns">
         <div class="column">
-            <h3>
+            <h3 class="has-text-info">
                 Purchase Orders
                 {#if pagination}
                     <span class="gray has-text-weight-light ml-2"
@@ -418,12 +546,12 @@ import { createActivityLog } from "../../utils/activity/log";
     </div>
 
     <div class="columns">
-        <div class="column">
-            <div class="field has-addons" style="width: 500px;">
+        <div class="column is-narrow">
+            <div class="field has-addons" style="width: 400px;">
                 <div class="control has-icons-left">
                     <input
                         bind:value={query}
-                        class="input is-dark"
+                        class="input is-light"
                         type="search"
                         placeholder="search"
                     />
@@ -433,11 +561,78 @@ import { createActivityLog } from "../../utils/activity/log";
                 </div>
                 <div class="control">
                     <button
-                        class="button is-dark has-text-weight-bold"
+                        class="button is-light has-text-weight-bold"
                         on:click={search}
                     >
                         Search
                     </button>
+                </div>
+            </div>
+        </div>
+        <div class="column is-narrow">
+            <div class="dropdown is-hoverable">
+                <div class="dropdown-trigger">
+                    <button
+                        class="button is-light px-5 has-text-weight-bold"
+                        aria-haspopup="true"
+                        aria-controls="dropdown-menu"
+                    >
+                        <span class="panel-icon pr-4" style="margin-top: -7px;">
+                            <svg
+                                width="24"
+                                height="24"
+                                stroke-width="1.5"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M2.99997 7V4C2.99997 3.44772 3.44769 3 3.99997 3H20.0001C20.5523 3 21 3.44766 21.0001 3.9999L21.0004 7M2.99997 7L9.65077 12.7007C9.87241 12.8907 9.99998 13.168 9.99998 13.4599V19.7192C9.99998 20.3698 10.6114 20.8472 11.2425 20.6894L13.2425 20.1894C13.6877 20.0781 14 19.6781 14 19.2192V13.46C14 13.168 14.1275 12.8907 14.3492 12.7007L21.0004 7M2.99997 7H21.0004"
+                                    stroke="currentColor"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+                        </span>
+                        <span>Filter</span>
+                    </button>
+                </div>
+                <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                    <div class="dropdown-content has-text-left p-3">
+                        <div class="field">
+                            <label for="" class="gray">Field</label><br />
+                            <div
+                                class="control select has-background-light is-fullwidth"
+                            >
+                                <select
+                                    required
+                                    bind:value={field}
+                                    name="category"
+                                >
+                                    {#each columns.concat(columnsDetails) as c}
+                                        <option value={c.key}>{c.title}</option>
+                                    {/each}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label for="" class="gray">Query</label><br />
+                            <div class="control">
+                                <input
+                                    bind:value={queryF}
+                                    class="input has-background-light"
+                                    required
+                                    type="text"
+                                />
+                            </div>
+                        </div>
+
+                        <button
+                            on:click|preventDefault={addFilter}
+                            class="button is-fullwidth is-dark my-2 px-5 py-2 has-text-weight-bold"
+                            >ADD</button
+                        >
+                    </div>
                 </div>
             </div>
         </div>
@@ -491,6 +686,28 @@ import { createActivityLog } from "../../utils/activity/log";
             </div>
         </div>
     </div>
+
+    <div class="container">
+        {#if filters?.length > 0}
+            {#each filters as f (f.index)}
+                <span class="tag is-light is-medium is-rounded p-4 mr-4">
+                    <b class="mx-2">
+                        {columns
+                            .concat(columnsDetails)
+                            .filter((c) => c.key == f?.name)[0]?.title}
+                    </b>
+                    contains
+                    <b class="mx-2">{f.query}</b>
+                    <button
+                        on:click={() => removeFilter(f)}
+                        class="delete is-small"
+                    />
+                </span>
+            {/each}
+        {/if}
+    </div>
+    <br />
+
     <div class="card">
         {#if rows?.length > 0}
             <DataTableDetails
@@ -507,11 +724,19 @@ import { createActivityLog } from "../../utils/activity/log";
                 on:clickRow={editRow}
                 on:printRow={printRow}
             />
-        {:else}
+        {:else if rows}
             <div class="has-text-centered">
                 <br /><br /><br /><br />
                 <Icon data={faSearch} scale="3" />
                 <p class="gray">Uh oh! nothing found on database.</p>
+                <br /><br /><br /><br />
+            </div>
+        {:else}
+            <div class="has-text-centered">
+                <br /><br /><br /><br />
+                <div class="is-flex is-justify-content-center">
+                    <Moon size="60" color="blue" unit="px" duration="1s" />
+                </div>
                 <br /><br /><br /><br />
             </div>
         {/if}

@@ -6,7 +6,8 @@
 
 <script>
     import { get } from "../../../../lib/api";
-    import { faAngleLeft, faPrint } from "@fortawesome/free-solid-svg-icons";
+    import { faAngleLeft,
+faSave, faPrint } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
     import { numberWithCommas } from "../../../../lib";
@@ -101,12 +102,22 @@
         <div class="card p-6">
             <br />
 
-            <h3 class="is-size-5">
-                PO No:
-                <span class="has-text-weight-bold"
-                    >{purchase_order.attributes.poNumber}</span
-                >
-            </h3>
+            <div class="columns">
+                <div class="column is-narrow mr-5">
+                    <img src="./images/logo/swan_consortium.svg" width="150" alt="SWAN Humaniterian Consortium">
+                </div>
+                <div class="column is-flex is-align-items-center">
+                    <h3 class="is-size-5">
+                        PO No:
+                        <span class="has-text-weight-bold"
+                            >{purchase_order.attributes.poNumber}</span
+                        >
+                    </h3>
+                </div>
+            </div>
+            
+
+            
             <hr />
 
             <div class="card" style="width: 400px;">
@@ -160,8 +171,10 @@
                             >{item.attributes.item.data?.attributes.name} - {item
                                 .attributes.item.data?.attributes.category}</td
                         >
-                        <td>{item.attributes.unit}</td>
-                        <td>{item.attributes.quantity}</td>
+                        <td
+                            >{item.attributes.item.data?.attributes.unit ? item.attributes.item.data?.attributes.unit : "-"} ( {item.attributes.item.data?.attributes.pieces ? item.attributes.item.data?.attributes.pieces : "-"} pcs) </td
+                        >
+                        <td>{numberWithCommas(item.attributes.quantity)}</td>
                         <td>{item.attributes.currency}</td>
                         <td>{numberWithCommas(item.attributes.unitPrice)}</td>
                         <td

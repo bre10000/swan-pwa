@@ -6,12 +6,18 @@
 
 <script>
     import { get } from "../../../../lib/api";
-    import { faAngleLeft, faFileExcel, faFilePdf, faPrint } from "@fortawesome/free-solid-svg-icons";
+    import {
+        faAngleLeft,
+        faSave,
+        faFileExcel,
+        faFilePdf,
+        faPrint,
+    } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
     import { numberWithCommas } from "../../../../lib";
-import { exportToCsvAlternate } from "../../../../utils/export/csvGenerator";
-import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternate";
+    import { exportToCsvAlternate } from "../../../../utils/export/csvGenerator";
+    import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternate";
 
     export let slug;
 
@@ -21,10 +27,12 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
         let total = 0;
 
         items.forEach((element2) => {
-            element2.attributes.waybill_items.data?.forEach((element) => {
+            element2.attributes.waybill_items.data.filter( x => x.attributes.stock_release_item.data )?.forEach((element) => {
                 total +=
-                    element.attributes.stock_release_item.data?.attributes.purchase_order_item.data?.attributes
-                        .unitPrice * element.attributes.stock_release_item.data?.attributes.quantity;
+                    element.attributes.stock_release_item.data?.attributes
+                        .purchase_order_item.data?.attributes.unitPrice *
+                    element.attributes.stock_release_item.data?.attributes
+                        .quantity;
             });
         });
 
@@ -34,6 +42,34 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
     async function getItem() {
         try {
             let params = {
+                filters: {
+                    $and: [
+                        {
+                            waybills: {
+                                waybill_items: {
+                                    stock_release_item: {
+                                        stock_release: {
+                                            id: {
+                                                $not: null,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        {
+                            waybills: {
+                                waybill_items: {
+                                    stock_release_item: {
+                                            id: {
+                                                $not: null,
+                                            },
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                },
                 populate: [
                     "waybills",
                     "waybills.waybill_items",
@@ -41,7 +77,7 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
                     "waybills.waybill_items.stock_release_item.stock_release",
                     "waybills.waybill_items.stock_release_item.purchase_order_item",
                     "waybills.waybill_items.stock_release_item.purchase_order_item.item",
-                    "waybills.waybill_items.stock_release_item.purchase_order_item.purchase_order"
+                    "waybills.waybill_items.stock_release_item.purchase_order_item.purchase_order",
                 ],
             };
             params = qs.stringify(params, {
@@ -57,7 +93,6 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
             console.log("Error get Consortium Member by ID ", e);
         }
     }
-
 
     const columns = [
         {
@@ -174,8 +209,6 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
         },
     ];
 
-
-
     function getPopulatedDataPdf(rowss) {
         let array = [];
         rowss.forEach((element) => {
@@ -194,7 +227,7 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
                 "-",
                 "-",
                 "-",
-                "-"
+                "-",
             ]);
 
             element.attributes.waybill_items.data.forEach((elementC) => {
@@ -205,17 +238,28 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
                     "-",
                     "-",
                     elementC.id,
-                    elementC.attributes.stock_release_item.data.attributes.purchase_order_item.data.attributes
-                        .purchase_order.data.attributes.poNumber,
+                    elementC.attributes.stock_release_item.data.attributes
+                        .purchase_order_item.data.attributes.purchase_order.data
+                        .attributes.poNumber,
                     elementC.attributes.stock_release_item.data.attributes
                         .stock_release.data.id,
                     elementC.attributes.stock_release_item.data.attributes
                         .purchase_order_item.data.attributes.item.data
                         .attributes.name,
                     elementC.attributes.stock_release_item.data.attributes
-                        .purchase_order_item.data.attributes.unit,
+                        .purchase_order_item.data.attributes.item.data
+                        .attributes.unit
+                        ? elementC.attributes.stock_release_item.data.attributes
+                              .purchase_order_item.data.attributes.item.data
+                              .attributes.unit
+                        : "-",
                     elementC.attributes.stock_release_item.data.attributes
-                        .purchase_order_item.data.attributes.pieces,
+                        .purchase_order_item.data.attributes.item.data
+                        .attributes.pieces
+                        ? elementC.attributes.stock_release_item.data.attributes
+                              .purchase_order_item.data.attributes.item.data
+                              .attributes.pieces
+                        : "-",
                     elementC.attributes.stock_release_item.data.attributes
                         .purchase_order_item.data.attributes.currency,
                     elementC.attributes.stock_release_item.data.attributes
@@ -224,40 +268,40 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
                         .quantity,
                     elementC.attributes.remark,
                     elementC.attributes.stock_release_item.data.attributes
-                        .quantity * elementC.attributes.stock_release_item.data.attributes
-                        .purchase_order_item.data.attributes.unitPrice,
+                        .quantity *
+                        elementC.attributes.stock_release_item.data.attributes
+                            .purchase_order_item.data.attributes.unitPrice,
                 ]);
             });
         });
 
         array.push([
-                "Total",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-",
-                numberWithCommas(
-                            getTotal(consortium.attributes.waybills.data)
-                        )
-            ]);
+            "Total",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            numberWithCommas(getTotal(consortium.attributes.waybills.data)),
+        ]);
 
         return array;
     }
 
-
     function exportcsv() {
         let now = new Date();
-        let fname = `"SWAN Partner Waybill - "${consortium.attributes.name} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+        let fname = `SWAN Partner Waybill - ${
+            consortium.attributes.name
+        } ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
         let array = getPopulatedDataPdf(consortium.attributes.waybills.data);
 
@@ -273,7 +317,6 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
             columns.concat(columnsDetails)
         );
     }
-    
 
     $: if (slug) {
         getItem();
@@ -347,12 +390,24 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
         <div class="card p-6">
             <br />
 
-            <h3 class="is-size-5">
-                Partner Waybill / Dispatch -
-                <span class="has-text-weight-bold"
-                    >{consortium.attributes.name}</span
-                >
-            </h3>
+            <div class="columns">
+                <div class="column is-narrow mr-5">
+                    <img
+                        src="./images/logo/swan_consortium.svg"
+                        width="150"
+                        alt="SWAN Humaniterian Consortium"
+                    />
+                </div>
+                <div class="column is-flex is-align-items-center">
+                    <h3 class="is-size-5">
+                        Partner Waybill / Dispatch -
+                        <span class="has-text-weight-bold"
+                            >{consortium.attributes.name}</span
+                        >
+                    </h3>
+                </div>
+            </div>
+
             <hr />
 
             <p class="card-header-title">Waybill Items</p>
@@ -375,50 +430,71 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
                     <tr class="has-text-weight-bold">
                         <td>{item.id}</td>
                         <td>{item.attributes.date}</td>
-                        <td
-                            >{item.attributes.destination}</td
-                        >
-                        <td
-                            >{item.attributes.category}</td
-                        >
+                        <td>{item.attributes.destination}</td>
+                        <td>{item.attributes.category}</td>
                         <td colspan="6" />
                     </tr>
-                    {#each item.attributes.waybill_items.data as stock, index}
+                    {#each item.attributes.waybill_items.data.filter( x => x.attributes.stock_release_item.data ) as stock, index}
                         <tr>
                             <td>{index + 1}</td>
                             <td
-                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
+                                >{stock.attributes.stock_release_item.data
+                                    ?.attributes.purchase_order_item.data
                                     ?.attributes.item.data?.attributes.name}</td
                             >
                             <td>
-                                {stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
+                                {stock.attributes.stock_release_item.data
+                                    ?.attributes.purchase_order_item.data
                                     ?.attributes.item.data?.attributes.category}
                             </td>
                             <td
-                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
-                                    ?.attributes.unit}</td
+                                >{stock.attributes.stock_release_item.data
+                                    ?.attributes.purchase_order_item.data
+                                    ?.attributes.item.data?.attributes.unit
+                                    ? stock.attributes.stock_release_item.data
+                                          ?.attributes.purchase_order_item.data
+                                          ?.attributes.item.data?.attributes
+                                          .unit
+                                    : "-"}</td
                             >
                             <td
-                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
-                                    ?.attributes.pieces}</td
+                                >{stock.attributes.stock_release_item.data
+                                    ?.attributes.purchase_order_item.data
+                                    ?.attributes.item.data?.attributes.pieces
+                                    ? stock.attributes.stock_release_item.data
+                                          ?.attributes.purchase_order_item.data
+                                          ?.attributes.item.data?.attributes
+                                          .pieces
+                                    : "-"}</td
                             >
 
                             <td
-                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
+                                >{stock.attributes.stock_release_item.data
+                                    ?.attributes.purchase_order_item.data
                                     ?.attributes.currency}</td
                             >
                             <td
-                                >{stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
-                                    ?.attributes.unitPrice}</td
+                                >{numberWithCommas(
+                                    stock.attributes.stock_release_item.data
+                                        ?.attributes.purchase_order_item.data
+                                        ?.attributes.unitPrice
+                                )}</td
                             >
-                            <td>{stock.attributes.stock_release_item.data?.attributes.quantity}</td>
+                            <td
+                                >{numberWithCommas(
+                                    stock.attributes.stock_release_item.data
+                                        ?.attributes.quantity
+                                )}</td
+                            >
 
                             <td>{stock.attributes.remark}</td>
                             <td
                                 >{numberWithCommas(
-                                    stock.attributes.stock_release_item.data?.attributes.purchase_order_item.data
+                                    stock.attributes.stock_release_item.data
+                                        ?.attributes.purchase_order_item.data
                                         ?.attributes.unitPrice *
-                                        stock.attributes.stock_release_item.data?.attributes.quantity
+                                        stock.attributes.stock_release_item.data
+                                            ?.attributes.quantity
                                 )}</td
                             >
                         </tr>
@@ -443,7 +519,9 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
     {/if}
 </div>
 
-<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br
+/><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br
+/><br /><br />
 
 <style>
     .card {
@@ -467,10 +545,10 @@ import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternat
         }
 
         :global(#sapper) {
-            transform: scale(0.90);
+            transform: scale(0.9);
             transform-origin: top center;
         }
-        
+
         .card {
             box-shadow: none !important;
         }

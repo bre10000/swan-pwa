@@ -16,21 +16,11 @@
     import DataTableDetails from "../../widgets/table/DataTableDetails.svelte";
     import { exportToCsvAlternate } from "../../utils/export/csvGenerator";
     import { exportToPDFAlternate } from "../../utils/export/exportPDFAlternate";
-import { createActivityLog } from "../../utils/activity/log";
+    import { createActivityLog } from "../../utils/activity/log";
+    import { Moon } from "svelte-loading-spinners";
+import { numberWithCommas } from "../../lib";
 
-    const unsubscribe = user.subscribe((value) => {
-        if (!process.browser) {
-            return;
-        }
-
-        if (!value.loggedIn && value.fetched) {
-            goto("login");
-        } else if (value.data) {
-            getItems();
-        }
-    });
-
-    onDestroy(unsubscribe);
+    
 
     let query = "";
     let sortBy = "";
@@ -38,12 +28,16 @@ import { createActivityLog } from "../../utils/activity/log";
     let currentItem;
     let showConfirmation = false;
 
-    let rows = [];
+    let rows;
+
+    let filters = [];
+
+    let field, queryF;
 
     const columns = [
         {
             key: "id",
-            title: "ID",
+            title: "Batch #",
             sortable: true,
             filterValue: (v) => Math.floor(v.id / 10),
             interval: 10,
@@ -78,12 +72,12 @@ import { createActivityLog } from "../../utils/activity/log";
     ];
 
     const columnsDetails = [
-        {
-            key: "id",
-            title: "ID",
-            sortable: true,
-            selected: true,
-        },
+        // {
+        //     key: "id",
+        //     title: "Item ID",
+        //     sortable: true,
+        //     selected: true,
+        // },
         {
             key: "poNumber",
             title: "PO#",
@@ -114,12 +108,7 @@ import { createActivityLog } from "../../utils/activity/log";
             sortable: true,
             selected: true,
         },
-        {
-            key: "currency",
-            title: "Currency",
-            sortable: true,
-            selected: true,
-        },
+        
         {
             key: "unitPrice",
             title: "Unit Price",
@@ -129,6 +118,24 @@ import { createActivityLog } from "../../utils/activity/log";
         {
             key: "received",
             title: "Received",
+            sortable: true,
+            selected: true,
+        },
+        {
+            key: "total",
+            title: "Total",
+            sortable: true,
+            selected: true,
+        },
+        {
+            key: "currency",
+            title: "Currency",
+            sortable: true,
+            selected: true,
+        },
+        {
+            key: "balance",
+            title: "Balance",
             sortable: true,
             selected: true,
         },
@@ -149,6 +156,7 @@ import { createActivityLog } from "../../utils/activity/log";
     };
 
     async function getItems(filters, sort, page) {
+        rows = null;
         try {
             let params = {
                 filters: filters ? filters : {},
@@ -162,7 +170,13 @@ import { createActivityLog } from "../../utils/activity/log";
                         populate: "*",
                     },
                     stock_items: {
-                        populate: ['purchase_order_item', 'purchase_order_item.item', 'purchase_order_item.purchase_order'],
+                        populate: [
+                            "purchase_order_item",
+                            "purchase_order_item.item",
+                            "purchase_order_item.purchase_order",
+                            "stock_release_items",
+                            "stock_release_items.stock_release"
+                        ],
                     },
                 },
             };
@@ -231,8 +245,13 @@ import { createActivityLog } from "../../utils/activity/log";
                     },
                 });
 
-                createActivityLog("Stock", currentItem, "Delete", response.data.id)
-                
+                createActivityLog(
+                    "Stock",
+                    currentItem,
+                    "Delete",
+                    response.data.id
+                );
+
                 search();
             }
         } catch (e) {
@@ -242,8 +261,11 @@ import { createActivityLog } from "../../utils/activity/log";
 
     function getQS() {
         return {
+            $and: [
+                ...filters.map((x) => x.value),
+                {
+
             $or: [
-                
                 {
                     date: {
                         $containsi: query,
@@ -271,7 +293,7 @@ import { createActivityLog } from "../../utils/activity/log";
                                     $containsi: query,
                                 },
                             },
-                        }
+                        },
                     },
                 },
                 {
@@ -282,16 +304,18 @@ import { createActivityLog } from "../../utils/activity/log";
                                     $containsi: query,
                                 },
                             },
-                        }
+                        },
                     },
                 },
                 {
                     stock_items: {
                         purchase_order_item: {
-                            unit: {
-                                $containsi: query,
+                            item: {
+                                unit: {
+                                    $containsi: query,
+                                },
                             },
-                        }
+                        },
                     },
                 },
                 {
@@ -300,15 +324,190 @@ import { createActivityLog } from "../../utils/activity/log";
                             purchase_order: {
                                 poNumber: {
                                     $containsi: query,
-                                }
+                                },
                             },
-                        }
+                        },
                     },
                 },
-                
             ],
+                }
+            ]
         };
     }
+
+    function addFilter() {
+        if (field && queryF) {
+            if (
+                field == "warehouse" ||
+                field == "consortium_member" ||
+                field == "received"
+            ) {
+                let parent;
+                field = field.includes("item_id") ? "id" : field;
+                let field2 = field;
+
+                if (field == "consortium_member") {
+                    parent = "consortium_member";
+                }else if (field == "warehouse") {
+                    parent = "warehouse";
+                }  else {
+                    parent = "stock_items";
+                }
+
+                field = field.includes("name") ? "name" : field;
+                field = field.includes("consortium_member") ? "name" : field;
+                field = field.includes("warehouse") ? "name" : field;
+
+                let temp = {
+                    index: filters.length,
+                    value: {},
+                    name: field2,
+                    query: queryF,
+                };
+                temp.value[parent] = {};
+                temp.value[parent][field] = {
+                    $containsi: queryF,
+                };
+
+                filters = [temp, ...filters];
+            } else if (
+                field == "currency" ||
+                field == "unitPrice" ||
+                field == "quantity"
+            ) {
+                let grandparent, parent;
+                let field2 = field;
+
+                grandparent = "stock_items";
+                parent = "purchase_order_item";
+
+                let temp = {
+                    index: filters.length,
+                    value: {},
+                    name: field2,
+                    query: queryF,
+                };
+
+                temp.value[grandparent] = {};
+                temp.value[grandparent][parent] = {};
+                temp.value[grandparent][parent][field] = {
+                    $containsi: queryF,
+                };
+                console.log("Custom Filter", temp);
+
+                filters = [temp, ...filters];
+            } else if (
+                field == "item" ||
+                field == "unit" ||
+                field == "pieces" 
+                
+            ) {
+                let greatgrandparent,grandparent, parent;
+                let field2 = field;
+
+                greatgrandparent = "stock_items";
+                grandparent = "purchase_order_item";
+                parent = "item";
+
+                field = field.includes("item") ? "name" : field;
+
+                let temp = {
+                    index: filters.length,
+                    value: {},
+                    name: field2,
+                    query: queryF,
+                };
+
+                temp.value[greatgrandparent] = {};
+                temp.value[greatgrandparent][grandparent] = {};
+                temp.value[greatgrandparent][grandparent][parent] = {};
+
+                if(field == "id"){
+                    temp.value[greatgrandparent][grandparent][parent][field] = {
+                                            $eq: queryF,
+                    };
+                } else {
+                    temp.value[greatgrandparent][grandparent][parent][field] = {
+                        $containsi: queryF,
+                    };
+                }
+                
+                console.log("Custom Filter", temp);
+
+                filters = [temp, ...filters];
+            } else if (
+                field == "poNumber"
+            ) {
+                let greatgrandparent, grandparent, parent;
+                let field2 = field;
+
+                greatgrandparent = "stock_items";
+                grandparent = "purchase_order_item";
+                parent =  "purchase_order";
+
+
+                let temp = {
+                    index: filters.length,
+                    value: {},
+                    name: field2,
+                    query: queryF,
+                };
+
+                temp.value[greatgrandparent] = {};
+                temp.value[greatgrandparent][grandparent] = {};
+                temp.value[greatgrandparent][grandparent][parent] = {};
+
+                if(field == "id"){
+                    temp.value[greatgrandparent][grandparent][parent][field] = {
+                                            $eq: queryF,
+                    };
+                } else {
+                    temp.value[greatgrandparent][grandparent][parent][field] = {
+                        $containsi: queryF,
+                    };
+                }
+                
+                console.log("Custom Filter", temp);
+
+                filters = [temp, ...filters];
+            }else {
+                let temp = {
+                    index: filters.length,
+                    value: {},
+                    name: field,
+                    query: queryF,
+                };
+
+                temp.value[field] = {
+                    $containsi: queryF,
+                };
+
+                filters = [temp, ...filters];
+            }
+
+            field = "";
+            queryF = "";
+
+            search();
+            console.log({ filters });
+        }
+    }
+
+    function removeFilter(f) {
+        filters = [...filters.filter((x) => x.index !== f.index)];
+        search();
+    }
+
+    function getStockBalance(item) {
+		let temp = 0;
+		if(item.attributes.stock_release_items?.data){
+			item.attributes.stock_release_items?.data?.forEach(element => {
+				temp = temp + element.attributes.quantity
+			});
+		}
+
+		return numberWithCommas(item.attributes.received - temp)
+	}
 
     function getPopulatedDataPdf(rowss) {
         let array = [];
@@ -334,15 +533,26 @@ import { createActivityLog } from "../../utils/activity/log";
                     "-",
                     "-",
                     "-",
-                    elementC.id,
-                    elementC.attributes.purchase_order_item.data.attributes.purchase_order.data.attributes.poNumber,
-                    elementC.attributes.purchase_order_item.data.attributes.item.data.attributes.name,
-                    elementC.attributes.purchase_order_item.data.attributes.unit,
-                    elementC.attributes.purchase_order_item.data.attributes.pieces,
-                    elementC.attributes.purchase_order_item.data.attributes.quantity,
-                    elementC.attributes.purchase_order_item.data.attributes.currency,
-                    elementC.attributes.purchase_order_item.data.attributes.unitPrice,
+                    // elementC.id,
+                    elementC.attributes.purchase_order_item.data.attributes
+                        .purchase_order.data.attributes.poNumber,
+                    elementC.attributes.purchase_order_item.data.attributes.item
+                        .data.attributes.name,
+                    elementC.attributes.purchase_order_item.data.attributes.item?.data.attributes
+                        .unit,
+                    elementC.attributes.purchase_order_item.data.attributes.item?.data.attributes
+                        .pieces,
+                    elementC.attributes.purchase_order_item.data.attributes
+                        .quantity,
+                    
+                    elementC.attributes.purchase_order_item.data.attributes
+                        .unitPrice,
                     elementC.attributes.received,
+                    numberWithCommas( elementC.attributes.purchase_order_item.data.attributes
+                        .unitPrice * elementC.attributes.received),
+                    elementC.attributes.purchase_order_item.data.attributes
+                        .currency,
+                    getStockBalance(elementC)
                 ]);
             });
         });
@@ -351,7 +561,7 @@ import { createActivityLog } from "../../utils/activity/log";
 
     function exportcsv() {
         let now = new Date();
-        let fname = `"SWAN "${"Stocks"} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+        let fname = `SWAN ${"Stocks"} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
         let array = getPopulatedDataPdf(rows);
 
@@ -379,7 +589,11 @@ import { createActivityLog } from "../../utils/activity/log";
                         populate: "*",
                     },
                     stock_items: {
-                        populate: ['purchase_order_item', 'purchase_order_item.item', 'purchase_order_item.purchase_order'],
+                        populate: [
+                            "purchase_order_item",
+                            "purchase_order_item.item",
+                            "purchase_order_item.purchase_order",
+                        ],
                     },
                 },
                 "pagination[limit]": -1,
@@ -391,7 +605,7 @@ import { createActivityLog } from "../../utils/activity/log";
             let response = await get("stocks", params);
 
             let now = new Date();
-            let fname = `"SWAN "${"Stocks"} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+            let fname = `SWAN ${"Stocks"} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
             let array = getPopulatedDataPdf(response.data);
 
@@ -415,7 +629,11 @@ import { createActivityLog } from "../../utils/activity/log";
                         populate: "*",
                     },
                     stock_items: {
-                        populate: ['purchase_order_item', 'purchase_order_item.item', 'purchase_order_item.purchase_order'],
+                        populate: [
+                            "purchase_order_item",
+                            "purchase_order_item.item",
+                            "purchase_order_item.purchase_order",
+                        ],
                     },
                 },
             };
@@ -432,6 +650,25 @@ import { createActivityLog } from "../../utils/activity/log";
             );
         } catch (e) {}
     }
+
+    
+
+
+    const unsubscribe = user.subscribe((value) => {
+        if (!process.browser) {
+            return;
+        }
+
+        if (!value.loggedIn && value.fetched) {
+            goto("login");
+        } else if (value.data) {
+            getItems();
+        }
+    });
+
+    
+
+    onDestroy(unsubscribe);
 </script>
 
 <svelte:head>
@@ -442,7 +679,7 @@ import { createActivityLog } from "../../utils/activity/log";
 <div class="container px-6">
     <div class="columns">
         <div class="column">
-            <h3>
+            <h3 class="has-text-info">
                 Stocks
                 {#if pagination}
                     <span class="gray has-text-weight-light ml-2"
@@ -464,12 +701,12 @@ import { createActivityLog } from "../../utils/activity/log";
     </div>
 
     <div class="columns">
-        <div class="column">
-            <div class="field has-addons" style="width: 500px;">
+        <div class="column is-narrow">
+            <div class="field has-addons" style="width: 400px;">
                 <div class="control has-icons-left">
                     <input
                         bind:value={query}
-                        class="input is-dark"
+                        class="input is-light"
                         type="search"
                         placeholder="search"
                     />
@@ -479,7 +716,7 @@ import { createActivityLog } from "../../utils/activity/log";
                 </div>
                 <div class="control">
                     <button
-                        class="button is-dark has-text-weight-bold"
+                        class="button is-light has-text-weight-bold"
                         on:click={search}
                     >
                         Search
@@ -487,6 +724,75 @@ import { createActivityLog } from "../../utils/activity/log";
                 </div>
             </div>
         </div>
+
+        <div class="column is-narrow">
+            <div class="dropdown is-hoverable">
+                <div class="dropdown-trigger">
+                    <button
+                        class="button is-light px-5 has-text-weight-bold"
+                        aria-haspopup="true"
+                        aria-controls="dropdown-menu"
+                    >
+                        <span class="panel-icon pr-4" style="margin-top: -7px;">
+                            <svg
+                                width="24"
+                                height="24"
+                                stroke-width="1.5"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M2.99997 7V4C2.99997 3.44772 3.44769 3 3.99997 3H20.0001C20.5523 3 21 3.44766 21.0001 3.9999L21.0004 7M2.99997 7L9.65077 12.7007C9.87241 12.8907 9.99998 13.168 9.99998 13.4599V19.7192C9.99998 20.3698 10.6114 20.8472 11.2425 20.6894L13.2425 20.1894C13.6877 20.0781 14 19.6781 14 19.2192V13.46C14 13.168 14.1275 12.8907 14.3492 12.7007L21.0004 7M2.99997 7H21.0004"
+                                    stroke="currentColor"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+                        </span>
+                        <span>Filter</span>
+                    </button>
+                </div>
+                <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                    <div class="dropdown-content has-text-left p-3">
+                        <div class="field">
+                            <label for="" class="gray">Field</label><br />
+                            <div
+                                class="control select has-background-light is-fullwidth"
+                            >
+                                <select
+                                    required
+                                    bind:value={field}
+                                    name="category"
+                                >
+                                    {#each columns.concat(columnsDetails).filter( x => x.key !== "total" && x.key !== "balance") as c}
+                                        <option value={c.key}>{c.title}</option>
+                                    {/each}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label for="" class="gray">Query</label><br />
+                            <div class="control">
+                                <input
+                                    bind:value={queryF}
+                                    class="input has-background-light"
+                                    required
+                                    type="text"
+                                />
+                            </div>
+                        </div>
+
+                        <button
+                            on:click|preventDefault={addFilter}
+                            class="button is-fullwidth is-dark my-2 px-5 py-2 has-text-weight-bold"
+                            >ADD</button
+                        >
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="column has-text-right">
             <div class="dropdown is-hoverable">
                 <div class="dropdown-trigger">
@@ -537,6 +843,28 @@ import { createActivityLog } from "../../utils/activity/log";
             </div>
         </div>
     </div>
+
+    <div class="container">
+        {#if filters?.length > 0}
+            {#each filters as f (f.index)}
+                <span class="tag is-light is-medium is-rounded p-4 mr-4">
+                    <b class="mx-2">
+                        {columns
+                            .concat(columnsDetails)
+                            .filter((c) => c.key == f?.name)[0]?.title}
+                    </b>
+                    contains
+                    <b class="mx-2">{f.query}</b>
+                    <button
+                        on:click={() => removeFilter(f)}
+                        class="delete is-small"
+                    />
+                </span>
+            {/each}
+        {/if}
+    </div>
+    <br />
+
     <div class="card">
         {#if rows?.length > 0}
             <DataTableDetails
@@ -553,11 +881,19 @@ import { createActivityLog } from "../../utils/activity/log";
                 on:clickRow={editRow}
                 on:printRow={printRow}
             />
-        {:else}
+        {:else if rows}
             <div class="has-text-centered">
                 <br /><br /><br /><br />
                 <Icon data={faSearch} scale="3" />
                 <p class="gray">Uh oh! nothing found on database.</p>
+                <br /><br /><br /><br />
+            </div>
+        {:else}
+            <div class="has-text-centered">
+                <br /><br /><br /><br />
+                <div class="is-flex is-justify-content-center">
+                    <Moon size="60" color="blue" unit="px" duration="1s" />
+                </div>
                 <br /><br /><br /><br />
             </div>
         {/if}

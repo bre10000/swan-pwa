@@ -2,6 +2,7 @@
     import { get } from "../../../../lib/api";
     import {
         faAngleLeft,
+        faSave,
         faFileExcel,
         faFilePdf,
         faPrint,
@@ -86,6 +87,15 @@
                         },
                     },
                 },
+                {
+                    stock_release_item: {
+                        stock_release: {
+                            id: {
+                                $not: null,
+                            },
+                        },
+                    },
+                },
             ],
         };
 
@@ -99,6 +109,8 @@
                 },
             });
         }
+
+        console.log({ filter });
 
         getItem(filter);
     }
@@ -121,10 +133,7 @@
 
             destinations = response.data
                 .map((x) => {
-                    return {
-                        value: x.attributes.destination,
-                        label: x.attributes.destination,
-                    };
+                    return x.attributes.destination;
                 })
                 .filter(onlyUnique);
         } catch (e) {
@@ -242,9 +251,11 @@
                     .purchase_order_item.data.attributes.item.data.attributes
                     .category,
                 elementC.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data.attributes.unit,
+                    .purchase_order_item.data.attributes.item.data.attributes
+                    .unit,
                 elementC.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data.attributes.pieces,
+                    .purchase_order_item.data.attributes.item.data.attributes
+                    .pieces,
                 elementC.attributes.stock_release_item.data?.attributes
                     .purchase_order_item.data.attributes.currency,
                 elementC.attributes.stock_release_item.data?.attributes
@@ -282,7 +293,7 @@
 
     function exportcsv() {
         let now = new Date();
-        let fname = `"SWAN Waybill by Destination - " ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+        let fname = `SWAN Waybill by Destination -  ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
         let array = getPopulatedDataPdf(waybill_items);
 
@@ -445,7 +456,16 @@
         <div class="card p-6">
             <br />
 
-            <h3 class="is-size-5">Waybill by Destination</h3>
+            <div class="columns">
+                <div class="column is-narrow mr-5">
+                    <img src="./images/logo/swan_consortium.svg" width="150" alt="SWAN Humaniterian Consortium">
+                </div>
+                <div class="column is-flex is-align-items-center">
+                    <h3 class="is-size-5">Waybill by Destination</h3>
+                </div>
+            </div>
+
+            
             <hr />
             {#if $start.value != $end.value}
                 <p class="gray">
@@ -506,12 +526,20 @@
                         <td
                             >{stock.attributes.stock_release_item.data
                                 ?.attributes.purchase_order_item.data
-                                ?.attributes.unit}</td
+                                ?.attributes.item.data?.attributes.unit
+                                ? stock.attributes.stock_release_item.data
+                                      ?.attributes.purchase_order_item.data
+                                      ?.attributes.item.data?.attributes.unit
+                                : "-"}</td
                         >
                         <td
                             >{stock.attributes.stock_release_item.data
                                 ?.attributes.purchase_order_item.data
-                                ?.attributes.pieces}</td
+                                ?.attributes.item.data?.attributes.pieces
+                                ? stock.attributes.stock_release_item.data
+                                      ?.attributes.purchase_order_item.data
+                                      ?.attributes.item.data?.attributes.pieces
+                                : "-"}</td
                         >
 
                         <td

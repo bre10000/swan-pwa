@@ -1,15 +1,15 @@
 <br /><br />
 <div class="container px-6 dashboard">
-  <h3 >Reports</h3>
+  <h3 class="has-text-info" >Reports</h3>
   <br />
 
-  <div class="card columns is-multiline p-5">
+  <div class="card no-shadow columns is-multiline p-5">
 
 
     <a href="reports/aggregate/waybill-destination" class="column is-4">
       <div>
           <div class="card">
-            <div class="card-image p-6">
+            <div class="card-image p-2">
               <figure
                 class="image is-4by3"
                 style="background-image: url('images/reports/1.jpg');"
@@ -30,7 +30,7 @@
     <a href="reports/aggregate/item-waybill-category" class="column is-4">
       <div>
           <div class="card">
-            <div class="card-image p-6">
+            <div class="card-image p-2">
               <figure
                 class="image is-4by3"
                 style="background-image: url('images/reports/2.jpg');"
@@ -51,7 +51,7 @@
     <!-- <a href="reports/aggregate/item-stock-release-consortium" class="column is-4">
       <div>
           <div class="card">
-            <div class="card-image p-6">
+            <div class="card-image p-2">
               <figure
                 class="image is-4by3"
                 style="background-image: url('images/reports/3.jpg');"
@@ -72,7 +72,7 @@
     <a href="reports/aggregate/stock-balance" class="column is-4">
       <div>
           <div class="card">
-            <div class="card-image p-6">
+            <div class="card-image p-2">
               <figure
                 class="image is-4by3"
                 style="background-image: url('images/reports/4.jpg');"
@@ -93,7 +93,7 @@
     <a href="reports/aggregate/item-search" class="column is-4">
       <div>
           <div class="card">
-            <div class="card-image p-6">
+            <div class="card-image p-2">
               <figure
                 class="image is-4by3"
                 style="background-image: url('images/reports/6.jpg');"
@@ -114,7 +114,7 @@
     <a href="reports/aggregate/stock-warehouse" class="column is-4">
       <div>
           <div class="card">
-            <div class="card-image p-6">
+            <div class="card-image p-2">
               <figure
                 class="image is-4by3"
                 style="background-image: url('images/reports/7.jpg');"
@@ -144,6 +144,9 @@
     background-size: contain;
     background-position: center center;
     background-repeat: no-repeat;
+    width: 150px;
+    height: 100px;
+    margin: 0 auto;
   }
   .card .card{
     height: 100%;
@@ -154,7 +157,7 @@
     border: 1px solid rgb(240, 240, 240);
   }
   .card .card:hover{    
-    border: 1px solid blue;
+    border: 2px solid #0000BF;
   }
   a.column div{
     height: 100%;

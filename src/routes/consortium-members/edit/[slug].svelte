@@ -10,7 +10,8 @@
     import { get, post, put } from "../../../lib/api";
     import { goto } from "@sapper/app";
     import { toast } from "@zerodevx/svelte-toast";
-    import { faAngleLeft, faUpload } from "@fortawesome/free-solid-svg-icons";
+    import { faAngleLeft,
+faSave, faUpload } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import { api_url, image_url } from "../../../config";
     import { get as getIDB } from "idb-keyval";
@@ -267,10 +268,10 @@ import { json } from "svelte-i18n";
 
                 <div class="container-fluid has-text-centered py-2">
                     <button
-                        disabled={!$formItem.valid || !$formItem.dirty}
+                        disabled={!$formItem.valid && !$formItem.dirty}
                         on:click|preventDefault={uploadImage}
                         class="button is-dark my-2 px-5 py-2 has-text-weight-bold"
-                        >Save</button
+                        ><Icon data={faSave}/>  <span class="ml-2 has-text-white">Save</span></button
                     >
                 </div>
             </div>

@@ -64,10 +64,10 @@
   </ul>
 </nav>
 
-
 <style>
   .is-current {
-    background-color: black;
+    background-color: #0000BF;
+    border: none;
   }
+  
 </style>
-

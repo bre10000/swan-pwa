@@ -64,6 +64,7 @@
     "sapper": "^0.28.0",
     "svelte": "^3.44.2",
     "svelte-forms": "^2.2.1",
+    "svelte-loading-spinners": "^0.1.7",
     "svelte-select": "^4.4.7"
   }
 }

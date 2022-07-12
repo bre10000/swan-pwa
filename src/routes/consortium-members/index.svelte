@@ -1,9 +1,13 @@
 <script>
     import Icon from "svelte-awesome/components/Icon.svelte";
     import {
+faChartLine,
+faCross,
+faEdit,
         faFileExport,
         faPlus,
         faSearch,
+faTruck,
     } from "@fortawesome/free-solid-svg-icons";
 
     import { onDestroy } from "svelte";
@@ -17,20 +21,9 @@
     import { exportToCSV } from "../../utils/export/exportCSV";
     import { exportToPDF } from "../../utils/export/exportPDF";
     import { image_url } from "../../config";
+import { Moon } from "svelte-loading-spinners";
 
-    const unsubscribe = user.subscribe((value) => {
-        if (!process.browser) {
-            return;
-        }
-
-        if (!value.loggedIn && value.fetched) {
-            goto("login");
-        } else if (value.data) {
-            getConsortiumMembers();
-        }
-    });
-
-    onDestroy(unsubscribe);
+    
 
     let query = "",
         queryC = "";
@@ -39,7 +32,7 @@
     let currentConsortiumMember;
     let showConfirmation = false;
 
-    let rows = [];
+    let rows;
 
     const columns = [
         {
@@ -106,6 +99,7 @@
     };
 
     async function getConsortiumMembers(filters, sort, page) {
+        rows = null;
         try {
             let params = {
                 filters: filters ? filters : {},
@@ -240,6 +234,23 @@
             exportToPDF("Consortium Members", response.data, columns);
         } catch (e) {}
     }
+
+
+
+    const unsubscribe = user.subscribe((value) => {
+        if (!process.browser) {
+            return;
+        }
+
+        if (!value.loggedIn && value.fetched) {
+            goto("login");
+        } else if (value.data) {
+            getConsortiumMembers();
+        }
+    });
+
+    onDestroy(unsubscribe);
+    
 </script>
 
 <svelte:head>
@@ -250,7 +261,7 @@
 <div class="container px-6">
     <div class="columns">
         <div class="column">
-            <h3>
+            <h3 class="has-text-info">
                 Consortium Members
                 {#if pagination}
                     <span class="gray has-text-weight-light ml-2"
@@ -277,7 +288,7 @@
                 <div class="control has-icons-left">
                     <input
                         bind:value={query}
-                        class="input is-dark"
+                        class="input is-light"
                         type="search"
                         placeholder="search"
                     />
@@ -287,7 +298,7 @@
                 </div>
                 <div class="control">
                     <button
-                        class="button is-dark has-text-weight-bold"
+                        class="button is-light has-text-weight-bold"
                         on:click={search}
                     >
                         Search
@@ -379,23 +390,31 @@
                         <div class="card-footer">
                             <a
                                 href="reports/consortium/stock/{r.id}"
-                                class="card-footer-item has-text-dark">Stock</a
+                                class="card-footer-item  button is-primary is-light">
+                                <Icon  data={faChartLine}/>
+                                <span class="ml-4">Stock</span>
+                                </a
                             >
                             <a
                                 href="reports/consortium/waybill/{r.id}"
-                                class="card-footer-item has-text-dark"
-                                >Waybill</a
+                                class="card-footer-item  button is-primary is-light"
+                                >
+                                <Icon  data={faTruck}/>
+                                <span class="ml-4">Waybill</span></a
                             >
                         </div>
                         <div class="card-footer">
                             <a
                                 href="consortium-members/edit/{r.id}"
-                                class="card-footer-item has-text-dark">Edit</a
+                                class="card-footer-item  button is-info is-light">
+                                
+                                Edit</a
                             >
                             <a
                                 href={"#"}
                                 on:click|preventDefault={() => deleteRow(r)}
-                                class="card-footer-item has-text-dark">Delete</a
+                                class="card-footer-item button is-danger is-light">
+                                Delete</a
                             >
                         </div>
                     </div>
@@ -411,11 +430,19 @@
                 on:editRow={editRow}
                 on:clickRow={editRow}
             /> -->
-            {:else}
-                <div class="column has-text-centered">
+            {:else if rows}
+                <div class="has-text-centered"  style="width: 100%;">
                     <br /><br /><br /><br />
                     <Icon data={faSearch} scale="3" />
                     <p class="gray">Uh oh! nothing found on database.</p>
+                    <br /><br /><br /><br />
+                </div>
+            {:else}
+                <div class="has-text-centered" style="width: 100%;">
+                    <br /><br /><br /><br />
+                    <div class="is-flex is-justify-content-center">
+                        <Moon size="60" color="blue" unit="px" duration="1s" />
+                    </div>
                     <br /><br /><br /><br />
                 </div>
             {/if}

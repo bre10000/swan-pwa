@@ -12,6 +12,7 @@
   import qs from "qs";
   import { get } from "../../lib/api";
   import { Chart } from "frappe-charts";
+  import { goto } from "@sapper/app";
 
   const unsubscribe = user.subscribe((value) => {
     if (!process.browser) {
@@ -62,6 +63,8 @@
           "consortium_member",
           "stock_release_items",
           "stock_release_items.purchase_order_item",
+          "stock_release_items.stock_item",
+          "stock_release_items.stock_item.stock",
         ],
         "pagination[limit]": -1,
       };
@@ -73,6 +76,10 @@
       console.log("Get Stock Release ", response);
 
       stock_releases = response.data;
+
+      stock_releases.forEach(element => {
+        element.attributes.stock_release_items.data = element.attributes.stock_release_items?.data.filter( x => x.attributes.stock_item?.data?.attributes.stock?.data.id )
+      });
 
       let array = generateGraphStockRelease();
 
@@ -101,6 +108,7 @@
           "consortium_member",
           "stock_items",
           "stock_items.purchase_order_item",
+          "stock_items.purchase_order_item.purchase_order",
         ],
         "pagination[limit]": -1,
       };
@@ -112,6 +120,11 @@
       console.log("Get Stock  ", response);
 
       stocks = response.data;
+
+      stocks.forEach(element => {
+        element.attributes.stock_items.data = element.attributes.stock_items.data.filter( x => x.attributes.purchase_order_item?.data?.attributes.purchase_order?.data.id );
+
+      });
 
       let array = generateGraphStock();
 
@@ -138,20 +151,25 @@
 
     let array = [];
     stocks.forEach((element2) => {
-      let value = 0;
+      
 
+      let valueTotal = 0;
       element2.attributes.stock_items.data?.forEach((element) => {
+        let value = 0;
         value +=
-          element.attributes.purchase_order_item.data?.attributes.unitPrice *
-          element.attributes.received;
+        parseFloat(element.attributes.purchase_order_item.data?.attributes.unitPrice) *
+        parseFloat(element.attributes.received);
+        console.log(value);
         temp += value;
-        tempQuantity += parseInt(element.attributes.received);
+        valueTotal += value
+        tempQuantity += parseFloat(element.attributes.received);
       });
 
       let data = {
         name: element2.attributes.consortium_member.data?.attributes.name,
-        value: value,
+        value: valueTotal,
       };
+
 
       if (array.filter((x) => x.name == data.name).length > 0) {
         array.filter((x) => x.name == data.name)[0].value += data.value;
@@ -172,19 +190,23 @@
 
     let array = [];
     stock_releases.forEach((element2) => {
-      let value = 0;
-
+      
+      let valueTotal = 0;
       element2.attributes.stock_release_items.data?.forEach((element) => {
+        let value = 0;
+
         value +=
           element.attributes.purchase_order_item.data?.attributes.unitPrice *
           element.attributes.quantity;
+
+        valueTotal += value
         temp += value;
-        tempQuantity += parseInt(element.attributes.quantity);
+        tempQuantity += parseFloat(element.attributes.quantity);
       });
 
       let data = {
         name: element2.attributes.consortium_member.data?.attributes.name,
-        value: value,
+        value: valueTotal,
       };
 
       if (array.filter((x) => x.name == data.name).length > 0) {
@@ -207,13 +229,13 @@
       let f = new Chart("#stocksChart", {
         data: dataStock,
         type: "donut",
-        height: 380,
+        height: 340,
         // colors: ["#e9724d", "#d6d727", "#92cad1", "#79ccb3"],
       });
       let f2 = new Chart("#stockReleasesChart", {
         data: datastockRelease,
         type: "donut",
-        height: 380,
+        height: 340,
       });
     } catch (e) {
       console.warn("Error Setting up charts", e);
@@ -233,22 +255,22 @@
 
 <br /><br />
 <div class="container px-6 dashboard">
-  <h3>Dashboard</h3>
-  <br />
-
+  <h3 class="has-text-info">Dashboard</h3>
+  <br>
+  
   <div class="columns">
-    <div class="column card p-6">
+    <div  on:click={() => goto("consortium-members")} class="column card has-background-light no-shadow p-5">
       <Icon data={faChartLine} scale="2" /><br /><br />
-      <h1 style="line-height: 1;color: blue;" class="is-size-2 my-1">
+      <h1 style="line-height: 1;color: #0000BF;" class="is-size-2 my-1">
         {numberWithCommas(totalStock)} ETB
       </h1>
       <p>{numberWithCommas(totalStockQuantity)} Items</p> 
       <p class="gray">Total Stock</p>
     </div>
     <div class="column is-narrow"><div class="px-2" /></div>
-    <div class="column card p-6">
+    <div  on:click={() => goto("consortium-members")}  class="column card has-background-light no-shadow p-5">
       <Icon data={faTruck} scale="2" /><br /><br />
-      <h1 style="line-height: 1;color: blue;" class="is-size-2 my-1">
+      <h1 style="line-height: 1;color: #0000BF;" class="is-size-2 my-1">
         {numberWithCommas(totalStockRelease)} ETB
       </h1>
       <p>{numberWithCommas(totalStockReleaseQuantity)} Items</p> 
@@ -258,14 +280,14 @@
 
 
 
-  <br><br><br>
+  <br>
 
   <div class="columns">
     <div class="column">
-      <div id="stocksChart" class="px-6 chart" />
+      <div id="stocksChart" class="px-4 chart" />
     </div>
     <div class="column">
-      <div id="stockReleasesChart" class="px-6 chart" />
+      <div id="stockReleasesChart" class="px-4 chart" />
     </div>
   </div>
 
@@ -277,10 +299,14 @@
   }
 
   :global(.container.px-6.dashboard svg *) {
-    color: blue !important;
+    color: #0000BF !important;
   }
 
   :global(.chart *) {
     color: white !important;
+  }
+
+  .has-background-lightblue{
+    background-color: rgb(rgb(151, 151, 255)) !important;
   }
 </style>

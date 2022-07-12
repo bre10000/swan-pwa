@@ -6,6 +6,7 @@
   import Icon from "svelte-awesome/components/Icon.svelte";
   import { user } from "../store/user";
   import { sessionStore } from "../store/session";
+  import { Moon } from "svelte-loading-spinners";
 
   let error;
   async function logout() {
@@ -25,7 +26,7 @@
   <meta data-hid="og:title" name="og_title" content="Logout" />
 </svelte:head>
 
-<div class="columns py-6 px-4 m-6">
+<div class="py-6 px-4 m-6 has-text-centered" style="height: 100vh;">
   {#if error}
     <h5 class="is-size-1 has-text-weight-bold">Shoot!</h5>
     <h5 class="is-size-3">Well, this is unexpected...</h5>
@@ -34,12 +35,9 @@
       Try again in a few minutes.
     </h5>
   {:else}
-    <div class="has-text-centered">
-      <br /><br />
-      <h1 class="is-size-1"><Icon spin={true} data={faSpinner} scale="2" /></h1>
-      <p class="gray">Signing Out ...</p>
-      <!-- <a href="advertise/add-campaign" class="button is-gradient is-medium has-text-white my-2 is-outlined is-rounded px-5 py-2 has-text-weight-bold">Post Campaign</a> -->
-      <br /><br />
+  <br><br><br><br>
+    <div class="is-flex is-justify-content-center">
+      <Moon size="60" color="blue" unit="px" duration="1s" />
     </div>
   {/if}
 </div>

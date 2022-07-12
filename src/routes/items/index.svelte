@@ -16,20 +16,9 @@
     import { toast } from "@zerodevx/svelte-toast";
     import { exportToCSV } from "../../utils/export/exportCSV";
     import { exportToPDF } from "../../utils/export/exportPDF";
+    import { Moon } from "svelte-loading-spinners";
 
-    const unsubscribe = user.subscribe((value) => {
-        if (!process.browser) {
-            return;
-        }
-
-        if (!value.loggedIn && value.fetched) {
-            goto("login");
-        } else if (value.data) {
-            getItems();
-        }
-    });
-
-    onDestroy(unsubscribe);
+    
 
     let query = "",
         queryC = "";
@@ -38,7 +27,7 @@
     let currentItem;
     let showConfirmation = false;
 
-    let rows = [];
+    let rows;
 
     const columns = [
         {
@@ -67,6 +56,22 @@
             filterType: "string",
             selected: true,
         },
+        {
+            key: "unit",
+            title: "Unit",
+            sortable: true,
+            filterValue: (v) => v.last_name.charAt(0).toLowerCase(),
+            filterType: "string",
+            selected: true,
+        },
+        {
+            key: "pieces",
+            title: "Pieces",
+            sortable: true,
+            filterValue: (v) => v.last_name.charAt(0).toLowerCase(),
+            filterType: "string",
+            selected: true,
+        },
     ];
 
     let pagination;
@@ -81,6 +86,7 @@
     };
 
     async function getItems(filters, sort, page) {
+        rows = null;
         try {
             let params = {
                 filters: filters ? filters : {},
@@ -166,6 +172,16 @@
                         $containsi: query,
                     },
                 },
+                {
+                    unit: {
+                        $containsi: query,
+                    },
+                },
+                {
+                    pieces: {
+                        $containsi: query,
+                    },
+                },
             ],
         };
     }
@@ -189,7 +205,7 @@
 
             let response = await get("items", params);
 
-            exportToCSV("Items", response.data, columns);
+            exportToCSV("Items", response?.data, columns);
         } catch (e) {}
     }
 
@@ -204,9 +220,25 @@
 
             let response = await get("items", params);
 
-            exportToPDF("Items", response.data, columns);
+            exportToPDF("Items", response?.data, columns);
         } catch (e) {}
     }
+
+
+
+    const unsubscribe = user.subscribe((value) => {
+        if (!process.browser) {
+            return;
+        }
+
+        if (!value.loggedIn && value.fetched) {
+            goto("login");
+        } else if (value.data) {
+            getItems();
+        }
+    });
+
+    onDestroy(unsubscribe);
 </script>
 
 <svelte:head>
@@ -217,7 +249,7 @@
 <div class="container px-6">
     <div class="columns">
         <div class="column">
-            <h3>
+            <h3 class="has-text-info">
                 Items
                 {#if pagination}
                     <span class="gray has-text-weight-light ml-2"
@@ -244,7 +276,7 @@
                 <div class="control has-icons-left">
                     <input
                         bind:value={query}
-                        class="input is-dark"
+                        class="input is-light"
                         type="search"
                         placeholder="search"
                     />
@@ -254,7 +286,7 @@
                 </div>
                 <div class="control">
                     <button
-                        class="button is-dark has-text-weight-bold"
+                        class="button is-light has-text-weight-bold"
                         on:click={search}
                     >
                         Search
@@ -325,11 +357,20 @@
                 on:editRow={editRow}
                 on:clickRow={editRow}
             />
-        {:else}
+            {:else if rows}
             <div class="has-text-centered">
                 <br /><br /><br /><br />
                 <Icon data={faSearch} scale="3" />
                 <p class="gray">Uh oh! nothing found on database.</p>
+                <br /><br /><br /><br />
+            </div>
+
+            {:else}
+            <div class="has-text-centered">
+                <br /><br /><br /><br />
+                <div class="is-flex is-justify-content-center">
+                    <Moon size="60" color="blue" unit="px" duration="1s" />
+                </div>
                 <br /><br /><br /><br />
             </div>
         {/if}

@@ -1,21 +1,19 @@
-<script context="module">
-    export async function preload(params) {
-        return { slug: parseInt(params.params.slug) };
-    }
-</script>
-
 <script>
     import { form, field } from "svelte-forms";
     import { email, required } from "svelte-forms/validators";
     import { get, put } from "../lib/api";
     import { goto } from "@sapper/app";
     import { toast } from "@zerodevx/svelte-toast";
-    import { faAngleLeft } from "@fortawesome/free-solid-svg-icons";
+    import { faAngleLeft,
+faSave, faUpload } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import { onDestroy, onMount } from "svelte";
     import { user } from "../store/user";
+    import { api_url, image_url } from "../config";
+    import { get as getIDB } from 'idb-keyval'
+import { createActivityLog } from "../utils/activity/log";
 
-    export let slug;
+
 
 
     const name = field("name", "", [required()]);
@@ -26,7 +24,23 @@
     const formItem = form(name, username, emailValue);
 
 
-    async function add() {
+    let thumbnail, fileinput;
+
+    let url, imageID;
+
+    const onFileSelected = (e) => {
+        let image = e.target.files[0];
+        let reader = new FileReader();
+        reader.readAsDataURL(image);
+        reader.onload = (e) => {
+            thumbnail = e.target.result;
+        };
+    };
+
+
+
+
+    async function add(file) {
         await formItem.validate()
         if(!$formItem.valid){
             return;
@@ -39,6 +53,7 @@
                         name: $name.value,
                         username: $username.value,
                         email: $emailValue.value,
+                        avatar: file? file.id : imageID
                     
                 },
             });
@@ -53,6 +68,13 @@
                         "--toastBarBackground": "#2F855A",
                     },
                 });
+                createActivityLog(
+                    "User",
+                    response,
+                    "Profile Edit",
+                    response.id
+                );
+                
                 user.createUser();
                 goto("dashboard");
             }
@@ -61,6 +83,40 @@
         }
     }
 
+
+    async function uploadImage() {
+        try {
+            if (!thumbnail) {
+                add();
+                return;
+            }
+
+            let API_ENDPOINT = api_url + "/upload";
+            const request = new XMLHttpRequest();
+            const formData = new FormData();
+
+            request.open("POST", API_ENDPOINT, true);
+            request.setRequestHeader(
+                "Authorization",
+                "Bearer " + (await getIDB("session"))
+            );
+            request.onreadystatechange = () => {
+                if (request.readyState === 4 && request.status === 200) {
+                    // console.log(request.responseText);
+                    let file = JSON.parse(request.responseText)[0];
+                    add(file);
+                }
+                console.log("Image Upload Request", request);
+            };
+            console.log(fileinput.files[0]);
+            formData.append("files", fileinput.files[0]);
+            
+            console.log("Form Data", formData);
+            await request.send(formData);
+        } catch (e) {
+            console.log("Error Image Upload Request", e);
+        }
+    }
 
 
     const unsubscribe = user.subscribe((value) => {
@@ -74,6 +130,9 @@
       name.set(value.data.name);
       emailValue.set(value.data.email);
       username.set(value.data.username);
+
+      url = value.data.avatar?.url;
+      imageID = value.data.avatar?.id;
     } 
   });
 
@@ -157,13 +216,54 @@
             
         </div>
 
+
+        {#if !thumbnail && url}
+                <figure class="image is-128x128">
+                    <img class="image" src="{image_url}{url}" alt="thumnail" />
+                </figure>
+            {/if}
+
+            {#if thumbnail}
+                <figure class="image is-128x128">
+                    <img class="image" src={thumbnail} alt="thumnail" />
+                </figure>
+            {/if}
+
+            <div class="field">
+                <label for="" class="ml-4 gray">Avatar</label>
+                <div class="file">
+                    <label class="file-label">
+                        <input
+                            class="file-input"
+                            accept="image/png, image/jpeg"
+                            type="file"
+                            name="resume"
+                            required
+                            on:change={(e) => onFileSelected(e)}
+                            bind:this={fileinput}
+                        />
+                        <span class="file-cta">
+                            <span class="file-icon">
+                                <Icon data={faUpload} />
+                            </span>
+                            <span class="file-label"> Choose a file… </span>
+                        </span>
+                        {#if thumbnail}
+                            <span class="file-name">
+                                {thumbnail}
+                            </span>
+                        {/if}
+                    </label>
+                </div>
+
+                
         
         <div class="container-fluid has-text-centered py-2">
             <button
-                disabled={!$formItem.valid || !$formItem.dirty}
-                on:click|preventDefault={add}
+                disabled={!$formItem.valid && !$formItem.dirty}
+                on:click|preventDefault={uploadImage}
                 class="button is-dark my-2 px-5 py-2 has-text-weight-bold"
-                >Save</button
+                ><Icon data={faSave}/>  <span class="ml-2 has-text-white">Save</span></button
             >
         </div>
     </form>

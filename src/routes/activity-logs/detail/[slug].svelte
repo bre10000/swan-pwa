@@ -6,7 +6,7 @@
 
 <script>
     import { get, post, put } from "../../../lib/api";
-    import { faAngleLeft } from "@fortawesome/free-solid-svg-icons";
+    import { faAngleLeft, faSave } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
     import { numberWithCommas } from "../../../lib";

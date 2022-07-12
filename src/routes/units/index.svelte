@@ -18,27 +18,30 @@
     import { exportToPDF } from "../../utils/export/exportPDF";
     import { Moon } from "svelte-loading-spinners";
 
-   
+    const unsubscribe = user.subscribe((value) => {
+        if (!process.browser) {
+            return;
+        }
 
-    let query = "";
+        if (!value.loggedIn && value.fetched) {
+            goto("login");
+        } else if (value.data) {
+            getUnits();
+        }
+    });
+
+    onDestroy(unsubscribe);
+
+    let query = "",
+        queryC = "";
     let sortBy = "";
 
     let currentItem;
     let showConfirmation = false;
 
-    let rows ;
+    let rows;
 
     const columns = [
-        {
-            key: "id",
-            title: "ID",
-            sortable: true,
-            filterValue: (v) => Math.floor(v.id / 10),
-            interval: 10,
-            filterType: "numeric",
-            headerClass: "has-text-left",
-            selected: true,
-        },
         {
             key: "name",
             title: "Name",
@@ -47,28 +50,12 @@
             filterType: "string",
             selected: true,
         },
-        {
-            key: "description",
-            title: "Description",
-            sortable: true,
-            filterValue: (v) => v.last_name.charAt(0).toLowerCase(),
-            filterType: "string",
-            selected: true,
-        },
-        {
-            key: "address",
-            title: "Address",
-            sortable: true,
-            filterValue: (v) => v.last_name.charAt(0).toLowerCase(),
-            filterType: "string",
-            selected: true,
-        },
     ];
 
     let pagination;
 
     let options = {
-        title: "Warehouses Table",
+        title: "Units Table",
         showFilterHeader: false,
         showSelect: false,
         showDetails: false,
@@ -76,8 +63,7 @@
         showFooter: false,
     };
 
-    async function getItems(filters, sort, page) {
-        rows = null;
+    async function getUnits(filters, sort, page) {
         try {
             let params = {
                 filters: filters ? filters : {},
@@ -88,37 +74,37 @@
                 encodeValuesOnly: true,
             });
 
-            let response = await get("warehouses", params);
+            let response = await get("units", params);
 
-            console.log("Get Warehouses Request - ", response);
+            console.log("Get Units Request - ", response);
 
             rows = response.data;
             pagination = response.meta?.pagination;
         } catch (e) {
-            console.warn("Error Getting Warehouses - ", e);
+            console.warn("Error Getting Units - ", e);
         }
     }
 
     function search() {
         let qs = getQS();
-        getItems(qs, sortBy);
+        getUnits(qs, sortBy);
     }
 
     function changePage(event) {
         let qs = getQS();
 
-        getItems(qs, sortBy, event.detail.newPage);
+        getUnits(qs, sortBy, event.detail.newPage);
     }
 
     function sort(event) {
         sortBy = event.detail.key;
         let qs = getQS();
 
-        getItems(qs, sortBy, event.detail.newPage);
+        getUnits(qs, sortBy, event.detail.newPage);
     }
 
     function editRow(event) {
-        goto("warehouses/edit/" + event.detail.row.id);
+        goto("units/edit/" + event.detail.row.id);
     }
 
     function deleteRow(event) {
@@ -130,12 +116,12 @@
         showConfirmation = false;
 
         try {
-            let response = await del("warehouses/" + currentItem.id, null);
+            let response = await del("units/" + currentItem.id, null);
 
-            console.log("Delete Warehouse Request  ", response);
+            console.log("Delete Unit Request  ", response);
 
             if (response.data?.id) {
-                toast.push("Warehouse Deleted Successfully!", {
+                toast.push("Unit Deleted Successfully!", {
                     duration: 20000,
                     theme: {
                         "--toastBackground": "#48BB78",
@@ -146,7 +132,7 @@
                 search();
             }
         } catch (e) {
-            console.log("Error Delete Warehouse   ", e);
+            console.log("Error Delete Unit   ", e);
         }
     }
 
@@ -158,26 +144,16 @@
                         $containsi: query,
                     },
                 },
-                {
-                    description: {
-                        $containsi: query,
-                    },
-                },
-                {
-                    address: {
-                        $containsi: query,
-                    },
-                },
             ],
         };
     }
 
     function exportcsv() {
-        exportToCSV("Warehouses", rows, columns);
+        exportToCSV("Units", rows, columns);
     }
 
     function exportPDF() {
-        exportToPDF("Warehouses", rows, columns);
+        exportToPDF("Units", rows, columns);
     }
 
     async function exportAllcsv() {
@@ -189,9 +165,9 @@
                 encodeValuesOnly: true,
             });
 
-            let response = await get("warehouses", params);
+            let response = await get("units", params);
 
-            exportToCSV("Warehouses", response.data, columns);
+            exportToCSV("Units", response.data, columns);
         } catch (e) {}
     }
 
@@ -204,29 +180,15 @@
                 encodeValuesOnly: true,
             });
 
-            let response = await get("warehouses", params);
+            let response = await get("units", params);
 
-            exportToPDF("Warehouses", response.data, columns);
+            exportToPDF("Units", response.data, columns);
         } catch (e) {}
     }
-
-    const unsubscribe = user.subscribe((value) => {
-        if (!process.browser) {
-            return;
-        }
-
-        if (!value.loggedIn && value.fetched) {
-            goto("login");
-        } else if (value.data) {
-            getItems();
-        }
-    });
-
-    onDestroy(unsubscribe);
 </script>
 
 <svelte:head>
-  <title>Warehouses</title>
+  <title>Units</title>
 </svelte:head>
 
 <br /><br />
@@ -234,7 +196,7 @@
     <div class="columns">
         <div class="column">
             <h3 class="has-text-info">
-                Warehouses
+                Units
                 {#if pagination}
                     <span class="gray has-text-weight-light ml-2"
                         >{pagination.total}</span
@@ -243,12 +205,12 @@
             </h3>
         </div>
         <div class="column has-text-right">
-            <a href="warehouses/add" class="button is-dark px-5">
+            <a href="units/add" class="button is-dark px-5">
                 <span class="icon">
                     <Icon data={faPlus} />
                 </span>
                 <span class="has-text-white has-text-weight-bold"
-                    >Add a Warehouse</span
+                    >Add a Unit</span
                 >
             </a>
         </div>
@@ -341,7 +303,7 @@
                 on:editRow={editRow}
                 on:clickRow={editRow}
             />
-        {:else if rows}
+            {:else if rows}
             <div class="has-text-centered">
                 <br /><br /><br /><br />
                 <Icon data={faSearch} scale="3" />

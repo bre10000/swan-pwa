@@ -6,7 +6,8 @@
 
 <script>
     import { get } from "../../../../lib/api";
-    import { faAngleLeft, faPrint } from "@fortawesome/free-solid-svg-icons";
+    import { faAngleLeft,
+faSave, faPrint } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
     import { numberWithCommas } from "../../../../lib";
@@ -100,10 +101,16 @@
     {#if stock}
         <div class="card p-6">
             <br />
-            <h3 class="has-text-centered has-text-weight-bold">
+            
+                <div class="has-text-centered is-flex is-align-items-center">
+                    <img src="./images/logo/swan_consortium.svg" width="150" alt="SWAN Humaniterian Consortium" style="margin: 0 auto;">
+                </div>
+                
+            <h3 class="has-text-weight-bold has-text-centered">
                 {stock.attributes.consortium_member
                     .data?.attributes.name}
             </h3>
+
             <p class="has-text-centered">
                 {stock.attributes.consortium_member
                     .data?.attributes.address_1} - {stock.attributes.consortium_member
@@ -114,6 +121,7 @@
                     .data?.attributes.website} - {stock.attributes.consortium_member
                     .data?.attributes.phone}
             </p>
+            
             <hr>
             <h3 class="is-size-5">
                 
@@ -183,8 +191,8 @@
                         <td
                             >{item.attributes.purchase_order_item.data?.attributes.item.data?.attributes.name} - {item.attributes.purchase_order_item.data?.attributes.item.data?.attributes.category}</td
                         >
-                        <td>{item.attributes.purchase_order_item.data?.attributes.unit}</td>
-                        <td>{item.attributes.quantity}</td>
+                        <td>{item.attributes.purchase_order_item.data?.attributes.item.data?.attributes.unit ? item.attributes.purchase_order_item.data?.attributes.item.data?.attributes.unit : "-"}</td>
+                        <td>{numberWithCommas(item.attributes.quantity)}</td>
                         <td>{item.attributes.purchase_order_item.data?.attributes.currency}</td>
                         
                         

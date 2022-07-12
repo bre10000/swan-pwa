@@ -27,13 +27,13 @@ const dispatch = createEventDispatcher();
         <button on:click={dismiss} class="delete" aria-label="close"></button>
       </header>
       <section class="modal-card-body">
-        <p class="modal-card-title has-text-weight-bold px-6">Delete Confirmation</p>
-        <p class="px-6"> Are you sure you want to delete this item?</p>
+        <p class="modal-card-title has-text-weight-bold px-6">You have Unsaved Items. </p>
+        <p class="px-6">Your changes will be lost. Are you sure you want to go back?</p>
       </section>
       <footer class="modal-card-foot has-text-right is-justify-content-right py-2">
         
         <button on:click={dismiss} class="button has-text-dark">No</button>
-        <button on:click={confirm} class="button is-danger">Yes</button>
+        <button on:click={confirm} class="button is-dark">Yes</button>
       </footer>
     </div>
   </div>

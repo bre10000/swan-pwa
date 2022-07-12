@@ -28,8 +28,11 @@ export const csvGenerator = (totalData,actualHeaderKey,headerToShow,fileName) =>
         } else if (typeof item.attributes[key] == "string") {
           let strItem = item.attributes[key] ? '"' + item.attributes[key] + '"' : "-";
           result += strItem ? strItem.replace(/\s{2,}/g, " ") : strItem;
+        } else if (typeof item.attributes[key] == "number") {
+          let strItem = item.attributes[key] ?  item.attributes[key]  : "-";
+          result += strItem;
         } else if (typeof item.attributes[key] == "object") {
-          let strItem = item.attributes[key].data.attributes.name ? '"' + item.attributes[key].data.attributes.name + '"' : "-";
+          let strItem = item.attributes[key]?.data.attributes.name ? '"' + item.attributes[key]?.data.attributes.name + '"' : "-";
           result += strItem ? strItem.replace(/\s{2,}/g, " ") : strItem;
         } else {
           let strItem = item[key] + "";
@@ -72,7 +75,7 @@ export const csvGenerator = (totalData,actualHeaderKey,headerToShow,fileName) =>
     var processRow = function (row) {
         var finalVal = '';
         for (var j = 0; j < row.length; j++) {
-            var innerValue = row[j] === null ? '' : row[j].toString();
+            var innerValue = (row[j] === null || row[j] === undefined) ? '' : row[j].toString();
             if (row[j] instanceof Date) {
                 innerValue = row[j].toLocaleString();
             };

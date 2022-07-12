@@ -1,5 +1,6 @@
 @import './bulma.min.css';
 @import './bulma-collapsible.min.css';
+@import './bulma-tooltip.min.css';
 
 @keyframes slideInFromRight {
   0% {
@@ -134,7 +135,7 @@ body, #sapper, #sapeer>.is-flex {
   border-right: 1px solid rgba(159, 159, 159, 0.312);
 }
 .has-border-bottom-gray {
-  border-bottom: 1px solid rgba(159, 159, 159, 0.312);
+  border-bottom: 1px solid rgba(159, 159, 159, 0.708);
 }
 .has-background-orange {
   background-color: #f06a2e;
@@ -146,6 +147,35 @@ body, #sapper, #sapeer>.is-flex {
 
 .is-red {
   color: #ce242b;
+}
+
+.tag.is-purple , .timeline-marker.is-purple {
+  background-color: purple;
+}
+.tag.is-brown , .timeline-marker.is-brown {
+  background-color: brown;
+}
+
+progress.is-purple::-webkit-progress-value, .progress.is-purple::-moz-progress-bar {
+  background-color: purple !important;
+}
+
+progress.is-brown::-webkit-progress-value, .progress.is-brown::-moz-progress-bar {
+  background-color: brown !important;
+}
+
+.is-purple .icon svg *{  
+  color: purple !important;
+}
+.is-brown .icon svg * {
+  color: brown !important;
+}
+
+.is-purple svg *{  
+  color: purple !important;
+}
+.is-brown svg * {
+  color: brown !important;
 }
 
 a.gray {
@@ -167,7 +197,12 @@ a.is-light:active {
   color: #CCCCCC !important;
   font-weight: 600 !important;
 }
-
+.button.is-success {
+  background-color: #74cf6d;
+}
+.has-text-success {
+  color: #74cf6d;
+}
 .has-border-right-black {
   position: relative;
 }
@@ -180,14 +215,71 @@ a.is-light:active {
   border-right: 1px solid black;
 }
 
+.has-text-info, .has-text-info * {
+  color: #0000BF !important;
+}
+
+.has-background-lightgreen {
+  background: rgb(236, 239, 255) !important;
+}
+
+
+.button.is-dark {
+  background-color: #0000BF !important;
+}
+.input.is-dark {
+  border-color: #0000BF !important;
+}
+.has-background-lightgray{
+  background-color: rgb(255, 255, 255) !important;
+}
+
+
+.columns.child-item,
+    .columns.child-item .column {
+        margin: 0;
+        padding: 0;
+    }
+
+    .columns.child-item,
+    .columns.child-item * {
+        font-size: 0.9rem !important;
+    }
+    .columns.child-item .field .input {
+        border-radius: 0px !important;
+        border: 1px solid lightgray !important;
+        border-right: 0px solid lightgray !important;
+        padding: 1rem !important;
+    }
+
+    .border-radius-0 {
+        border-radius: 0px !important;
+        border: 1px solid lightgray !important;
+        background-color: #f5f5f5 !important;
+    }
+
+    .columns.child-item .field select,
+    .columns.child-item .field select * {
+        border-radius: 0 !important;
+        border: 1px solid gray !important;
+        border-right: 0px solid lightgray !important;
+        padding: 1rem !important;
+    }
+
+    
+
 body {
   width: 100% !important;
   overflow-x: hidden;
-  letter-spacing: 0.5px !important;
+  letter-spacing: 1px !important;
   padding: 0;
   margin: 0;
 }
-
+* {
+  -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
 .letter-spacing-1 {
   letter-spacing: 1.5px;
 }
@@ -269,16 +361,24 @@ body {
 .has-text-weight-boldest {
   font-weight: 700 !important;
 }
-.has-text-info {
-  color: #6f12ec !important;
-}
 
 .has-text-info * {
   color: #6f12ec !important;
 }
+.card {
+  border: 0.5px solid rgba(182, 182, 182, 0.244);
+  border-radius: 10px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px;
+}
+.no-shadow {
+  box-shadow: none;
+}
 
+.pagination .pagination-list {
+  list-style: none !important;
+}
 .header {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -439,7 +539,7 @@ nav.navbar .location-icon-light {
 }
 
 .main-content {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -492,12 +592,18 @@ input:focus {
   margin: 0 auto;
 }
 .contents-wrapper .contents > div > .container {
-  width: 90% !important;
+  width: 95% !important;
+  max-width: 2000px !important;
   margin: 0 auto;
 }
 #content > main.container.px-5 > div > div > div > form > div:nth-child(1) > div.columns.pt-4 > div:nth-child(1) > div > div > div > div > div > div > div > div.contents > div > div{
-  width: 90% !important;
+  width: 95% !important;
+  max-width: 2000px !important;
   margin: 0 auto;
+}
+
+.button.is-dark svg * {
+  color: white;
 }
 
 @media screen and (max-width: 1366px) {
@@ -544,7 +650,7 @@ input:focus {
   }
 
   .header {
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
   }
 }
@@ -738,11 +844,27 @@ body::-webkit-scrollbar {
 }
 
 .menu::-webkit-scrollbar-thumb {
+  background: white;
+  border-radius: 99vmax;
+  border: 0px solid #9c9c9c;
+}
+
+.menu::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0);
+}
+
+
+.tabs::-webkit-scrollbar {
+  /* width: 0.2rem; */
+  height: 1rem;
+}
+
+.tabs::-webkit-scrollbar-thumb {
   background: #9c9c9c;
   border-radius: 99vmax;
   border: 4px solid white;
 }
 
-.menu::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0);
+.tabs::-webkit-scrollbar-track {
+  background: rgba(177, 255, 177, 0);
 }

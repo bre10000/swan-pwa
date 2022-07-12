@@ -2,6 +2,7 @@
     import { get } from "../../../../lib/api";
     import {
         faAngleLeft,
+        faSave,
         faFileExcel,
         faFilePdf,
         faPrint,
@@ -289,10 +290,10 @@
                         .data.attributes.name,
                     elementC.attributes.purchase_order_item.data.attributes.item
                         .data.attributes.category,
-                    elementC.attributes.purchase_order_item.data.attributes
-                        .unit,
-                    elementC.attributes.purchase_order_item.data.attributes
-                        .pieces,
+                    elementC.attributes.purchase_order_item.data.attributes.item
+                        .data.attributes.unit,
+                    elementC.attributes.purchase_order_item.data.attributes.item
+                        .data.attributes.pieces,
                     elementC.attributes.purchase_order_item.data.attributes
                         .quantity,
                     elementC.attributes.purchase_order_item.data.attributes
@@ -360,7 +361,7 @@
 
     function exportcsv() {
         let now = new Date();
-        let fname = `"SWAN Stocks Balance - " ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+        let fname = `SWAN Stocks Balance - " ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
         let array = getPopulatedDataPdf(stock_items);
 
@@ -371,8 +372,12 @@
     function exportPDF() {
         // exportToPDF("Stocks", rows, columns);
         let s = "";
-        if ($start.value != $end.value){
-            s = " - Start - " + $start.value.toDateString() + ", End - " + $end.value.toDateString();
+        if ($start.value != $end.value) {
+            s =
+                " - Start - " +
+                $start.value.toDateString() +
+                ", End - " +
+                $end.value.toDateString();
         }
         exportToPDFAlternate(
             "Stock Balance" + s,
@@ -481,7 +486,7 @@
                 </div>
                 <div class="column is-flex is-align-items-end">
                     <button
-                        disabled={!$formItem.valid || !$formItem.dirty}
+                        disabled={!$formItem.valid && !$formItem.dirty}
                         on:click|preventDefault={filter}
                         class="button is-dark px-5 py-2 has-text-weight-bold"
                         >Filter</button
@@ -499,13 +504,27 @@
         <div class="card p-6">
             <br />
 
-            <h3 class="is-size-5">Total Stock Balance</h3>
-            <hr />
-            {#if $start.value != $end.value}
-                <p class="gray">Start - {$start.value.toDateString()} 
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    End - {$end.value.toDateString()}</p>
-            {/if}
+            <div class="columns">
+                <div class="column is-narrow mr-5">
+                    <img
+                        src="./images/logo/swan_consortium.svg"
+                        width="150"
+                        alt="SWAN Humaniterian Consortium"
+                    />
+                </div>
+                <div class="column is-flex is-align-items-center">
+                    <h3 class="is-size-5">Total Stock Balance</h3>
+                    <hr />
+                    {#if $start.value != $end.value}
+                        <p class="gray">
+                            Start - {$start.value.toDateString()}
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            End - {$end.value.toDateString()}
+                        </p>
+                    {/if}
+                </div>
+            </div>
+
             <!-- <p class="card-header-title">Stock Items</p> -->
 
             {#each categories as c}
@@ -552,11 +571,19 @@
                             >
                             <td
                                 >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.unit}</td
+                                    ?.attributes.item.data?.attributes.unit
+                                    ? stock.attributes.purchase_order_item.data
+                                          ?.attributes.item.data?.attributes
+                                          .unit
+                                    : "-"}</td
                             >
                             <td
                                 >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.pieces}</td
+                                    ?.attributes.item.data?.attributes.pieces
+                                    ? stock.attributes.purchase_order_item.data
+                                          ?.attributes.item.data?.attributes
+                                          .pieces
+                                    : "-"}</td
                             >
 
                             <td

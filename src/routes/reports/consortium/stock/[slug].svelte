@@ -6,7 +6,8 @@
 
 <script>
     import { get } from "../../../../lib/api";
-    import { faAngleLeft, faFileExcel, faFilePdf, faPrint } from "@fortawesome/free-solid-svg-icons";
+    import { faAngleLeft,
+faSave, faFileExcel, faFilePdf, faPrint } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
     import { numberWithCommas } from "../../../../lib";
@@ -192,8 +193,8 @@
                     elementC.id,
                     elementC.attributes.purchase_order_item.data.attributes.purchase_order.data.attributes.poNumber,
                     elementC.attributes.purchase_order_item.data.attributes.item.data.attributes.name,
-                    elementC.attributes.purchase_order_item.data.attributes.unit,
-                    elementC.attributes.purchase_order_item.data.attributes.pieces,
+                    elementC.attributes.purchase_order_item.data.attributes.item.data.attributes.unit,
+                    elementC.attributes.purchase_order_item.data.attributes.item.data.attributes.pieces,
                     elementC.attributes.purchase_order_item.data.attributes.quantity,
                     elementC.attributes.purchase_order_item.data.attributes.currency,
                     elementC.attributes.purchase_order_item.data.attributes.unitPrice,
@@ -230,7 +231,7 @@
 
     function exportcsv() {
         let now = new Date();
-        let fname = `"SWAN Partner Stocks - "${consortium.attributes.name} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+        let fname = `SWAN Partner Stocks - ${consortium.attributes.name} ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
         let array = getPopulatedDataPdf(consortium.attributes.stocks.data);
 
@@ -319,13 +320,21 @@
     {#if consortium}
         <div class="card p-6">
             <br />
-
-            <h3 class="is-size-5">
-                Consortium Member Stock -
-                <span class="has-text-weight-bold"
-                    >{consortium.attributes.name}</span
-                >
-            </h3>
+            
+            <div class="columns">
+                <div class="column is-narrow mr-5">
+                    <img src="./images/logo/swan_consortium.svg" width="150" alt="SWAN Humaniterian Consortium">
+                </div>
+                <div class="column is-flex is-align-items-center">
+                    <h3 class="is-size-5">
+                        Consortium Member Stock -
+                        <span class="has-text-weight-bold"
+                            >{consortium.attributes.name}</span
+                        >
+                    </h3>
+                </div>
+            </div>
+            
             <hr />
 
             <p class="card-header-title">Stock Items</p>
@@ -367,11 +376,13 @@
                             </td>
                             <td
                                 >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.unit}</td
+                                    ?.attributes.item.data?.attributes.unit ? stock.attributes.purchase_order_item.data
+                                    ?.attributes.item.data?.attributes.unit : "-"}</td
                             >
                             <td
                                 >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.pieces}</td
+                                    ?.attributes.item.data?.attributes.pieces ? stock.attributes.purchase_order_item.data
+                                    ?.attributes.item.data?.attributes.pieces : "-"}</td
                             >
 
                             <td
@@ -382,7 +393,7 @@
                                 >{stock.attributes.purchase_order_item.data
                                     ?.attributes.unitPrice}</td
                             >
-                            <td>{stock.attributes.received}</td>
+                            <td>{numberWithCommas(stock.attributes.received)}</td>
 
                             <td>{stock.attributes.remark}</td>
                             <td
@@ -419,11 +430,6 @@
 <style>
     .card {
         overflow: visible !important;
-    }
-
-    .card .card {
-        box-shadow: none !important;
-        border: 0.5px solid gray;
     }
 
     :global(.button.is-success svg *, .button.is-dark svg *, .button.is-info
