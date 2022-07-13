@@ -38,7 +38,7 @@
 
 <aside class="menu p-4 has-border-right-gray has-background-light">
   <div class="has-border-bottom-gray has-text-centered">
-    <img src="./images/logo/swan_logo_horizontal.svg" width="180" alt="" />
+    <img src="./images/logo/swan_logo_horizontal.svg" width="150" alt="" />
   </div>
   <p class="menu-label">General</p>
   <ul class="menu-list">

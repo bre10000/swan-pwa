@@ -275,6 +275,10 @@ faSave, faPrint } from "@fortawesome/free-solid-svg-icons";
                 </table>
 
             <br><br>
+
+            <p class="has-text-centered is-size-8">
+                Approved By _________________________________________________________________
+            </p>
             
         </div>
     {/if}

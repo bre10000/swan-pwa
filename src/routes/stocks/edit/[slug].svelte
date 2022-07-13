@@ -784,10 +784,10 @@
                 >
                     No.
                 </div>
-                <div class="column  is-narrow" style="width: 120px;">
+                <div class="column  is-narrow" style="width: 90px;">
                     <label for="" class="gray">PO #</label>
                 </div>
-                <div class="column  is-narrow" style="width: 200px;">
+                <div class="column  is-narrow" style="width: 150px;">
                     <label for="" class="gray">Item (*)</label>
                 </div>
                 <div class="column">
@@ -831,7 +831,7 @@
                             value={index + 1}
                         />
                     </div>
-                    <div class="column is-narrow" style="width: 120px;">
+                    <div class="column is-narrow" style="width: 90px;">
                         <div class="field">
                             <div class="control">
                                 <Select
@@ -844,7 +844,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="column is-narrow" style="width: 200px;">
+                    <div class="column is-narrow" style="width: 150px;">
                         <div class="field">
                             <div class="control">
                                 <Select
@@ -1154,13 +1154,25 @@ min=0 oninput="validity.valid||(value='');"
         width: 400% !important;
         z-index: 10;
     }
-    :global(.selectContainer .listContainer .listItem) {
-        font-size: 14px;
+
+    :global(.selectContainer input) {
+        border: 1px solid lightgray !important;
+        border-right: 0px solid lightgray !important;
+        border-radius: 0px;
+        font-size: 0.9rem !important;
+        height: 36px !important;
+        /* background-color: #f5f5f5!important; */
+    }
+    :global(.selectContainer) {
+        height: 36px !important;
     }
 
-    :global(.button.is-success svg *, .button.is-danger svg *, .button.is-info
-            svg
-            *) {
+    :global(.selectContainer .listContainer .listItem) {
+        font-size: 14px;
+        border-radius: 0px;
+    }
+
+    :global(.button.is-success svg *, .button.is-danger svg *) {
         color: white;
     }
 </style>

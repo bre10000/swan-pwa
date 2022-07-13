@@ -71,11 +71,10 @@ import { faEye } from "@fortawesome/free-solid-svg-icons";
   <br><br>
   <div class="card login-card is-rounded">
     <div class="columns is-justify-content-center">
-      <div class="column has-text-centered has-border-right-gray is-hidden-mobile card no-shadow opacity">
-        <br><br><br><br>
-        <h1 class="is-size-1 has-text-info" style="line-height: 1; font-weight: 900; letter-spacing: -5px;">SWAN</h1>
-        <p class="is-size-7 gray">Humanitarian Consortium</p> 
-        <br><br>
+      <div class="column has-text-centered has-border-right-gray is-hidden-mobile card no-shadow opacity is-flex is-align-items-center">
+       
+       
+        
         <div class="columns px-6 is-align-items-center is-multiline">
           <div class="column p-5 is-half">
             <img src="./images/login/Save the ChildrenSTC_Logo_Horiz_ColPos_RGB-01.jpg" alt="">
@@ -84,17 +83,18 @@ import { faEye } from "@fortawesome/free-solid-svg-icons";
             <img src="./images/login/World VisionWorld Vision.png" alt="">
           </div>
           <div class="column p-5 is-half">
-            <img src="./images/login/Norwegian Refugee CouncilNRC.png" alt="">
-          </div>
-          <div class="column p-5 is-half">
             <img src="./images/login/Action Against HungerAAH.png" alt="">
           </div>
+          <div class="column p-5 is-half">
+            <img src="./images/login/Norwegian Refugee CouncilNRC.png" alt="">
+          </div>
+          
         </div>
       </div>
       <div class="column is-6 has-text-centered p-6 signin-form">
+        <br><br><br><br>
+        <img src="./images/logo/swan_consortium.svg" alt="SWAN Logo" width="200">
         <br><br>
-        <img src="./images/logo/swan_logo.svg" alt="SWAN Logo" width="200">
-
         {#if loginForm}
           <!-- svelte-ignore component-name-lowercase -->
           <form
@@ -192,7 +192,7 @@ import { faEye } from "@fortawesome/free-solid-svg-icons";
   }
 
   .opacity {
-    opacity: 0.8 !important;
+    opacity: 1 !important;
     transition: opacity 0.5s ease-in-out;
   }
   .opacity:hover {

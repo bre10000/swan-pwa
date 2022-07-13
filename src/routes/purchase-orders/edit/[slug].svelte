@@ -562,14 +562,14 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
                 </div>
                 <div
                     class="column is-narrow has-text-weight-bold is-size-8"
-                    style="width: 100px;"
+                    style="width: 70px;"
                 >
                     PO Item ID
                 </div>
-                <div class="column  is-narrow" style="width: 120px;">
+                <div class="column  is-narrow" style="width: 90px;">
                     <label for="" class="gray">Category</label>
                 </div>
-                <div class="column  is-narrow" style="width: 250px;">
+                <div class="column  is-narrow" style="width: 200px;">
                     <label for="" class="gray">Item (*)</label>
                 </div>
                 <div class="column">
@@ -606,7 +606,7 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
                             value={index + 1}
                         />
                     </div>
-                    <div class="column is-narrow" style="width: 100px;">
+                    <div class="column is-narrow" style="width: 70px;">
                         <input
                             style="background-color: rgb(236, 239, 255) !important;"
                             type="text"
@@ -615,7 +615,7 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
                             value={childItem.createdAt ? childItem.id : "-"}
                         />
                     </div>
-                    <div class="column  is-narrow" style="width: 120px;">
+                    <div class="column  is-narrow" style="width: 90px;">
                         <div class="control select is-fullwidth">
                             <select
                                 on:change={(event) =>
@@ -629,7 +629,7 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
                             </select>
                         </div>
                     </div>
-                    <div class="column  is-narrow" style="width: 250px;">
+                    <div class="column  is-narrow" style="width: 200px;">
                         <div class="field">
                             <div class="control">
                                 <Select

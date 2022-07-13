@@ -566,7 +566,7 @@
 													</div>
 												{:else if col.key == "item"}
 													<div
-														class="column is-4 px-4"
+														class="column is-3 px-4"
 													>
 														<span class=""
 															>{item.attributes[
@@ -709,7 +709,7 @@
 														{item[col.key]}
 													</div>
 												{:else if col.key == "item"}
-													<div class="column is-3">
+													<div class="column is-2">
 														<span class=""
 															>{item.attributes
 																.purchase_order_item
@@ -903,8 +903,8 @@
 													</div>
 												{:else if col.key == "item"}
 													<div
-														class="column is-3 is-narrow"
-														style="width: 300px;"
+														class="column is-2 is-narrow"
+														style="width: 200px;"
 													>
 														<span class=""
 															>{item.attributes
@@ -1143,7 +1143,7 @@
 														{item[col.key]}
 													</div>
 												{:else if col.key == "item"}
-													<div class="column is-3">
+													<div class="column is-2">
 														<span class=""
 															>{item.attributes
 																.stock_release_item

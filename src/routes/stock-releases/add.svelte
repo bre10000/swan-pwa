@@ -592,13 +592,13 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                 >
                     No.
                 </div>
-                <div class="column  is-narrow" style="width: 120px;">
+                <div class="column  is-narrow" style="width: 100px;">
                     <label for="" class="gray">PO #</label>
                 </div>
-                <div class="column is-narrow" style="width: 120px;">
+                <div class="column is-narrow" style="width: 100px;">
                     <label for="" class="gray">Batch Number</label>
                 </div>
-                <div class="column  is-narrow" style="width: 200px;">
+                <div class="column  is-narrow" style="width: 150px;">
                     <label for="" class="gray">Item (*)</label>
                 </div>
                 <div class="column">
@@ -638,7 +638,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                             value={index + 1}
                         />
                     </div>
-                    <div class="column is-narrow" style="width: 120px;">
+                    <div class="column is-narrow" style="width: 100px;">
                         <div class="field">
                             <div class="control">
                                 <Select
@@ -652,7 +652,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                         </div>
                     </div>
 
-                    <div class="column is-narrow" style="width: 120px;">
+                    <div class="column is-narrow" style="width: 100px;">
                         <div class="field">
                             <div class="control">
                                 <Select
@@ -665,7 +665,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                         </div>
                     </div>
 
-                    <div class="column is-narrow" style="width: 200px;">
+                    <div class="column is-narrow" style="width: 150px;">
                         <div class="field">
                             <div class="control">
                                 <Select

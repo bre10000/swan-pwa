@@ -3,7 +3,7 @@
   <h3 class="has-text-info" >Reports</h3>
   <br />
 
-  <div class="card no-shadow columns is-multiline p-5">
+  <div class="card no-shadow columns is-multiline p-2">
 
 
     <a href="reports/aggregate/waybill-destination" class="column is-4">
@@ -19,7 +19,7 @@
               <div class="media">
                 <div class="media-content">
                   <p class="title is-5">Waybill by Destination </p>
-                  <p class="subtitle is-6">Filter by Destination and Date</p>
+                  <p class="subtitle is-6 mt-0">Filter by Destination and Date</p>
                 </div>
               </div>
             </div>
@@ -40,7 +40,7 @@
               <div class="media">
                 <div class="media-content">
                   <p class="title is-5">Item Waybill by Category </p>
-                  <p class="subtitle is-6">Filter by Consortium Member and Date</p>
+                  <p class="subtitle is-6 mt-0">Filter by Consortium Member and Date</p>
                 </div>
               </div>
             </div>
@@ -61,7 +61,7 @@
               <div class="media">
                 <div class="media-content">
                   <p class="title is-5">Item Stock Release by Consortium Member </p>
-                  <p class="subtitle is-6">Filter by Consortium Member and Date</p>
+                  <p class="subtitle is-6 mt-0">Filter by Consortium Member and Date</p>
                 </div>
               </div>
             </div>
@@ -82,7 +82,7 @@
               <div class="media">
                 <div class="media-content">
                   <p class="title is-5">Stock Balance </p>
-                  <p class="subtitle is-6">Filter by Date</p>
+                  <p class="subtitle is-6 mt-0">Filter by Date</p>
                 </div>
               </div>
             </div>
@@ -103,7 +103,7 @@
               <div class="media">
                 <div class="media-content">
                   <p class="title is-5">Item Search (Waybill)</p>
-                  <p class="subtitle is-6">Filter by Consortium Member and Date</p>
+                  <p class="subtitle is-6 mt-0">Filter by Consortium Member and Date</p>
                 </div>
               </div>
             </div>
@@ -124,7 +124,7 @@
               <div class="media">
                 <div class="media-content">
                   <p class="title is-5">Stock by Warehouse </p>
-                  <p class="subtitle is-6">Filter by Consortium Member and Date</p>
+                  <p class="subtitle is-6 mt-0">Filter by Consortium Member and Date</p>
                 </div>
               </div>
             </div>

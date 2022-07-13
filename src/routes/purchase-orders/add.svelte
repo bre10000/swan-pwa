@@ -386,10 +386,10 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                 >
                     No.
                 </div>
-                <div class="column  is-narrow" style="width: 120px;">
+                <div class="column  is-narrow" style="width: 90px;">
                     <label for="" class="gray">Category</label>
                 </div>
-                <div class="column  is-narrow" style="width: 300px;">
+                <div class="column  is-narrow" style="width: 250px;">
                     <label for="" class="gray">Item (*)</label>
                 </div>
                 <div class="column">
@@ -423,7 +423,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                             value={index + 1}
                         />
                     </div>
-                    <div class="column  is-narrow" style="width: 120px;">
+                    <div class="column  is-narrow" style="width: 90px;">
                         <div class="control select is-fullwidth">
                             <select on:change={(event) => filterItems(event, childItem.id)} bind:value={childItem.category} class="border-radius-0 ">
                                 <option>Health</option>
@@ -432,7 +432,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                             </select>
                         </div>
                     </div>
-                    <div class="column  is-narrow" style="width: 300px;">
+                    <div class="column  is-narrow" style="width: 250px;">
                         <div class="field">
                             <div class="control">
                                 <Select

@@ -356,11 +356,11 @@ import { Moon } from "svelte-loading-spinners";
             </div>
         </div>
     </div>
-    <div class="card p-5">
+    <div class="card p-2">
         <div class="columns is-multiline">
             {#if rows?.length > 0}
                 {#each rows as r}
-                    <div class="column is-4 card">
+                    <div class="column is-3 card is-flex is-flex-direction-column">
                         <div class="card-image">
                             <figure
                                 class="image is-4by3"
@@ -370,7 +370,7 @@ import { Moon } from "svelte-loading-spinners";
                                 <!-- <img src="{image_url}{r.attributes.logo.data.attributes.url}" alt="Placeholder"> -->
                             </figure>
                         </div>
-                        <div class="card-content">
+                        <div class="card-content" style="height: 270px;">
                             <div class="media">
                                 <div class="media-content">
                                     <p class="title is-4">
@@ -477,4 +477,6 @@ import { Moon } from "svelte-loading-spinners";
         box-shadow: none !important;
         border: 0.5px solid rgba(211, 211, 211, 0.167);
     }
+
+    
 </style>
