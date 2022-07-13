@@ -807,6 +807,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                     <div class="column">
                         <input
                             type="number"
+min=0 oninput="validity.valid||(value='');"
                             placeholder="Quantity"
                             class="input"
                             on:change={() =>

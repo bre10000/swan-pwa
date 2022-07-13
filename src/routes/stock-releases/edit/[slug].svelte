@@ -939,8 +939,10 @@
                     <div class="column">
                         <input
                             type="number"
+min=0 oninput="validity.valid||(value='');"
                             placeholder="Unit Price"
                             class="input"
+                            
                             on:change={() =>
                                 refreshRemaining({
                                     detail: childItem.stock_item,
@@ -1176,10 +1178,10 @@
                                         <br />
                                         {s.attributes.purchase_order_item?.data
                                             ?.attributes.item?.data?.attributes
-                                            .unit.pieces
-                                            ? s.attributes.purchase_order_item
-                                                  ?.data?.attributes.item?.data
-                                                  ?.attributes.unit.pieces
+                                            .pieces
+                                            ? s.attributes.purchase_order_item?.data
+                                            ?.attributes.item?.data?.attributes
+                                            .pieces
                                             : "-"}
                                     </div>
 

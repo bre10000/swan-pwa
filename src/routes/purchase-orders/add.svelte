@@ -480,6 +480,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                     <div class="column">
                         <input
                             type="number"
+min=0 oninput="validity.valid||(value='');"
                             placeholder="Unit Price"
                             class="input has-background-light border-radius-0 "
                             bind:value={childItem.unitPrice}

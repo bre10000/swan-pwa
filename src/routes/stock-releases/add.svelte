@@ -433,16 +433,16 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
             stock_release_items.forEach((element) => {
                 released += parseFloat(element.attributes.quantity);
             });
-            stock_items.forEach((element) => {
-                batchStock += parseFloat(element.attributes.received);
-            });
+            // stock_items.forEach((element) => {
+            //     batchStock += parseFloat(element.attributes.received);
+            // });
             formChildItems[index].stock_items_history = stock_items;
             formChildItems[index].stock_release_items_history =
                 stock_release_items.filter( x => x.attributes.stock_release?.data );
 
             formChildItems[index].released = released;
-            formChildItems[index].batchStock = batchStock;
-            formChildItems[index].balance = batchStock - released;
+            // formChildItems[index].batchStock = batchStock;
+            formChildItems[index].balance = event.detail.data.attributes.received - released;
 
             console.log(event.detail.data.attributes.purchase_order_item.data);
 
@@ -701,6 +701,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                     <div class="column">
                         <input
                             type="number"
+min=0 oninput="validity.valid||(value='');"
                             placeholder="Unit Price"
                             class="input"
                             on:change={() =>
@@ -825,17 +826,21 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                                     <div class="column has-text-centered">
                                         <span class="is-small tag">Unit</span>
                                         <br />
-                                        {s.attributes.purchase_order_item?.data
-                                            ?.attributes.item?.data?.attributes
-                                            .unit}
+                                        {s.attributes.purchase_order_item
+                                            ?.data?.attributes.item?.data
+                                            ?.attributes.unit ? s.attributes.purchase_order_item
+                                            ?.data?.attributes.item?.data
+                                            ?.attributes.unit : "-"}
                                     </div>
 
                                     <div class="column has-text-centered">
                                         <span class="is-small tag">Pieces</span>
                                         <br />
-                                        {s.attributes.purchase_order_item?.data
-                                            ?.attributes.item?.data?.attributes
-                                            .pieces}
+                                        {s.attributes.purchase_order_item
+                                            ?.data?.attributes.item?.data
+                                            ?.attributes.pieces ? s.attributes.purchase_order_item
+                                            ?.data?.attributes.item?.data
+                                            ?.attributes.pieces : "-"}
                                     </div>
 
                                     <div class="column has-text-centered">

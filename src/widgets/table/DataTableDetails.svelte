@@ -1245,10 +1245,10 @@
 													</div>
 												{:else if col.key == "poNumber"}
 													<div
-														class="column has-text-centered"
+														class="column has-text-centered has-background-lightgreen"
 													>
 														<span
-															class="is-small tag"
+															class="is-small tag is-info is-light"
 															>{col.title}</span
 														> <br />
 														{item.attributes
@@ -1301,10 +1301,10 @@
 													</div>
 												{:else if col.key == "srfNo"}
 													<div
-														class="column has-text-centered"
+														class="column has-text-centered has-background-lightgreen"
 													>
 														<span
-															class="is-small tag"
+															class="is-small tag is-info is-light"
 															>{col.title}</span
 														> <br />
 														{item.attributes
