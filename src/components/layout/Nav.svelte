@@ -188,13 +188,13 @@
 <style>
   .menu {
     position: relative;
-    width: 18rem;
+    width: 14rem;
     height: 100vh !important;
     overflow-y: scroll;
   }
   .menu .dropdown {
     position: fixed;
-    width: 16rem;
+    width: 13rem;
     bottom: 10px;
     left: 10px;
   }
