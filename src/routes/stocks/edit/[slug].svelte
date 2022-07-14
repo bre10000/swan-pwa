@@ -269,7 +269,7 @@
                 remark: "",
                 showHistory: false,
                 has_expiry: false,
-                expiry_date: new Date(),
+                expiry_date: new Date(Date.now()),
 
                 id: Date.now(),
             },

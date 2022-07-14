@@ -80,7 +80,7 @@
                             {activity_log.attributes.data.id}
                         </div>
                     </div>
-                    <div class="column is-3">
+                    <div class="column is-2">
                         {activity_log.attributes.data.attributes.item?.data
                             ?.attributes.name} <br />
                         <span class="gray is-size-7"
@@ -96,12 +96,14 @@
                     <div class="column has-text-centered">
                         <div class="tag is-rounded is-small">Unit</div>
                         <br />
-                        {activity_log.attributes.data.attributes.unit}
+                        {activity_log.attributes.data.attributes.item?.data
+                            ?.attributes.unit}
                     </div>
                     <div class="column has-text-centered">
                         <div class="tag is-rounded is-small">Pieces</div>
                         <br />
-                        {activity_log.attributes.data.attributes.pieces}
+                        {activity_log.attributes.data.attributes.item?.data
+                            ?.attributes.pieces}
                     </div>
                     <div class="column has-text-centered">
                         <div class="tag is-rounded is-small">Quantity</div>
@@ -145,7 +147,7 @@
                         </div>
                     </div>
 
-                    <div class="column is-3">
+                    <div class="column is-2">
                         {activity_log.attributes.data.attributes
                             .consortium_member?.data?.attributes.name}
                     </div>
@@ -173,7 +175,7 @@
                                     {child.id}
                                 </div>
                             </div>
-                            <div class="column is-3">
+                            <div class="column is-2">
                                 {child.attributes.item?.data?.attributes.name}
                                 <br />
                                 <span class="gray is-size-7"
@@ -183,14 +185,14 @@
                             <div class="column has-text-centered">
                                 <div class="tag is-rounded is-small">Unit</div>
                                 <br />
-                                {child.attributes.unit}
+                                {child.attributes.item?.data?.attributes.unit}
                             </div>
                             <div class="column has-text-centered">
                                 <div class="tag is-rounded is-small">
                                     Pieces
                                 </div>
                                 <br />
-                                {child.attributes.pieces}
+                                {child.attributes.item?.data?.attributes.pieces}
                             </div>
                             <div class="column has-text-centered">
                                 <div class="tag is-rounded is-small">
@@ -239,7 +241,7 @@
                         </div>
                     </div>
 
-                    <div class="column is-3">
+                    <div class="column is-2">
                         {activity_log.attributes.data.attributes
                             .consortium_member?.data?.attributes.name}
                     </div>
@@ -275,7 +277,7 @@
                                     ?.attributes.purchase_order.data?.attributes
                                     .poNumber}
                             </div>
-                            <div class="column is-3">
+                            <div class="column is-2">
                                 {child.attributes.purchase_order_item.data
                                     ?.attributes.item?.data?.attributes.name}
                                 <br />
@@ -287,7 +289,7 @@
                                 <div class="tag is-rounded is-small">Unit</div>
                                 <br />
                                 {child.attributes.purchase_order_item.data
-                                    ?.attributes.unit}
+                                    ?.attributes.item?.data?.attributes.unit}
                             </div>
                             <div class="column has-text-centered">
                                 <div class="tag is-rounded is-small">
@@ -295,7 +297,7 @@
                                 </div>
                                 <br />
                                 {child.attributes.purchase_order_item.data
-                                    ?.attributes.pieces}
+                                    ?.attributes.item?.data?.attributes.pieces}
                             </div>
                             <div class="column has-text-centered">
                                 <div class="tag is-rounded is-small">
@@ -364,7 +366,7 @@
                             .purchase_order_item?.data?.attributes
                             .purchase_order?.data?.attributes.poNumber}
                     </div>
-                    <div class="column is-3">
+                    <div class="column is-2">
                         {activity_log.attributes.data.attributes
                             .purchase_order_item?.data?.attributes.item?.data
                             ?.attributes.name} <br />
@@ -377,13 +379,15 @@
                         <div class="tag is-rounded is-small">Unit</div>
                         <br />
                         {activity_log.attributes.data.attributes
-                            .purchase_order_item.data?.attributes.unit}
+                            .purchase_order_item?.data?.attributes.item?.data
+                            ?.attributes.unit}
                     </div>
                     <div class="column has-text-centered">
                         <div class="tag is-rounded is-small">Pieces</div>
                         <br />
                         {activity_log.attributes.data.attributes
-                            .purchase_order_item.data?.attributes.pieces}
+                            .purchase_order_item?.data?.attributes.item?.data
+                            ?.attributes.pieces}
                     </div>
                     <div class="column has-text-centered">
                         <div class="tag is-rounded is-small">Quantity</div>
@@ -441,7 +445,7 @@
                         </div>
                     </div>
 
-                    <div class="column is-3">
+                    <div class="column is-2">
                         {activity_log.attributes.data.attributes
                             .consortium_member?.data?.attributes.name}
                     </div>
@@ -472,7 +476,7 @@
                                     ?.attributes.purchase_order.data?.attributes
                                     .poNumber}
                             </div>
-                            <div class="column is-3">
+                            <div class="column is-2">
                                 {child.attributes.purchase_order_item?.data
                                     ?.attributes.item?.data?.attributes.name}
                                 <br />
@@ -484,7 +488,7 @@
                                 <div class="tag is-rounded is-small">Unit</div>
                                 <br />
                                 {child.attributes.purchase_order_item?.data
-                                    ?.attributes.unit}
+                                    ?.attributes.item?.data?.attributes.unit}
                             </div>
                             <div class="column has-text-centered">
                                 <div class="tag is-rounded is-small">
@@ -492,7 +496,7 @@
                                 </div>
                                 <br />
                                 {child.attributes.purchase_order_item?.data
-                                    ?.attributes.pieces}
+                                    ?.attributes.item?.data?.attributes.pieces}
                             </div>
                             <div class="column has-text-centered">
                                 <div class="tag is-rounded is-small">
@@ -567,7 +571,7 @@
                             .purchase_order_item?.data?.attributes
                             .purchase_order?.data?.attributes.poNumber}
                     </div>
-                    <div class="column is-3">
+                    <div class="column is-2">
                         {activity_log.attributes.data.attributes
                             .purchase_order_item?.data?.attributes.item?.data
                             ?.attributes.name} <br />
@@ -580,13 +584,15 @@
                         <div class="tag is-rounded is-small">Unit</div>
                         <br />
                         {activity_log.attributes.data.attributes
-                            .purchase_order_item.data?.attributes.unit}
+                            .purchase_order_item?.data?.attributes.item?.data
+                            ?.attributes.unit}
                     </div>
                     <div class="column has-text-centered">
                         <div class="tag is-rounded is-small">Pieces</div>
                         <br />
                         {activity_log.attributes.data.attributes
-                            .purchase_order_item.data?.attributes.pieces}
+                            .purchase_order_item?.data?.attributes.item?.data
+                            ?.attributes.pieces}
                     </div>
                     <div class="column has-text-centered">
                         <div class="tag is-rounded is-small">Quantity</div>
@@ -644,7 +650,7 @@
                         </div>
                     </div>
 
-                    <div class="column is-3">
+                    <div class="column is-2">
                         {activity_log.attributes.data.attributes
                             .consortium_member?.data?.attributes.name}
                     </div>
@@ -673,7 +679,7 @@
                                     {child.id}
                                 </div>
                             </div>
-                            <div class="column is-3">
+                            <div class="column is-2">
                                 {child.attributes.stock_release_item?.data
                                     ?.attributes.purchase_order_item?.data
                                     ?.attributes.item?.data?.attributes.name}
@@ -695,7 +701,7 @@
                                 <br />
                                 {child.attributes.stock_release_item?.data
                                     ?.attributes.purchase_order_item?.data
-                                    ?.attributes.unit}
+                                    ?.attributes.item?.data?.attributes.unit}
                             </div>
                             <div class="column has-text-centered">
                                 <div class="tag is-rounded is-small">
@@ -704,7 +710,7 @@
                                 <br />
                                 {child.attributes.stock_release_item?.data
                                     ?.attributes.purchase_order_item?.data
-                                    ?.attributes.pieces}
+                                    ?.attributes.item?.data?.attributes.pieces}
                             </div>
 
                             <div class="column has-text-centered">
@@ -763,7 +769,7 @@
                             {activity_log.attributes.data.id}
                         </div>
                     </div>
-                    <div class="column is-3">
+                    <div class="column is-2">
                         {activity_log.attributes.data.attributes
                             .stock_release_item?.data?.attributes
                             .purchase_order_item?.data?.attributes.item?.data
@@ -786,14 +792,16 @@
                         <br />
                         {activity_log.attributes.data.attributes
                             .stock_release_item?.data?.attributes
-                            .purchase_order_item?.data?.attributes.unit}
+                            .purchase_order_item?.data?.attributes.item?.data
+                            ?.attributes.unit}
                     </div>
                     <div class="column has-text-centered">
                         <div class="tag is-rounded is-small">Pieces</div>
                         <br />
                         {activity_log.attributes.data.attributes
                             .stock_release_item?.data?.attributes
-                            .purchase_order_item?.data?.attributes.pieces}
+                            .purchase_order_item?.data?.attributes.item?.data
+                            ?.attributes.pieces}
                     </div>
 
                     <div class="column has-text-centered">

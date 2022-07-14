@@ -211,7 +211,7 @@
                 received: "",
                 remark: "",
                 has_expiry: false,
-                expiry_date: new Date(),
+                expiry_date: new Date(Date.now()),
                 showHistory: false,
 
                 id: Date.now(),
