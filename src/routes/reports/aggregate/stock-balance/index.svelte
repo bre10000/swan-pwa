@@ -9,7 +9,7 @@
     } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
-    import { numberWithCommas } from "../../../../lib";
+    import { numberWithCommas, checkValue } from "../../../../lib";
     import { exportToCsvAlternate } from "../../../../utils/export/csvGenerator";
     import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternate";
     import { onMount } from "svelte";
@@ -24,7 +24,6 @@
     const formItem = form(start, end);
 
     let stock_items;
-    let stock_release_items = [];
     let categories = ["Health", "Wash", "ES/NFI"];
 
     function getTotal(items) {
@@ -35,7 +34,7 @@
                 element.attributes.purchase_order_item.data?.attributes
                     .unitPrice *
                 getRemainingInStock(
-                    element.attributes.purchase_order_item.data.id
+                    element
                 );
         });
 
@@ -54,7 +53,7 @@
                     "purchase_order_item.purchase_order",
                     "stock_release_items",
                     "stock_release_items.purchase_order_item",
-                    "stock_release_items.item",
+                    "stock_release_items.purchase_order_item.item",
                     "stock_release_items.purchase_order_item.purchase_order",
                     "stock_release_items.stock_release",
                 ],
@@ -75,31 +74,6 @@
         }
     }
 
-    async function getStockReleaseItems() {
-        try {
-            let params = {
-                populate: [
-                    "stock_release",
-                    "purchase_order_item",
-                    "purchase_order_item.item",
-                ],
-                "pagination[limit]": -1,
-            };
-            params = qs.stringify(params, {
-                encodeValuesOnly: true,
-            });
-
-            let response = await get("stock-release-items", params);
-
-            console.log("Get Stock Release Items ", response);
-
-            stock_release_items = response.data.filter(
-                (x) => x.attributes.stock_release.data
-            );
-        } catch (e) {
-            console.log("Error get Stock Release Items ", e);
-        }
-    }
 
     function getCategoryItems(category) {
         return stock_items.filter(
@@ -109,41 +83,30 @@
         );
     }
 
-    function getRemainingInStock(purchase_order_item_id) {
-        let totalStock = 0;
+    function getRemainingInStock(stock_item) {
+        let totalStock = stock_item.attributes.received;
         let totalRelease = 0;
-        stock_items
+        stock_item.attributes.stock_release_items.data
             .filter(
                 (x) =>
-                    x.attributes.purchase_order_item.data?.id ==
-                    purchase_order_item_id
-            )
-            .forEach((element) => {
-                totalStock += parseInt(element.attributes.received);
-            });
-
-        stock_release_items
-            .filter(
-                (x) =>
-                    x.attributes.purchase_order_item.data?.id ==
-                    purchase_order_item_id
+                    x.attributes.stock_release.data
             )
             .forEach((element) => {
                 totalRelease += parseInt(element.attributes.quantity);
             });
 
+       
         // console.log("Total Stock - ", totalStock, " Total Release - ", totalRelease)
         return totalStock - totalRelease;
     }
 
-    function getReleased(purchase_order_item_id) {
+    function getReleased(stock_release_items) {
         let totalRelease = 0;
 
         stock_release_items
             .filter(
                 (x) =>
-                    x.attributes.purchase_order_item.data?.id ==
-                    purchase_order_item_id
+                    x.attributes.stock_release.data
             )
             .forEach((element) => {
                 totalRelease += parseInt(element.attributes.quantity);
@@ -173,7 +136,7 @@
     const columnsDetails = [
         {
             key: "id",
-            title: "Stock ID",
+            title: "Batch #",
             sortable: true,
             selected: true,
         },
@@ -307,15 +270,15 @@
                         .unitPrice,
                     elementC.attributes.received,
                     getReleased(
-                        elementC.attributes.purchase_order_item.data.id
+                        elementC.attributes.stock_release_items.data
                     ),
                     getRemainingInStock(
-                        elementC.attributes.purchase_order_item.data.id
+                        elementC
                     ),
                     elementC.attributes.purchase_order_item.data.attributes
                         .unitPrice *
                         getRemainingInStock(
-                            elementC.attributes.purchase_order_item.data.id
+                            elementC
                         ),
                 ]);
             });
@@ -392,7 +355,6 @@
     }
 
     onMount(async () => {
-        await getStockReleaseItems();
         await getItem();
     });
 </script>
@@ -541,6 +503,7 @@
                         <th class="has-text-white">Consortium Member</th>
                         <th class="has-text-white">Warehouse</th>
                         <th class="has-text-white">Date</th>
+                        <th class="has-text-white">Batch #</th>
                         <th class="has-text-white">Description</th>
                         <th class="has-text-white">Unit</th>
                         <th class="has-text-white">Pcs/Package</th>
@@ -550,7 +513,7 @@
                         <th class="has-text-white">Received</th>
                         <th class="has-text-white">Released</th>
 
-                        <th class="has-text-white">Remaining In Stock</th>
+                        <th class="has-text-white">Balance</th>
                         <th class="has-text-white">Total</th>
                     </tr>
 
@@ -568,9 +531,12 @@
                             <td>
                                 {stock.attributes.stock.data?.attributes.date}
                             </td>
+                            <td>
+                                {stock.attributes.stock.data?.id}
+                            </td>
                             <td
                                 >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.item.data?.attributes.name} - ({stock
+                                    ?.attributes.item.data?.attributes.name} - PO Item ID ({stock
                                     .attributes.purchase_order_item.data
                                     ?.id})</td
                             >
@@ -592,28 +558,27 @@
                             >
 
                             <td
-                                >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.unitPrice}</td
+                                >{numberWithCommas(stock.attributes.purchase_order_item.data
+                                    ?.attributes.unitPrice)}</td
                             >
                             <td
-                                >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.quantity}</td
+                                >{numberWithCommas(stock.attributes.purchase_order_item.data
+                                    ?.attributes.quantity)}</td
                             >
 
-                            <td>{stock.attributes.received}</td>
+                            <td>{numberWithCommas(stock.attributes.received)}</td>
                             <td
                                 >{numberWithCommas(
                                     getReleased(
-                                        stock.attributes.purchase_order_item
-                                            .data?.id
+                                        stock.attributes.stock_release_items
+                                            .data
                                     )
                                 )}</td
                             >
                             <td
                                 >{numberWithCommas(
                                     getRemainingInStock(
-                                        stock.attributes.purchase_order_item
-                                            .data?.id
+                                        stock
                                     )
                                 )}</td
                             >
@@ -622,8 +587,7 @@
                                     stock.attributes.purchase_order_item.data
                                         ?.attributes.unitPrice *
                                         getRemainingInStock(
-                                            stock.attributes.purchase_order_item
-                                                .data?.id
+                                            stock
                                         )
                                 )}
                                 {stock.attributes.purchase_order_item.data
@@ -634,7 +598,7 @@
 
                     <tr class="">
                         <th>Total - {c}</th>
-                        <th colspan="11" />
+                        <th colspan="12" />
                         <th
                             >{numberWithCommas(
                                 getTotal(
@@ -654,7 +618,7 @@
             <table class="table is-bordered is-fullwidth is-narrow">
                 <tr class="">
                     <th>Total</th>
-                    <th colspan="11" />
+                    <th colspan="12" />
                     <th class="is-narrow"
                         >{numberWithCommas(getTotal(stock_items))}</th
                     >

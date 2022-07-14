@@ -17,10 +17,11 @@
     const formItem = form(name, category, unit, pieces);
 
     let units = [];
+    let categories = [];
 
     async function add() {
-        await formItem.validate()
-        if(!$formItem.valid){
+        await formItem.validate();
+        if (!$formItem.valid) {
             return;
         }
         try {
@@ -72,8 +73,27 @@
         }
     }
 
+    async function getCategories() {
+        try {
+            let params = {
+                "pagination[limit]": -1,
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+            let response = await get("categories", params);
+
+            console.log("Get Categories ", response);
+
+            categories = response.data.map((x) => x.attributes.name);
+        } catch (e) {
+            console.log("Error Get Categories ", e);
+        }
+    }
+
     onMount(() => {
         getUnits();
+        getCategories();
     });
 </script>
 
@@ -121,9 +141,9 @@
                                 name="category"
                                 bind:value={$category.value}
                             >
-                                <option value="Health">Health</option>
-                                <option value="Wash">Wash</option>
-                                <option value="ES/NFI">ES/NFI</option>
+                                {#each categories as c}
+                                    <option>{c}</option>
+                                {/each}
                             </select>
                             {#if $formItem.hasError("category.required")}
                                 <p class="help is-danger">
@@ -169,7 +189,8 @@
                     disabled={!$formItem.valid && !$formItem.dirty}
                     on:click|preventDefault={add}
                     class="button is-dark my-2 px-5 py-2 has-text-weight-bold"
-                    ><Icon data={faSave}/>  <span class="ml-2 has-text-white">Save</span></button
+                    ><Icon data={faSave} />
+                    <span class="ml-2 has-text-white">Save</span></button
                 >
             </div>
         </form>

@@ -8,10 +8,11 @@
 
   import { onDestroy, onMount } from "svelte";
   import { user } from "../../store/user";
-  import { numberWithCommas } from "../../lib";
+  import { numberWithCommas, checkValue } from "../../lib";
   import qs from "qs";
   import { get } from "../../lib/api";
   import { Chart } from "frappe-charts";
+  import Pie from "svelte-chartjs/src/Pie.svelte"
   import { goto } from "@sapper/app";
 
   const unsubscribe = user.subscribe((value) => {
@@ -36,24 +37,9 @@
   let stock_releases = [];
 
 
-  let dataStock = {
-    labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    datasets: [
-      {
-        name: "Views",
-        values: [1158, 2580, 7594, 3429, 5791, 1042, 548, 6498],
-      },
-      { name: "Likes", values: [458, 126, 247, 483, 436, 701, 20, 1100] },
-    ],
-  };
+  let dataStock = {};
 
-  let datastockRelease = {
-    labels: ["18-25", "25-35", "35-45", "45-55", "55+"],
-    datasets: [
-      { name: "Views", values: [1158, 2580, 7594, 3429, 5791] },
-      { name: "Likes", values: [458, 126, 247, 483, 436] },
-    ],
-  };
+  let datastockRelease = {};
 
 
   async function getStockReleases() {
@@ -87,8 +73,24 @@
         labels: array.map( x => x.name),
         datasets: [
           {
-            name: "Stock Amount (ETB)",
-            values: array.map( x => x.value),
+            // name: "Stock Amount (ETB)",
+            data: array.map( x => x.value),
+            backgroundColor: [
+          "#F7464A",
+          "#46BFBD",
+          "#FDB45C",
+          "#949FB1",
+          "#4D5360",
+          "#AC64AD"
+        ],
+        hoverBackgroundColor: [
+          "#FF5A5E",
+          "#5AD3D1",
+          "#FFC870",
+          "#A8B3C5",
+          "#616774",
+          "#DA92DB"
+        ]
           },
         ],
       }
@@ -132,8 +134,24 @@
         labels: array.map( x => x.name),
         datasets: [
           {
-            name: "Stock Amount (ETB)",
-            values: array.map( x => x.value),
+            // name: "Stock Amount (ETB)",
+            data: array.map( x => x.value),
+            backgroundColor: [
+          "#F7464A",
+          "#46BFBD",
+          "#FDB45C",
+          "#949FB1",
+          "#4D5360",
+          "#AC64AD"
+        ],
+        hoverBackgroundColor: [
+          "#FF5A5E",
+          "#5AD3D1",
+          "#FFC870",
+          "#A8B3C5",
+          "#616774",
+          "#DA92DB"
+        ]
           },
         ],
       }
@@ -281,15 +299,26 @@
 
 
   <br>
-
   <div class="columns">
+    <div class="column p-6">
+       <Pie data={dataStock}/>
+    </div>
+    <div class="column p-6">
+       <Pie data={datastockRelease} />
+    </div>
+  </div>
+
+ 
+ 
+
+  <!-- <div class="columns">
     <div class="column">
       <div id="stocksChart" class="px-4 chart" />
     </div>
     <div class="column">
       <div id="stockReleasesChart" class="px-4 chart" />
     </div>
-  </div>
+  </div> -->
 
 </div>
 

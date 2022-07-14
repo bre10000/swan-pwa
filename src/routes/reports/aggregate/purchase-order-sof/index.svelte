@@ -19,26 +19,21 @@
     import Select from "svelte-select";
 
     let now = new Date();
-    const consortium_member = field("consortium_member", "", [required()]);
-    const item = field("item", "", [required()]);
+    const sof = field("sof", "", [required()]);
     const start = field("start", now, [required()]);
     const end = field("end", now, [required()]);
 
-    const formItem = form(start, end, consortium_member, item);
+    const formItem = form(start, end);
 
-    let waybill_items;
+    let purchase_order_items;
 
-    let consortium_members = [];
-    let items = [];
+    let sofs = [];
 
     function getTotal(items) {
         let total = 0;
 
         items.forEach((element) => {
-            total +=
-                element.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data?.attributes.unitPrice *
-                element.attributes.quantity;
+            total += element.attributes.unitPrice * element.attributes.quantity;
         });
 
         return total;
@@ -48,12 +43,9 @@
         try {
             let params = {
                 populate: [
-                    "waybill",
-                    "waybill.consortium_member",
-                    "stock_release_item",
-                    "stock_release_item.purchase_order_item",
-                    "stock_release_item.purchase_order_item.item",
-                    "stock_release_item.purchase_order_item.purchase_order",
+                    "purchase_order",
+                    "purchase_order.consortium_member",
+                    "item",
                 ],
                 filters: filter,
                 "pagination[limit]": -1,
@@ -62,15 +54,15 @@
                 encodeValuesOnly: true,
             });
 
-            let response = await get("waybill-items", params);
+            let response = await get("purchase-order-items", params);
 
-            console.log("Get Waybill Items  ", response);
+            console.log("Get Purchase Order Items  ", response);
 
-            waybill_items = response.data.filter(
-                (x) => x.attributes.waybill.data
+            purchase_order_items = response.data.filter(
+                (x) => x.attributes.purchase_order.data
             );
         } catch (e) {
-            console.log("Error get Waybill Items  ", e);
+            console.log("Error get Purchase Order Items  ", e);
         }
     }
 
@@ -83,23 +75,8 @@
         let filter = {
             $and: [
                 {
-                    waybill: {
-                        consortium_member: {
-                            id: {
-                                $in: [$consortium_member.value.id],
-                            },
-                        },
-                    },
-                },
-                {
-                    stock_release_item: {
-                        purchase_order_item: {
-                            item: {
-                                id: {
-                                    $in: [$item.value.value],
-                                },
-                            },
-                        },
+                    sof: {
+                        $containsi: $sof.value?.value,
                     },
                 },
             ],
@@ -107,7 +84,7 @@
 
         if ($start.value != $end.value) {
             filter.$and.push({
-                waybill: {
+                purchase_order: {
                     date: {
                         $gte: $start.value,
                         $lte: $end.value,
@@ -116,25 +93,13 @@
             });
         }
 
+        console.log({ filter });
+
         getItem(filter);
     }
 
-    async function getConsortiumMembers() {
-        try {
-            let params = {
-                "pagination[limit]": -1,
-            };
-            params = qs.stringify(params, {
-                encodeValuesOnly: true,
-            });
-            let response = await get("consortium-members", params);
-
-            console.log("Get Consortium Members ", response);
-
-            consortium_members = response.data;
-        } catch (e) {
-            console.log("Error Get Consortium Members ", e);
-        }
+    function onlyUnique(value, index, self) {
+        return self.indexOf(value) === index;
     }
 
     async function getItems() {
@@ -145,37 +110,33 @@
             params = qs.stringify(params, {
                 encodeValuesOnly: true,
             });
-            let response = await get("items", params);
+            let response = await get("purchase-order-items", params);
 
-            console.log("Get Items ", response);
+            console.log("Get Purchase Order Items SOF ", response);
 
-            items = response.data.map((x) => {
-                return {
-                    value: x.id,
-                    label: x.attributes.name + "-" + x.attributes.category,
-                };
-            });
+            sofs = response.data
+                .filter((x) => x.attributes.sof)
+                .map((x) => {
+                    return x.attributes.sof;
+                })
+                .filter(onlyUnique);
+
+            console.log({ sofs });
         } catch (e) {
-            console.log("Error Get Items ", e);
+            console.log("Error Get Purchase Order Items SOF ", e);
         }
     }
 
     const columnsDetails = [
         {
-            key: "id",
-            title: "Waybill ID",
+            key: "poNumber",
+            title: "PO #",
             sortable: true,
             selected: true,
         },
         {
             key: "consortium_member",
             title: "Consortium Member",
-            sortable: true,
-            selected: true,
-        },
-        {
-            key: "destination",
-            title: "Destination",
             sortable: true,
             selected: true,
         },
@@ -187,13 +148,7 @@
         },
         {
             key: "id",
-            title: "Waybill Item ID",
-            sortable: true,
-            selected: true,
-        },
-        {
-            key: "poNumber",
-            title: "PO#",
+            title: "PO Item ID",
             sortable: true,
             selected: true,
         },
@@ -235,6 +190,12 @@
             selected: true,
         },
         {
+            key: "sof",
+            title: "SOF",
+            sortable: true,
+            selected: true,
+        },
+        {
             key: "quantity",
             title: "Quantity",
             sortable: true,
@@ -254,35 +215,26 @@
 
         rowss.forEach((elementC) => {
             array.push([
-                elementC.attributes.waybill.data.id,
-                elementC.attributes.waybill.data.attributes.consortium_member
+                elementC.attributes.purchase_order.data.attributes.poNumber,
+                elementC.attributes.purchase_order.data.attributes.consortium_member
                     .data.attributes.name,
-                elementC.attributes.waybill.data.attributes.destination,
-                elementC.attributes.waybill.data.attributes.date,
+                
+                elementC.attributes.purchase_order.data.attributes.date,
                 elementC.id,
-                elementC.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data.attributes.purchase_order.data
-                    .attributes.poNumber,
-                elementC.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data.attributes.item.data.attributes
+                elementC.attributes.item.data.attributes
                     .name,
-                elementC.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data.attributes.item.data.attributes
+                elementC.attributes.item.data.attributes
                     .category,
-                elementC.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data.attributes.item.data.attributes
+                elementC.attributes.item.data.attributes
                     .unit,
-                elementC.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data.attributes.item.data.attributes
+                elementC.attributes.item.data.attributes
                     .pieces,
-                elementC.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data.attributes.currency,
-                elementC.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data.attributes.unitPrice,
+                elementC.attributes.currency,
+                elementC.attributes.unitPrice,
+                elementC.attributes.sof,
                 elementC.attributes.quantity,
 
-                elementC.attributes.stock_release_item.data?.attributes
-                    .purchase_order_item.data.attributes.unitPrice *
+                elementC.attributes.unitPrice *
                     elementC.attributes.quantity,
             ]);
         });
@@ -292,7 +244,6 @@
             "-",
             "-",
             "-",
-            "-",
 
             "-",
             "-",
@@ -302,7 +253,7 @@
             "-",
             "-",
             "-",
-            numberWithCommas(getTotal(waybill_items)),
+            numberWithCommas(getTotal(purchase_order_items)),
         ]);
 
         return array;
@@ -310,9 +261,9 @@
 
     function exportcsv() {
         let now = new Date();
-        let fname = `SWAN Item Search - " ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
+        let fname = `SWAN Purchase Order by SOF -  ${now.getFullYear()}-${now.getMonth()}-${now.getDate()} T${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.csv`;
 
-        let array = getPopulatedDataPdf(waybill_items);
+        let array = getPopulatedDataPdf(purchase_order_items);
 
         array = [columnsDetails.map((x) => x.title), ...array];
         exportToCsvAlternate(fname, array);
@@ -329,20 +280,19 @@
                 $end.value.toDateString();
         }
         exportToPDFAlternate(
-            "Item Search" + s,
-            getPopulatedDataPdf(waybill_items),
+            "Purchase Order by SOF - " + ($sof.value?.value ? $sof.value?.value : "-") + s,
+            getPopulatedDataPdf(purchase_order_items),
             columnsDetails
         );
     }
 
     onMount(async () => {
-        await getConsortiumMembers();
         await getItems();
     });
 </script>
 
 <svelte:head>
-    <title>Print Item Search Report</title>
+    <title>Print Purchase Order by SOF Report</title>
 </svelte:head>
 
 <br class="hide-print" /><br class="hide-print" />
@@ -356,7 +306,7 @@
         <div class="columns">
             <div class="column">
                 <h3 class="my-0 is-size-5 has-text-weight-bold">
-                    Print Item Search Report
+                    Print Purchase Order by SOF Report
                 </h3>
             </div>
 
@@ -405,43 +355,20 @@
             <div class="columns">
                 <div class="column">
                     <div class="field">
-                        <label for="" class="gray">Consortium Member</label><br
-                        />
-                        <div class="control select is-fullwidth">
-                            <select
-                                required
-                                name="category"
-                                bind:value={$consortium_member.value}
-                            >
-                                {#each consortium_members as c}
-                                    <option value={c}
-                                        >{c.attributes.name}</option
-                                    >
-                                {/each}
-                            </select>
-                        </div>
-                        {#if $formItem.hasError("consortium_member.required")}
-                            <p class="help is-danger">
-                                Consortium Member is required
-                            </p>
-                        {/if}
-                    </div>
-                </div>
-                <div class="column">
-                    <div class="field">
-                        <label for="" class="gray">Item (*)</label>
+                        <label for="" class="gray">SOF (*)</label>
                         <div class="control">
                             <Select
-                                {items}
-                                bind:value={$item.value}
+                                items={sofs}
+                                bind:value={$sof.value}
                                 listAutoWidth={true}
                             />
                         </div>
-                        {#if $formItem.hasError("item.required")}
-                            <p class="help is-danger">Item is required</p>
+                        {#if $formItem.hasError("sof.required")}
+                            <p class="help is-danger">SOF is required</p>
                         {/if}
                     </div>
                 </div>
+                <div class="column" />
             </div>
 
             <div class="columns">
@@ -477,7 +404,7 @@
                 </div>
                 <div class="column is-flex is-align-items-end">
                     <button
-                        disabled={!$formItem.valid && !$formItem.dirty}
+                        disabled={!$formItem.valid}
                         on:click|preventDefault={filter}
                         class="button is-dark px-5 py-2 has-text-weight-bold"
                         >Filter</button
@@ -491,33 +418,23 @@
 
     <br class="hide-print" /><br class="hide-print" />
 
-    {#if waybill_items}
+    {#if purchase_order_items}
         <div class="card p-6">
             <br />
 
-            <div class="has-text-centered is-flex is-align-items-center">
-                <img
-                    src="./images/logo/swan_consortium.svg"
-                    width="150"
-                    alt="SWAN Humaniterian Consortium"
-                    style="margin: 0 auto;"
-                />
+            <div class="columns">
+                <div class="column is-narrow mr-5">
+                    <img
+                        src="./images/logo/swan_consortium.svg"
+                        width="150"
+                        alt="SWAN Humaniterian Consortium"
+                    />
+                </div>
+                <div class="column is-flex is-align-items-center">
+                    <h3 class="is-size-5">Purchase Order by SOF</h3>
+                </div>
             </div>
-            {#if $consortium_member.value}
-                <h3 class="has-text-centered has-text-weight-bold">
-                    {$consortium_member.value.attributes.name}
-                </h3>
-                <p class="has-text-centered">
-                    {$consortium_member.value.attributes.address_1} -
-                    {$consortium_member.value.attributes.address_2}
-                </p>
-                <p class="has-text-centered">
-                    {$consortium_member.value.attributes.website} - {$consortium_member
-                        .value.attributes.phone}
-                </p>
-            {/if}
 
-            <h3 class="is-size-5">Waybill Item Search</h3>
             <hr />
             {#if $start.value != $end.value}
                 <p class="gray">
@@ -528,97 +445,83 @@
             {/if}
             <!-- <p class="card-header-title">Stock Items</p> -->
 
-            <!-- <p class="card-header-title"></p> -->
+            {#if $sof.value}
+                <p class="card-header-title">{$sof.value.value}</p>
+            {/if}
 
             <table class="table is-bordered is-fullwidth is-narrow">
                 <tr class="has-background-black has-text-white">
                     <td>No.</td>
+                    <th class="has-text-white">PO #</th>
                     <th class="has-text-white">Consortium Member</th>
-                    <th class="has-text-white">Destination</th>
                     <th class="has-text-white">Date</th>
                     <th class="has-text-white">Description</th>
                     <th class="has-text-white">Category</th>
                     <th class="has-text-white">Unit</th>
                     <th class="has-text-white">Pcs/Package</th>
-
+                    <th class="has-text-white">SOF</th>
                     <th class="has-text-white">Unit Price</th>
                     <th class="has-text-white">Quantity</th>
 
                     <th class="has-text-white">Total</th>
                 </tr>
 
-                {#each waybill_items as stock, index}
+                {#each purchase_order_items as stock, index}
                     <tr>
                         <td>{index + 1}</td>
                         <td>
-                            {stock.attributes.waybill.data?.attributes
+                            {stock.attributes.purchase_order.data?.attributes
+                                .poNumber}
+                        </td>
+                        <td>
+                            {stock.attributes.purchase_order.data?.attributes
                                 .consortium_member.data?.attributes.name}
                         </td>
+
                         <td>
-                            {stock.attributes.waybill.data?.attributes
-                                .destination}
-                        </td>
-                        <td>
-                            {stock.attributes.waybill.data?.attributes.date}
+                            {stock.attributes.purchase_order.data?.attributes
+                                .date}
                         </td>
                         <td
-                            >{stock.attributes.stock_release_item.data
-                                ?.attributes.purchase_order_item.data
-                                ?.attributes.item.data?.attributes.name} - PO Item ID ({stock
-                                .attributes.stock_release_item.data?.attributes
-                                .purchase_order_item.data?.id})</td
+                            >{stock.attributes.item.data?.attributes.name} - PO Item ID({stock.id})</td
                         >
                         <td
-                            >{stock.attributes.stock_release_item.data
-                                ?.attributes.purchase_order_item.data
-                                ?.attributes.item.data?.attributes.category}
+                            >{stock.attributes.item.data?.attributes.category}
                         </td>
                         <td
-                            >{stock.attributes.stock_release_item.data
-                                ?.attributes.purchase_order_item.data
-                                ?.attributes.item.data?.attributes.unit
-                                ? stock.attributes.stock_release_item.data
-                                      ?.attributes.purchase_order_item.data
-                                      ?.attributes.item.data?.attributes.unit
+                            >{stock.attributes.item.data?.attributes.unit
+                                ? stock.attributes.item.data?.attributes.unit
                                 : "-"}</td
                         >
                         <td
-                            >{stock.attributes.stock_release_item.data
-                                ?.attributes.purchase_order_item.data
-                                ?.attributes.item.data?.attributes.pieces
-                                ? stock.attributes.stock_release_item.data
-                                      ?.attributes.purchase_order_item.data
-                                      ?.attributes.item.data?.attributes.pieces
+                            >{stock.attributes.item.data?.attributes.pieces
+                                ? stock.attributes.item.data?.attributes.pieces
                                 : "-"}</td
                         >
 
                         <td
-                            >{numberWithCommas(stock.attributes.stock_release_item.data
-                                ?.attributes.purchase_order_item.data
-                                ?.attributes.unitPrice)}</td
+                            >{stock.attributes.sof
+                                ? stock.attributes.sof
+                                : "-"}</td
                         >
-                        <td
-                            >{numberWithCommas(stock.attributes.quantity)}</td
-                        >
+
+                        <td>{numberWithCommas(stock.attributes.unitPrice)}</td>
+                        <td>{numberWithCommas(stock.attributes.quantity)}</td>
 
                         <td
                             >{numberWithCommas(
-                                stock.attributes.stock_release_item.data
-                                    ?.attributes.purchase_order_item.data
-                                    ?.attributes.unitPrice *
+                                stock.attributes.unitPrice *
                                     stock.attributes.quantity
                             )}
-                            {stock.attributes.stock_release_item.data
-                                ?.attributes.purchase_order_item.data
-                                ?.attributes.currency}</td
+                            {stock.attributes.currency}</td
                         >
                     </tr>
                 {/each}
 
                 <tr class="">
                     <th>Total</th>
-                    <th colspan="9" />
-                    <th>{numberWithCommas(getTotal(waybill_items))}</th>
+                    <th colspan="10" />
+                    <th>{numberWithCommas(getTotal(purchase_order_items))}</th>
                 </tr>
             </table>
 

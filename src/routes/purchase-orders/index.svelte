@@ -18,7 +18,7 @@
     import { exportToPDFAlternate } from "../../utils/export/exportPDFAlternate";
     import { createActivityLog } from "../../utils/activity/log";
     import { Moon } from "svelte-loading-spinners";
-    import { numberWithCommas } from "../../lib";
+    import { numberWithCommas, checkValue } from "../../lib";
 
     let query = "";
     let sortBy = "";
@@ -91,6 +91,12 @@
         {
             key: "pieces",
             title: "Pieces",
+            sortable: true,
+            selected: true,
+        },
+        {
+            key: "sof",
+            title: "SOF",
             sortable: true,
             selected: true,
         },
@@ -261,6 +267,13 @@
                         },
                         {
                             purchase_order_items: {
+                                sof: {
+                                        $containsi: query,
+                                },
+                            },
+                        },
+                        {
+                            purchase_order_items: {
                                 item: {
                                     name: {
                                         $containsi: query,
@@ -297,6 +310,7 @@
             if (
                 field == "consortium_member" ||
                 field == "quantity" ||
+                field == "sof" ||
                 field == "currency" ||
                 field == "unit_price" ||
                 field == "item_id"
@@ -547,7 +561,7 @@
 
     <div class="columns">
         <div class="column is-narrow">
-            <div class="field has-addons" style="width: 400px;">
+            <div class="field has-addons" style="width: 250px;">
                 <div class="control has-icons-left">
                     <input
                         bind:value={query}

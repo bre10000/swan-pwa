@@ -17,10 +17,10 @@
     import { onMount } from "svelte";
     import { DateInput } from "date-picker-svelte";
     import Select from "svelte-select";
-    import { checkInput, numberWithCommas } from "../../lib";
+    import { checkInput, checkValue, numberWithCommas } from "../../lib";
     import { createActivityLog } from "../../utils/activity/log";
     import qs from "qs";
-import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte";
+    import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte";
 
     const poNumber = field("poNumber", "", [required()]);
     const consortium_member = field("consortium_member", "", [required()]);
@@ -32,17 +32,18 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
 
     let consortium_members = [];
     let items = [];
+    let categories = [];
 
     let errors;
 
-    let unsavedItemsDialog ;
+    let unsavedItemsDialog;
 
     async function add() {
         await formItem.validate();
         if (!$formItem.valid) {
             return;
         }
-        if(!validateChildItems()) {
+        if (!validateChildItems()) {
             return;
         }
 
@@ -103,6 +104,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                     data: {
                         data: {
                             quantity: element.quantity,
+                            sof: element.sof,
                             unitPrice: element.unitPrice,
                             currency: element.currency,
                             remark: element.remark,
@@ -132,7 +134,6 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
     }
 
     function addChildItem() {
-
         formChildItems = [
             ...formChildItems,
             {
@@ -140,6 +141,8 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                 item: "",
                 items: [],
                 currency: "",
+                sof: "",
+                quantity: "",
                 quantity: "",
                 unitPrice: "",
                 remark: "",
@@ -152,53 +155,56 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
     }
 
     function removeChildItem(id) {
-        formChildItems = formChildItems.filter(
-            (x) => x.id != id
-        );
+        formChildItems = formChildItems.filter((x) => x.id != id);
     }
 
     function filterItems(event, id) {
-        let index = formChildItems.findIndex(
-            (x) => x.id == id
+        let index = formChildItems.findIndex((x) => x.id == id);
+        formChildItems[index].items = items.filter(
+            (x) => x.category == event.target.value
         );
-        formChildItems[index].items = items.filter( x => x.category == event.target.value );
-
     }
     function selectItem(event, id) {
-        let index = formChildItems.findIndex(
-            (x) => x.id == id
-        );
-        formChildItems[index].item = event?.detail
-
+        let index = formChildItems.findIndex((x) => x.id == id);
+        formChildItems[index].item = event?.detail;
     }
 
     function validateChildItems() {
-            
-
-            formChildItems.forEach(element => {
-                if((checkInput(element.item) && checkInput(element.quantity) && checkInput(element.unitPrice) && checkInput(element.currency))) {
-                    element.error = null
-                } else {
-                    element.error = "<b> Required field/s are missing </b> <br> " + (checkInput(element.item)? "" : " Item ") + (checkInput(element.quantity)? "" : " Quantity ") + (checkInput(element.unitPrice)? "" : " Unit Price ") + (checkInput(element.currency)? "" : " Currency ")
-
-                }
-            });
-
-            console.log("validate", {formChildItems})
-
-            formChildItems = formChildItems;
-
-            console.log("Validate Result", formChildItems.filter( x => checkInput(x.error)))
-
-            if( formChildItems.filter( x => checkInput(x.error)).length == 0 ) {
-                return true;
+        formChildItems.forEach((element) => {
+            if (
+                checkInput(element.item) &&
+                checkInput(element.quantity) &&
+                checkInput(element.unitPrice) &&
+                checkInput(element.currency)
+            ) {
+                element.error = null;
             } else {
-                $formItem.valid = true;
-                formItem = formItem;
-                return false;
+                element.error =
+                    "<b> Required field/s are missing </b> <br> " +
+                    (checkInput(element.item) ? "" : " Item ") +
+                    (checkInput(element.quantity) ? "" : " Quantity ") +
+                    (checkInput(element.unitPrice) ? "" : " Unit Price ") +
+                    (checkInput(element.currency) ? "" : " Currency ");
             }
-    }
+        });
 
+        console.log("validate", { formChildItems });
+
+        formChildItems = formChildItems;
+
+        console.log(
+            "Validate Result",
+            formChildItems.filter((x) => checkInput(x.error))
+        );
+
+        if (formChildItems.filter((x) => checkInput(x.error)).length == 0) {
+            return true;
+        } else {
+            $formItem.valid = true;
+            formItem = formItem;
+            return false;
+        }
+    }
 
     async function getConsortiumMembers() {
         try {
@@ -235,7 +241,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                     value: x.id,
                     label: x.attributes.name + "-" + x.attributes.category,
                     name: x.attributes.name,
-                    category: x.attributes.category
+                    category: x.attributes.category,
                 };
             });
         } catch (e) {
@@ -243,10 +249,29 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
         }
     }
 
+    async function getCategories() {
+        try {
+            let params = {
+                "pagination[limit]": -1,
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+            let response = await get("categories", params);
+
+            console.log("Get Categories ", response);
+
+            categories = response.data.map((x) => x.attributes.name);
+        } catch (e) {
+            console.log("Error Get Categories ", e);
+        }
+    }
+
     onMount(() => {
         getConsortiumMembers();
         getItems();
         addChildItem();
+        getCategories();
     });
 </script>
 
@@ -256,7 +281,10 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
 
 <br /><br />
 <div class="container px-6">
-    <a href="purchase-orders" on:click|preventDefault={() => unsavedItemsDialog = true} class="has-text-dark"
+    <a
+        href="purchase-orders"
+        on:click|preventDefault={() => (unsavedItemsDialog = true)}
+        class="has-text-dark"
         ><span class="icon is-small"><Icon data={faAngleLeft} /></span> Back</a
     >
     <br /><br />
@@ -389,8 +417,11 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                 <div class="column  is-narrow" style="width: 90px;">
                     <label for="" class="gray">Category</label>
                 </div>
-                <div class="column  is-narrow" style="width: 250px;">
+                <div class="column  is-narrow" style="width: 200px;">
                     <label for="" class="gray">Item (*)</label>
+                </div>
+                <div class="column">
+                    <label for="" class="gray">SOF</label>
                 </div>
                 <div class="column">
                     <label for="" class="gray">Quantity</label>
@@ -414,10 +445,13 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
             </div>
 
             {#each formChildItems as childItem, index}
-                <div class="columns child-item" class:is-danger={childItem.error}>
+                <div
+                    class="columns child-item"
+                    class:is-danger={childItem.error}
+                >
                     <div class="column is-narrow" style="width: 50px;">
                         <input
-                            type="text"        
+                            type="text"
                             class="input has-background-light border-radius-0 "
                             disabled
                             value={index + 1}
@@ -425,20 +459,26 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                     </div>
                     <div class="column  is-narrow" style="width: 90px;">
                         <div class="control select is-fullwidth">
-                            <select on:change={(event) => filterItems(event, childItem.id)} bind:value={childItem.category} class="border-radius-0 ">
-                                <option>Health</option>
-                                <option>Wash</option>
-                                <option>ES/NFI</option>
+                            <select
+                                on:change={(event) =>
+                                    filterItems(event, childItem.id)}
+                                bind:value={childItem.category}
+                                class="border-radius-0 "
+                            >
+                                {#each categories as c}
+                                    <option>{c}</option>
+                                {/each}
                             </select>
                         </div>
                     </div>
-                    <div class="column  is-narrow" style="width: 250px;">
+                    <div class="column  is-narrow" style="width: 200px;">
                         <div class="field">
                             <div class="control">
                                 <Select
                                     items={childItem.items}
                                     value={childItem.item}
-                                    on:select={(event) => selectItem(event, childItem.id)}
+                                    on:select={(event) =>
+                                        selectItem(event, childItem.id)}
                                     listAutoWidth={true}
                                 />
                             </div>
@@ -447,12 +487,20 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
 
                     <div class="column">
                         <input
+                            bind:value={childItem.sof}
+                            type="text"
+                            placeholder="SOF"
+                            class="input has-background-light border-radius-0 "
+                        />
+                    </div>
+
+                    <div class="column">
+                        <input
                             bind:value={childItem.quantity}
-                            type="number"
+                            type="number" min=0 on:input={checkValue}
                             placeholder="Quantity"
                             class="input has-background-light border-radius-0 "
                         />
-                        
                     </div>
 
                     <div class="column">
@@ -475,17 +523,15 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                                 <option>MXN ($)</option>
                             </select>
                         </div>
-                        
                     </div>
                     <div class="column">
                         <input
                             type="number"
-min=0 oninput="validity.valid||(value='');"
+                            min=0 on:input={checkValue}
                             placeholder="Unit Price"
                             class="input has-background-light border-radius-0 "
                             bind:value={childItem.unitPrice}
                         />
-                        
                     </div>
                     <div class="column">
                         <input
@@ -494,7 +540,7 @@ min=0 oninput="validity.valid||(value='');"
                             class="input has-background-light border-radius-0 "
                             disabled
                             value={numberWithCommas(
-                                childItem.unitPrice*
+                                childItem.unitPrice *
                                     parseInt(childItem.quantity)
                             )
                                 ? numberWithCommas(
@@ -506,32 +552,36 @@ min=0 oninput="validity.valid||(value='');"
                     </div>
 
                     <div class="column">
-                        <div class="field">
-                            <div class="control is-fullwidth">
-                                <input
+                        <input
                                     type="text"
                                     placeholder="Remark"
-                                    class="input has-background-light"
+                                    class="input has-background-light border-radius-0"
                                     bind:value={childItem.remark}
                                     style="border-right: 1px solid lightgray !important;"
                                 />
-                            </div>
-                        </div>
                     </div>
 
                     <div
                         class="column is-narrow has-text-weight-bold input"
-                        style="width: 45px;"
+                        style="width: 40px;"
                     >
                         <!-- <button class="button is-info is-light ml-2"> <Icon data={faEdit}/></button> -->
-                        <button type="button border-radius-0" on:click|preventDefault={() => {removeChildItem(childItem.id)}} class="button is-danger">
+                        <button
+                            type="button border-radius-0"
+                            on:click|preventDefault={() => {
+                                removeChildItem(childItem.id);
+                            }}
+                            class="button is-danger"
+                        >
                             <Icon data={faTimes} /></button
                         >
                     </div>
                 </div>
                 {#if childItem.error}
                     <div class="columns px-3">
-                        <div class="column has-text-centered has-background-light has-text-danger p-4">
+                        <div
+                            class="column has-text-centered has-background-light has-text-danger p-4"
+                        >
                             {@html childItem.error}
                         </div>
                     </div>
@@ -547,14 +597,12 @@ min=0 oninput="validity.valid||(value='');"
 
 <br /><br /><br /><br /><br />
 
-
 {#if unsavedItemsDialog}
     <UnsavedConfirmation
-        on:confirm={() => goto('purchase-orders')}
+        on:confirm={() => goto("purchase-orders")}
         on:dismiss={() => (unsavedItemsDialog = false)}
     />
 {/if}
-
 
 <style>
     .card {
@@ -573,8 +621,6 @@ min=0 oninput="validity.valid||(value='');"
         padding: 0.5rem;
     }
 
-    
-
     :global(.selectContainer .listContainer) {
         width: 400% !important;
         z-index: 10;
@@ -585,11 +631,11 @@ min=0 oninput="validity.valid||(value='');"
         border-right: 0px solid lightgray !important;
         border-radius: 0px;
         font-size: 0.9rem !important;
-        height: 36px !important;
+        height: 28px !important;
         /* background-color: #f5f5f5!important; */
     }
     :global(.selectContainer) {
-        height: 36px !important;
+        height: 28px !important;
     }
 
     :global(.selectContainer .listContainer .listItem) {

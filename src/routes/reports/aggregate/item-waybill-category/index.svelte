@@ -9,7 +9,7 @@
     } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
-    import { numberWithCommas } from "../../../../lib";
+    import { numberWithCommas, checkValue } from "../../../../lib";
     import { exportToCsvAlternate } from "../../../../utils/export/csvGenerator";
     import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternate";
     import { onMount } from "svelte";
@@ -30,7 +30,7 @@
     let waybill_items;
 
     let consortium_members = [];
-    let categories = ["Health", "Wash", "ES/NFI"];
+    let categories = [];
 
     function getTotal(items) {
         let total = 0;
@@ -39,7 +39,7 @@
             total +=
                 element.attributes.stock_release_item.data?.attributes
                     .purchase_order_item.data?.attributes.unitPrice *
-                element.attributes.stock_release_item.data?.attributes.quantity;
+                element.attributes.quantity;
         });
 
         return total;
@@ -257,13 +257,11 @@
                     .purchase_order_item.data.attributes.currency,
                 elementC.attributes.stock_release_item.data?.attributes
                     .purchase_order_item.data.attributes.unitPrice,
-                elementC.attributes.stock_release_item.data?.attributes
-                    .quantity,
+                elementC.attributes.quantity,
 
                 elementC.attributes.stock_release_item.data?.attributes
                     .purchase_order_item.data.attributes.unitPrice *
-                    elementC.attributes.stock_release_item.data?.attributes
-                        .quantity,
+                    elementC.attributes.quantity,
             ]);
         });
 
@@ -315,8 +313,27 @@
         );
     }
 
+    async function getCategories() {
+        try {
+            let params = {
+                "pagination[limit]": -1,
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+            let response = await get("categories", params);
+
+            console.log("Get Categories ", response);
+
+            categories = response.data.map((x) => x.attributes.name);
+        } catch (e) {
+            console.log("Error Get Categories ", e);
+        }
+    }
+
     onMount(async () => {
         await getConsortiumMembers();
+        getCategories();
     });
 </script>
 
@@ -546,7 +563,7 @@
                         <td
                             >{stock.attributes.stock_release_item.data
                                 ?.attributes.purchase_order_item.data
-                                ?.attributes.item.data?.attributes.name} - ({stock
+                                ?.attributes.item.data?.attributes.name} - PO Item ID ({stock
                                 .attributes.stock_release_item.data?.attributes
                                 .purchase_order_item.data?.id})</td
                         >
@@ -575,13 +592,12 @@
                         >
 
                         <td
-                            >{stock.attributes.stock_release_item.data
+                            >{numberWithCommas(stock.attributes.stock_release_item.data
                                 ?.attributes.purchase_order_item.data
-                                ?.attributes.unitPrice}</td
+                                ?.attributes.unitPrice)}</td
                         >
                         <td
-                            >{stock.attributes.stock_release_item.data
-                                ?.attributes.quantity}</td
+                            >{numberWithCommas(stock.attributes.quantity)}</td
                         >
 
                         <td
@@ -589,8 +605,7 @@
                                 stock.attributes.stock_release_item.data
                                     ?.attributes.purchase_order_item.data
                                     ?.attributes.unitPrice *
-                                    stock.attributes.stock_release_item.data
-                                        ?.attributes.quantity
+                                    stock.attributes.quantity
                             )}
                             {stock.attributes.stock_release_item.data
                                 ?.attributes.purchase_order_item.data

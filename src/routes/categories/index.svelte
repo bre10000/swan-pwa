@@ -9,20 +9,31 @@
     import { onDestroy } from "svelte";
     import { user } from "../../store/user";
     import DataTable from "../../widgets/table/DataTable.svelte";
-    import { get, del, put } from "../../lib/api";
+    import { get, del } from "../../lib/api";
     import qs from "qs";
     import DeleteConfirmation from "../../widgets/modals/DeleteConfirmation.svelte";
     import { goto } from "@sapper/app";
     import { toast } from "@zerodevx/svelte-toast";
-    import { Moon } from "svelte-loading-spinners";
     import { exportToCSV } from "../../utils/export/exportCSV";
     import { exportToPDF } from "../../utils/export/exportPDF";
-    import DataTableUsers from "../../widgets/table/DataTableUsers.svelte";
-    import { createActivityLog } from "../../utils/activity/log";
+    import { Moon } from "svelte-loading-spinners";
 
-   
+    const unsubscribe = user.subscribe((value) => {
+        if (!process.browser) {
+            return;
+        }
 
-    let query = "";
+        if (!value.loggedIn && value.fetched) {
+            goto("login");
+        } else if (value.data) {
+            getCategories();
+        }
+    });
+
+    onDestroy(unsubscribe);
+
+    let query = "",
+        queryC = "";
     let sortBy = "";
 
     let currentItem;
@@ -32,52 +43,10 @@
 
     const columns = [
         {
-            key: "id",
-            title: "ID",
-            sortable: true,
-            filterValue: (v) => Math.floor(v.id / 10),
-            interval: 10,
-            filterType: "numeric",
-            headerClass: "has-text-left",
-            selected: true,
-        },
-        {
             key: "name",
             title: "Name",
             sortable: true,
-            filterValue: (v) => v.name.charAt(0).toLowerCase(),
-            filterType: "string",
-            selected: true,
-        },
-        {
-            key: "username",
-            title: "Username",
-            sortable: true,
-            filterValue: (v) => v.username.charAt(0).toLowerCase(),
-            filterType: "string",
-            selected: true,
-        },
-        {
-            key: "email",
-            title: "Email",
-            sortable: true,
-            filterValue: (v) => v.email.charAt(0).toLowerCase(),
-            filterType: "string",
-            selected: true,
-        },
-        {
-            key: "role",
-            title: "Role",
-            sortable: true,
-            filterValue: (v) => v.role.name.charAt(0).toLowerCase(),
-            filterType: "string",
-            selected: true,
-        },
-        {
-            key: "blocked",
-            title: "Blocked",
-            sortable: true,
-            filterValue: (v) => v.role.name.charAt(0).toLowerCase(),
+            filterValue: (v) => v.first_name.charAt(0).toLowerCase(),
             filterType: "string",
             selected: true,
         },
@@ -86,102 +55,58 @@
     let pagination;
 
     let options = {
-        title: "Users Table",
-        showSearch: false,
+        title: "Categories Table",
         showFilterHeader: false,
-        showSelect: true,
+        showSelect: false,
         showDetails: false,
-        showActions: false,
+        showActions: true,
         showFooter: false,
     };
 
-    async function getItems(filters, sort, page) {
-        rows = null;
+    async function getCategories(filters, sort, page) {
         try {
             let params = {
                 filters: filters ? filters : {},
                 sort: sort ? sort : "id",
-                "pagination['limit']": -1,
-                populate: '*'
+                "pagination[page]": page ? page : 1,
             };
             params = qs.stringify(params, {
                 encodeValuesOnly: true,
             });
 
-            let response = await get("users", params);
+            let response = await get("categories", params);
 
-            console.log("Get Users Request - ", response);
+            console.log("Get Categories Request - ", response);
 
             rows = response.data;
             pagination = response.meta?.pagination;
         } catch (e) {
-            console.warn("Error Getting Users - ", e);
+            console.warn("Error Getting Categories - ", e);
         }
     }
 
     function search() {
         let qs = getQS();
-        getItems(qs, sortBy);
+        getCategories(qs, sortBy);
     }
 
     function changePage(event) {
         let qs = getQS();
 
-        getItems(qs, sortBy, event.detail.newPage);
+        getCategories(qs, sortBy, event.detail.newPage);
     }
 
     function sort(event) {
         sortBy = event.detail.key;
         let qs = getQS();
 
-        getItems(qs, sortBy, event.detail.newPage);
+        getCategories(qs, sortBy, event.detail.newPage);
     }
 
     function editRow(event) {
-        goto("users/edit/" + event.detail.row.id);
-    }
-    function selectRow(event) {
-        let index = rows.findIndex( x=> x.id == event.detail.id ) 
-        rows[index].selected = !rows[index].selected
-    }
-    function selectAllRows(event) {
-        rows = event.detail.rows
+        goto("categories/edit/" + event.detail.row.id);
     }
 
-    async function changeStatusSelected(value){
-        rows?.filter( x => x.selected ).forEach(async element => {
-            try {
-            let response = await put({
-                path: "users/" + element.id,
-                data: {
-                        blocked: value
-                },
-            });
-
-            console.log("Change User Status Request  ", response);
-
-            if (response?.id) {
-                toast.push( value ? "User Account Blocked Successfully!" : "User Account Activated Successfully!", {
-                    duration: 20000,
-                    theme: {
-                        "--toastBackground": "#48BB78",
-                        "--toastBarBackground": "#2F855A",
-                    },
-                });
-                createActivityLog(
-                    "User",
-                    response,
-                    "Account Status",
-                    response.id
-                );
-
-                getItems();
-            }
-        } catch (e) {
-            console.log("Error Change User Status   ", e);
-        }
-        });
-    }
     function deleteRow(event) {
         currentItem = event.detail.row;
         showConfirmation = true;
@@ -191,12 +116,12 @@
         showConfirmation = false;
 
         try {
-            let response = await del("users/" + currentItem.id, null);
+            let response = await del("categories/" + currentItem.id, null);
 
-            console.log("Delete User Request  ", response);
+            console.log("Delete Category Request  ", response);
 
-            if (response?.id) {
-                toast.push("User Deleted Successfully!", {
+            if (response.data?.id) {
+                toast.push("Category Deleted Successfully!", {
                     duration: 20000,
                     theme: {
                         "--toastBackground": "#48BB78",
@@ -207,7 +132,7 @@
                 search();
             }
         } catch (e) {
-            console.log("Error Delete User   ", e);
+            console.log("Error Delete Category   ", e);
         }
     }
 
@@ -219,33 +144,16 @@
                         $containsi: query,
                     },
                 },
-                {
-                    email: {
-                        $containsi: query,
-                    },
-                },
-                {
-                    username: {
-                        $containsi: query,
-                    },
-                },
-                {
-                    role: {
-                        name: {
-                            $containsi: query,
-                        }
-                    },
-                },
             ],
         };
     }
 
     function exportcsv() {
-        exportToCSV("Users", rows, columns);
+        exportToCSV("Categories", rows, columns);
     }
 
     function exportPDF() {
-        exportToPDF("Users", rows, columns);
+        exportToPDF("Categories", rows, columns);
     }
 
     async function exportAllcsv() {
@@ -257,9 +165,9 @@
                 encodeValuesOnly: true,
             });
 
-            let response = await get("users", params);
+            let response = await get("categories", params);
 
-            exportToCSV("Users", response.data, columns);
+            exportToCSV("Categories", response.data, columns);
         } catch (e) {}
     }
 
@@ -272,54 +180,37 @@
                 encodeValuesOnly: true,
             });
 
-            let response = await get("users", params);
+            let response = await get("categories", params);
 
-            exportToPDF("Users", response.data, columns);
+            exportToPDF("Categories", response.data, columns);
         } catch (e) {}
     }
-
-
-    const unsubscribe = user.subscribe((value) => {
-        if (!process.browser) {
-            return;
-        }
-
-        if (!value.loggedIn && value.fetched) {
-            goto("login");
-        } else if (value.data) {
-            getItems();
-        }
-    });
-
-    onDestroy(unsubscribe);
 </script>
 
 <svelte:head>
-    <title>Users</title>
+  <title>Categories</title>
 </svelte:head>
-<br />
 
+<br /><br />
 <div class="container px-6">
-    <br />
-    <div class="columns ">
+    <div class="columns">
         <div class="column">
             <h3 class="has-text-info">
-                
-                Users
-                {#if rows}
-                    <span class="has-text-weight-light ml-2"
-                        >{rows.length}</span
+                Categories
+                {#if pagination}
+                    <span class="gray has-text-weight-light ml-2"
+                        >{pagination.total}</span
                     >
                 {/if}
             </h3>
         </div>
         <div class="column has-text-right">
-            <a href="users/add" class="button is-dark px-5">
+            <a href="categories/add" class="button is-dark px-5">
                 <span class="icon">
                     <Icon data={faPlus} />
                 </span>
                 <span class="has-text-white has-text-weight-bold"
-                    >Add a User</span
+                    >Add a Category</span
                 >
             </a>
         </div>
@@ -349,17 +240,7 @@
                 </div>
             </div>
         </div>
-        {#if rows?.filter( x => x.selected ).length > 0}
-            <div class="column has-text-right">
-                <button on:click={() => {changeStatusSelected(true)}} class="button is-danger is-light p-4 has-text-weight-bold">
-                    Block Selected
-                </button>
-                <button on:click={() => {changeStatusSelected(false)}} class="button is-success is-light p-4 ml-4 has-text-weight-bold">
-                    Activate Selected
-                </button>
-            </div>
-        {/if}
-        <!-- <div class="column has-text-right">
+        <div class="column has-text-right">
             <div class="dropdown is-hoverable">
                 <div class="dropdown-trigger">
                     <button
@@ -407,12 +288,11 @@
                     </div>
                 </div>
             </div>
-        </div> -->
+        </div>
     </div>
-    <br>
-    <div class="card no-shadow">
+    <div class="card">
         {#if rows?.length > 0}
-            <DataTableUsers
+            <DataTable
                 {pagination}
                 {columns}
                 {rows}
@@ -422,17 +302,16 @@
                 on:deleteRow={deleteRow}
                 on:editRow={editRow}
                 on:clickRow={editRow}
-                on:selectRow={selectRow}
-                on:selectAllRows={selectAllRows}
             />
-        {:else if rows}
-        <div class="has-text-centered">
-            <br /><br /><br /><br />
-            <Icon data={faSearch} scale="3" />
-            <p class="gray">Uh oh! nothing found on database.</p>
-            <br /><br /><br /><br />
-        </div>
-        {:else}
+            {:else if rows}
+            <div class="has-text-centered">
+                <br /><br /><br /><br />
+                <Icon data={faSearch} scale="3" />
+                <p class="gray">Uh oh! nothing found on database.</p>
+                <br /><br /><br /><br />
+            </div>
+
+            {:else}
             <div class="has-text-centered">
                 <br /><br /><br /><br />
                 <div class="is-flex is-justify-content-center">
@@ -442,7 +321,7 @@
             </div>
         {/if}
     </div>
-    <br /><br /><br /><br /><br />
+    <br><br><br><br><br>
 </div>
 
 {#if showConfirmation}
@@ -453,8 +332,6 @@
 {/if}
 
 <style>
-
-    
     :global(.button.is-dark .icon svg *) {
         color: white !important;
     }

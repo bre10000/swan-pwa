@@ -9,7 +9,7 @@
     } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
-    import { numberWithCommas } from "../../../../lib";
+    import { numberWithCommas, checkValue } from "../../../../lib";
     import { exportToCsvAlternate } from "../../../../utils/export/csvGenerator";
     import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternate";
     import { onMount } from "svelte";
@@ -36,7 +36,7 @@
             total +=
                 element.attributes.stock_release_item.data?.attributes
                     .purchase_order_item.data?.attributes.unitPrice *
-                element.attributes.stock_release_item.data?.attributes.quantity;
+                element.attributes.quantity;
         });
 
         return total;
@@ -83,7 +83,7 @@
                 {
                     waybill: {
                         destination: {
-                            $containsi: $destination.value.value,
+                            $containsi: $destination.value?.value,
                         },
                     },
                 },
@@ -260,13 +260,11 @@
                     .purchase_order_item.data.attributes.currency,
                 elementC.attributes.stock_release_item.data?.attributes
                     .purchase_order_item.data.attributes.unitPrice,
-                elementC.attributes.stock_release_item.data?.attributes
-                    .quantity,
+                elementC.attributes.quantity,
 
                 elementC.attributes.stock_release_item.data?.attributes
                     .purchase_order_item.data.attributes.unitPrice *
-                    elementC.attributes.stock_release_item.data?.attributes
-                        .quantity,
+                    elementC.attributes.quantity,
             ]);
         });
 
@@ -312,7 +310,7 @@
                 $end.value.toDateString();
         }
         exportToPDFAlternate(
-            "Waybill by Destination - " + $destination.value.value + s,
+            "Waybill by Destination - " + ($destination.value?.value ? $destination.value?.value : "-") + s,
             getPopulatedDataPdf(waybill_items),
             columnsDetails
         );
@@ -514,7 +512,7 @@
                         <td
                             >{stock.attributes.stock_release_item.data
                                 ?.attributes.purchase_order_item.data
-                                ?.attributes.item.data?.attributes.name} - ({stock
+                                ?.attributes.item.data?.attributes.name} - PO Item ID ({stock
                                 .attributes.stock_release_item.data?.attributes
                                 .purchase_order_item.data?.id})</td
                         >
@@ -543,13 +541,12 @@
                         >
 
                         <td
-                            >{stock.attributes.stock_release_item.data
+                            >{numberWithCommas(stock.attributes.stock_release_item.data
                                 ?.attributes.purchase_order_item.data
-                                ?.attributes.unitPrice}</td
+                                ?.attributes.unitPrice)}</td
                         >
                         <td
-                            >{stock.attributes.stock_release_item.data
-                                ?.attributes.quantity}</td
+                            >{numberWithCommas(stock.attributes.quantity)}</td
                         >
 
                         <td
@@ -557,8 +554,7 @@
                                 stock.attributes.stock_release_item.data
                                     ?.attributes.purchase_order_item.data
                                     ?.attributes.unitPrice *
-                                    stock.attributes.stock_release_item.data
-                                        ?.attributes.quantity
+                                    stock.attributes.quantity
                             )}
                             {stock.attributes.stock_release_item.data
                                 ?.attributes.purchase_order_item.data

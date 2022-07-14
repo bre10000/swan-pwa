@@ -337,7 +337,7 @@
 
     <div class="columns">
         <div class="column is-narrow">
-            <div class="field has-addons" style="width: 400px;">
+            <div class="field has-addons" style="width: 250px;">
                 <div class="control has-icons-left">
                     <input
                         bind:value={query}

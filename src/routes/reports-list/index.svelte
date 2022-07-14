@@ -132,6 +132,27 @@
       </div>
     </a>
 
+    <a href="reports/aggregate/purchase-order-sof" class="column is-4">
+      <div>
+          <div class="card">
+            <div class="card-image p-2">
+              <figure
+                class="image is-4by3"
+                style="background-image: url('images/reports/8.jpg');"
+              />
+            </div>
+            <div class="card-content">
+              <div class="media">
+                <div class="media-content">
+                  <p class="title is-5">Purchase Order by SOF </p>
+                  <p class="subtitle is-6 mt-0">Filter by Source of funding and Date</p>
+                </div>
+              </div>
+            </div>
+        </div>
+      </div>
+    </a>
+
 
   </div>
 

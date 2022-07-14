@@ -6,6 +6,7 @@
   import Icon from "svelte-awesome/components/Icon.svelte";
   import {
     faAngleUp,
+    faArchive,
     faBook,
     faChartLine,
     faClipboard,
@@ -100,6 +101,11 @@
       >
     </li>
     <li>
+      <a href="categories" class:is-active={segment == "categories"}
+        ><Icon data={faArchive} /> Categories</a
+      >
+    </li>
+    <li>
       <a href="warehouses" class:is-active={segment == "warehouses"}
         ><Icon data={faWarehouse} /> Warehouse</a
       >
@@ -143,21 +149,23 @@
       <div class="dropdown-menu" id="dropdown-menu7" role="menu">
         <div class="dropdown-content" style="width: 15rem;">
           <br />
-          <figure class="image is-128x128" style="margin: 0 auto;">
-            {#if $user.data.avatar?.url}
-              <img
-                class="is-rounded"
-                src="{image_url}{$user.data.avatar?.url}"
-                alt=""
-              />
-            {:else}
-              <img
-                class="is-rounded"
-                src="./images/profile/profile-placeholder.png"
-                alt=""
-              />
-            {/if}
-          </figure>
+          <div class="is-flex is-justify-content-center">
+            <figure class="image is-128x128" style="background-image: url({ $user.data.avatar?.url ? image_url + $user.data.avatar?.url :  "./images/profile/profile-placeholder.png" });">
+              <!-- {#if $user.data.avatar?.url}
+                <img
+                  class="is-rounded"
+                  src="{image_url}{$user.data.avatar?.url}"
+                  alt=""
+                />
+              {:else}
+                <img
+                  class="is-rounded"
+                  src="./images/profile/profile-placeholder.png"
+                  alt=""
+                />
+              {/if} -->
+            </figure>
+          </div>
           <br />
           <ul class="menu-list px-4">
             <li>
@@ -210,4 +218,12 @@
   :global(.menu-list a svg) {
     margin-right: 1rem;
   }
+
+
+  .image.is-128x128 {
+		background-repeat: no-repeat;
+		background-position: center center;
+		background-size: cover;
+		border-radius: 100%;
+	}
 </style>

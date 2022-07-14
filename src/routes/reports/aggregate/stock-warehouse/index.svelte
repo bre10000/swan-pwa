@@ -9,7 +9,7 @@ faSave,
     } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
-    import { numberWithCommas } from "../../../../lib";
+    import { numberWithCommas, checkValue } from "../../../../lib";
     import { exportToCsvAlternate } from "../../../../utils/export/csvGenerator";
     import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternate";
     import { onMount } from "svelte";
@@ -542,6 +542,7 @@ faSave,
                 <table class="table is-bordered is-fullwidth is-narrow">
                     <tr class="has-background-black has-text-white">
                         <td>No.</td>
+                        <th class="has-text-white">PO #</th>
                         <th class="has-text-white">Consortium Member</th>
                         <th class="has-text-white">Warehouse</th>
                         <th class="has-text-white">Date</th>
@@ -561,6 +562,12 @@ faSave,
                         <tr>
                             <td>{index + 1}</td>
                             <td>
+                                {
+                                    stock.attributes.purchase_order_item.data
+                                    ?.attributes.purchase_order?.data?.attributes.poNumber
+                                }
+                            </td>
+                            <td>
                                 {stock.attributes.stock.data?.attributes
                                     .consortium_member.data?.attributes.name}
                             </td>
@@ -573,7 +580,7 @@ faSave,
                             </td>
                             <td
                                 >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.item.data?.attributes.name} - ({stock
+                                    ?.attributes.item.data?.attributes.name} - PO Item ID ({stock
                                     .attributes.purchase_order_item.data
                                     ?.id})</td
                             >
@@ -589,15 +596,15 @@ faSave,
                             >
 
                             <td
-                                >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.unitPrice}</td
+                                >{numberWithCommas(stock.attributes.purchase_order_item.data
+                                    ?.attributes.unitPrice)}</td
                             >
                             <td
-                                >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.quantity}</td
+                                >{numberWithCommas(stock.attributes.purchase_order_item.data
+                                    ?.attributes.quantity)}</td
                             >
 
-                            <td>{stock.attributes.received}</td>
+                            <td>{numberWithCommas(stock.attributes.received)}</td>
                             
                             
                             <td
@@ -616,7 +623,7 @@ faSave,
 
                     <tr class="">
                         <th>Total</th>
-                        <th colspan="9" />
+                        <th colspan="10" />
                         <th
                             >{numberWithCommas(
                                 getTotal(

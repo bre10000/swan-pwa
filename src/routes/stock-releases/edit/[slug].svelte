@@ -19,7 +19,7 @@
         faHistory,
     } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
-    import { checkInput, numberWithCommas } from "../../../lib";
+    import { checkInput, numberWithCommas, checkValue } from "../../../lib";
     import Select from "svelte-select";
     import { DateInput } from "date-picker-svelte";
     import qs from "qs";
@@ -858,11 +858,11 @@
                 </div>
                 <div
                     class="column is-narrow has-text-weight-bold"
-                    style="width: 45px;"
+                    style="width: 40px;"
                 />
                 <div
                     class="column is-narrow has-text-weight-bold"
-                    style="width: 45px;"
+                    style="width: 40px;"
                 />
             </div>
 
@@ -938,8 +938,7 @@
 
                     <div class="column">
                         <input
-                            type="number"
-min=0 oninput="validity.valid||(value='');"
+                            type="number" min=0 on:input={checkValue}
                             placeholder="Unit Price"
                             class="input"
                             
@@ -967,20 +966,16 @@ min=0 oninput="validity.valid||(value='');"
                     </div>
 
                     <div class="column">
-                        <div class="field">
-                            <div class="control is-fullwidth">
-                                <input
+                        <input
                                     rows="1"
                                     class="input has-background-light border-radius-0 "
-                                    bind:value={remark}
+                                    bind:value={childItem.remark}
                                 />
-                            </div>
-                        </div>
                     </div>
 
                     <div
                         class="column is-narrow has-text-weight-bold input"
-                        style="width: 45px;"
+                        style="width: 40px;"
                     >
                         <!-- <button class="button is-info is-light ml-2"> <Icon data={faEdit}/></button> -->
                         <button
@@ -995,7 +990,7 @@ min=0 oninput="validity.valid||(value='');"
                     </div>
                     <div
                         class="column is-narrow has-text-weight-bold input"
-                        style="width: 45px;"
+                        style="width: 40px;"
                     >
                         <button
                             type="button"
@@ -1300,11 +1295,11 @@ min=0 oninput="validity.valid||(value='');"
         border-right: 0px solid lightgray !important;
         border-radius: 0px;
         font-size: 0.9rem !important;
-        height: 36px !important;
+        height: 28px !important;
         /* background-color: #f5f5f5!important; */
     }
     :global(.selectContainer) {
-        height: 36px !important;
+        height: 28px !important;
     }
 
     :global(.selectContainer .listContainer .listItem) {

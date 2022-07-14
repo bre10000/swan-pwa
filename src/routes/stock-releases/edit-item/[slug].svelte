@@ -18,7 +18,7 @@ faSave,
         faTimes,
     } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
-    import { numberWithCommas } from "../../../lib";
+    import { numberWithCommas, checkValue } from "../../../lib";
     import Select from "svelte-select";
     import { DateInput } from "date-picker-svelte";
     import qs from "qs";

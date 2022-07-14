@@ -13,13 +13,14 @@
         faPlus,
         faTimes,
         faHistory,
+        faCalendarAlt,
     } from "@fortawesome/free-solid-svg-icons";
     import { onMount } from "svelte";
     import { DateInput } from "date-picker-svelte";
     import Select from "svelte-select";
-    import { checkInput, numberWithCommas } from "../../lib";
+    import { checkInput, numberWithCommas, checkValue } from "../../lib";
     import { createActivityLog } from "../../utils/activity/log";
-import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte";
+    import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte";
 
     const warehouse = field("warehouse", "", [required()]);
     const consortium_member = field("consortium_member", "", [required()]);
@@ -40,7 +41,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
 
     let errors;
 
-    let unsavedItemsDialog ;
+    let unsavedItemsDialog;
 
     async function add() {
         await formItem.validate();
@@ -116,11 +117,14 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                     path: "stock-items?" + params,
                     data: {
                         data: {
+                            has_expiry: element.has_expiry,
+                            expiry_date: element.expiry_date,
                             stock: stock.id,
                             purchase_order_item:
                                 element.purchase_order_item.value,
                             received: element.received,
                             remark: element.remark,
+                            
                         },
                     },
                 });
@@ -206,6 +210,8 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                 unitPrice: "",
                 received: "",
                 remark: "",
+                has_expiry: false,
+                expiry_date: new Date(),
                 showHistory: false,
 
                 id: Date.now(),
@@ -438,7 +444,10 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
 
 <br /><br />
 <div class="container px-6">
-    <a href="stocks" on:click|preventDefault={() => unsavedItemsDialog = true} class="has-text-dark"
+    <a
+        href="stocks"
+        on:click|preventDefault={() => (unsavedItemsDialog = true)}
+        class="has-text-dark"
         ><span class="icon is-small"><Icon data={faAngleLeft} /></span> Back</a
     >
     <br /><br />
@@ -596,11 +605,15 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                 </div>
                 <div
                     class="column is-narrow has-text-weight-bold"
-                    style="width: 45px;"
+                    style="width: 40px;"
                 />
                 <div
                     class="column is-narrow has-text-weight-bold"
-                    style="width: 45px;"
+                    style="width: 40px;"
+                />
+                <div
+                    class="column is-narrow has-text-weight-bold"
+                    style="width: 40px;"
                 />
             </div>
 
@@ -680,7 +693,8 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                     <div class="column">
                         <input
                             type="number"
-min=0 oninput="validity.valid||(value='');"
+                            min="0"
+                            on:input={checkValue}
                             placeholder="Received"
                             class="input border-radius-0 "
                             class:is-danger={childItem.remaining -
@@ -719,24 +733,20 @@ min=0 oninput="validity.valid||(value='');"
                         />
                     </div>
                     <div class="column">
-                        <div class="field">
-                            <div class="control is-fullwidth">
-                                <input
-                                    rows="1"
-                                    class="input has-background-light border-radius-0 "
-                                    bind:value={remark}
-                                />
-                            </div>
-                        </div>
+                        <input
+                            rows="1"
+                            class="input has-background-light border-radius-0 "
+                            bind:value={childItem.remark}
+                        />
                     </div>
 
                     <div
                         class="column is-narrow has-text-weight-bold input"
-                        style="width: 45px;"
+                        style="width: 40px;"
                     >
                         <!-- <button class="button is-info is-light ml-2"> <Icon data={faEdit}/></button> -->
                         <button
-                            type="button border-radius-0"
+                            type="button"
                             on:click|preventDefault={() => {
                                 removeChildItem(childItem.id);
                             }}
@@ -747,7 +757,7 @@ min=0 oninput="validity.valid||(value='');"
                     </div>
                     <div
                         class="column is-narrow has-text-weight-bold input"
-                        style="width: 45px;"
+                        style="width: 40px;"
                     >
                         <button
                             type="button"
@@ -757,6 +767,20 @@ min=0 oninput="validity.valid||(value='');"
                             class="button is-info"
                         >
                             <Icon data={faHistory} /></button
+                        >
+                    </div>
+                    <div
+                        class="column is-narrow has-text-weight-bold input"
+                        style="width: 40px;"
+                    >
+                        <button
+                            type="button"
+                            on:click={() =>
+                                (childItem.showExpiryForm =
+                                    !childItem.showExpiryForm)}
+                            class="button is-info"
+                        >
+                            <Icon data={faCalendarAlt} /></button
                         >
                     </div>
                 </div>
@@ -890,6 +914,32 @@ min=0 oninput="validity.valid||(value='');"
                         </div>
                     </div>
                 {/if}
+
+                {#if childItem.showExpiryForm}
+                    <div class="columns px-3 has-background-light p-4">
+                        <div class="column">
+                            <h6>Expiry Date Form</h6>
+                            <label class="checkbox">
+                                <input
+                                    bind:checked={childItem.has_expiry}
+                                    type="checkbox"
+                                />
+                                Item Has Expiry Date
+                            </label>
+                        </div>
+                        <div class="column">
+                            <label for="">Expiry Date</label>
+                            <DateInput
+                                bind:value={childItem.expiry_date}
+                                format="yyyy/MM/dd"
+                                placeholder="2000/31/12"
+                                closeOnSelection={true}
+                                min={new Date("1920/1/1")}
+                                class="input"
+                            />
+                        </div>
+                    </div>
+                {/if}
             {/each}
         </form>
 
@@ -899,11 +949,9 @@ min=0 oninput="validity.valid||(value='');"
 
 <br /><br /><br /><br /><br />
 
-
-
 {#if unsavedItemsDialog}
     <UnsavedConfirmation
-        on:confirm={() => goto('stocks')}
+        on:confirm={() => goto("stocks")}
         on:dismiss={() => (unsavedItemsDialog = false)}
     />
 {/if}
@@ -940,11 +988,11 @@ min=0 oninput="validity.valid||(value='');"
         border-right: 0px solid lightgray !important;
         border-radius: 0px;
         font-size: 0.9rem !important;
-        height: 36px !important;
+        height: 28px !important;
         /* background-color: #f5f5f5!important; */
     }
     :global(.selectContainer) {
-        height: 36px !important;
+        height: 28px !important;
     }
 
     :global(.selectContainer .listContainer .listItem) {

@@ -24,6 +24,7 @@
     const formItem = form(name, category, unit, pieces);
 
     let units = [];
+    let categories = [];
 
     async function add() {
         await formItem.validate()
@@ -94,9 +95,28 @@
         }
     }
 
+    async function getCategories() {
+        try {
+            let params = {
+                "pagination[limit]": -1,
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+            let response = await get("categories", params);
+
+            console.log("Get Categories ", response);
+
+            categories = response.data.map((x) => x.attributes.name);
+        } catch (e) {
+            console.log("Error Get Categories ", e);
+        }
+    }
+
     $: if (slug) {
         getItem();
         getUnits();
+        getCategories();
     }
 </script>
 
@@ -143,9 +163,9 @@
                                 name="category"
                                 bind:value={$category.value}
                             >
-                                <option value="Health">Health</option>
-                                <option value="Wash">Wash</option>
-                                <option value="ES/NFI">ES/NFI</option>
+                            {#each categories as c}
+                                <option>{c}</option>
+                            {/each}
                             </select>
                             {#if $formItem.hasError("category.required")}
                                 <p class="help is-danger">

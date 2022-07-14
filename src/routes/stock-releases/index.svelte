@@ -18,7 +18,7 @@
     import { exportToPDFAlternate } from "../../utils/export/exportPDFAlternate";
     import { createActivityLog } from "../../utils/activity/log";
     import { Moon } from "svelte-loading-spinners";
-import { checkInput, numberWithCommas } from "../../lib";
+    import { checkInput, numberWithCommas, checkValue } from "../../lib";
 
     let query = "";
     let sortBy = "";
@@ -286,6 +286,16 @@ import { checkInput, numberWithCommas } from "../../lib";
                         {
                             stock_release_items: {
                                 purchase_order_item: {
+                                    sof: {
+                                        $containsi: query,
+                                    },
+                                },
+                            },
+                        },
+
+                        {
+                            stock_release_items: {
+                                purchase_order_item: {
                                     item: {
                                         name: {
                                             $containsi: query,
@@ -369,6 +379,7 @@ import { checkInput, numberWithCommas } from "../../lib";
 
                 filters = [temp, ...filters];
             } else if (
+                field == "sof" ||
                 field == "currency" ||
                 field == "unitPrice"
             ) {
@@ -431,9 +442,7 @@ import { checkInput, numberWithCommas } from "../../lib";
                 console.log("Custom Filter", temp);
 
                 filters = [temp, ...filters];
-            } else if (
-                field == "batch_number"
-            ) {
+            } else if (field == "batch_number") {
                 let greatgrandparent, grandparent, parent;
                 field = "id";
 
@@ -528,17 +537,17 @@ import { checkInput, numberWithCommas } from "../../lib";
     }
 
     function getStockReleaseBalance(item) {
-		let temp = 0;
-		if (item.attributes.waybill_items?.data) {
-			item.attributes.waybill_items?.data
-				?.filter((x) => checkInput(x.attributes.waybill.data))
-				.forEach((element) => {
-					temp = temp + parseInt(element.attributes.quantity);
-				});
-		}
+        let temp = 0;
+        if (item.attributes.waybill_items?.data) {
+            item.attributes.waybill_items?.data
+                ?.filter((x) => checkInput(x.attributes.waybill.data))
+                .forEach((element) => {
+                    temp = temp + parseInt(element.attributes.quantity);
+                });
+        }
 
-		return numberWithCommas(item.attributes.quantity - temp);
-	}
+        return numberWithCommas(item.attributes.quantity - temp);
+    }
 
     function getPopulatedDataPdf(rowss) {
         let array = [];
@@ -563,15 +572,15 @@ import { checkInput, numberWithCommas } from "../../lib";
                     "-",
                     "-",
                     "-",
-                    elementC.attributes.stock_item.data?.attributes
-                        .stock.data?.id,
+                    elementC.attributes.stock_item.data?.attributes.stock.data
+                        ?.id,
                     elementC.attributes.purchase_order_item.data.attributes
                         .purchase_order.data.attributes.poNumber,
                     elementC.attributes.purchase_order_item.data.attributes.item
                         .data.attributes.name,
-                        elementC.attributes.purchase_order_item.data.attributes.item
+                    elementC.attributes.purchase_order_item.data.attributes.item
                         .data.attributes.unit,
-                        elementC.attributes.purchase_order_item.data.attributes.item
+                    elementC.attributes.purchase_order_item.data.attributes.item
                         .data.attributes.pieces,
                     elementC.attributes.purchase_order_item.data.attributes
                         .currency,
@@ -580,7 +589,7 @@ import { checkInput, numberWithCommas } from "../../lib";
                     elementC.attributes.quantity,
                     elementC.attributes.purchase_order_item.data.attributes
                         .unitPrice * elementC.attributes.quantity,
-                    getStockReleaseBalance(elementC)
+                    getStockReleaseBalance(elementC),
                 ]);
             });
         });
@@ -726,7 +735,7 @@ import { checkInput, numberWithCommas } from "../../lib";
 
     <div class="columns">
         <div class="column is-narrow">
-            <div class="field has-addons" style="width: 400px;">
+            <div class="field has-addons" style="width: 250px;">
                 <div class="control has-icons-left">
                     <input
                         bind:value={query}
@@ -789,7 +798,7 @@ import { checkInput, numberWithCommas } from "../../lib";
                                     bind:value={field}
                                     name="category"
                                 >
-                                    {#each columns.concat(columnsDetails).filter( x => x.key !== "total" && x.key !== "balance") as c}
+                                    {#each [...columns.concat(columnsDetails), { key: "sof", title: "SOF", sortable: true, selected: true }].filter((x) => x.key !== "total" && x.key !== "balance") as c}
                                         <option value={c.key}>{c.title}</option>
                                     {/each}
                                 </select>
@@ -873,9 +882,15 @@ import { checkInput, numberWithCommas } from "../../lib";
             {#each filters as f (f.index)}
                 <span class="tag is-light is-medium is-rounded p-4 mr-4">
                     <b class="mx-2">
-                        {columns
-                            .concat(columnsDetails)
-                            .filter((c) => c.key == f?.name)[0]?.title}
+                        {[
+                            ...columns.concat(columnsDetails),
+                            {
+                                key: "sof",
+                                title: "SOF",
+                                sortable: true,
+                                selected: true,
+                            },
+                        ].filter((c) => c.key == f?.name)[0]?.title}
                     </b>
                     contains
                     <b class="mx-2">{f.query}</b>
@@ -889,39 +904,38 @@ import { checkInput, numberWithCommas } from "../../lib";
     </div>
     <br />
 
-        <div class="card">
-            {#if rows?.length > 0}
-                <DataTableDetails
-                    {pagination}
-                    {columns}
-                    {columnsDetails}
-                    {detailVariable}
-                    {rows}
-                    {options}
-                    on:clickCol={sort}
-                    on:changePage={changePage}
-                    on:deleteRow={deleteRow}
-                    on:editRow={editRow}
-                    on:clickRow={editRow}
-                    on:printRow={printRow}
-                />
-            {:else if rows}
-                <div class="has-text-centered">
-                    <br /><br /><br /><br />
-                    <Icon data={faSearch} scale="3" />
-                    <p class="gray">Uh oh! nothing found on database.</p>
-                    <br /><br /><br /><br />
+    <div class="card">
+        {#if rows?.length > 0}
+            <DataTableDetails
+                {pagination}
+                {columns}
+                {columnsDetails}
+                {detailVariable}
+                {rows}
+                {options}
+                on:clickCol={sort}
+                on:changePage={changePage}
+                on:deleteRow={deleteRow}
+                on:editRow={editRow}
+                on:clickRow={editRow}
+                on:printRow={printRow}
+            />
+        {:else if rows}
+            <div class="has-text-centered">
+                <br /><br /><br /><br />
+                <Icon data={faSearch} scale="3" />
+                <p class="gray">Uh oh! nothing found on database.</p>
+                <br /><br /><br /><br />
+            </div>
+        {:else}
+            <div class="has-text-centered">
+                <br /><br /><br /><br />
+                <div class="is-flex is-justify-content-center">
+                    <Moon size="60" color="blue" unit="px" duration="1s" />
                 </div>
-            {:else}
-                <div class="has-text-centered">
-                    <br /><br /><br /><br />
-                    <div class="is-flex is-justify-content-center">
-                        <Moon size="60" color="blue" unit="px" duration="1s" />
-                    </div>
-                    <br /><br /><br /><br />
-                </div>
-            {/if}
-        
+                <br /><br /><br /><br />
+            </div>
+        {/if}
     </div>
 
     <br /><br /><br /><br /><br />

@@ -329,8 +329,8 @@
 											: "-"}
 									{:else if col.key == "name"}
 										<div class="is-flex">
-											<figure class="image is-64x64">
-													{#if row["avatar"]?.url}
+											<figure class="image is-64x64" style="background-image: url({ row["avatar"]?.url ? image_url + row["avatar"]?.url :  "./images/profile/profile-placeholder.png" });">
+													<!-- {#if row["avatar"]?.url}
 														<img
 															class="is-rounded ml-0"
 															src="{image_url}{row['avatar']
@@ -343,7 +343,7 @@
 															src="./images/profile/profile-placeholder.png"
 															alt=""
 														/>
-													{/if}
+													{/if} -->
 											</figure>
 
 											<div class="is-flex-grow-1">
@@ -463,6 +463,13 @@
 </div>
 
 <style>
+
+	.image.is-64x64 {
+		background-repeat: no-repeat;
+		background-position: center center;
+		background-size: cover;
+		border-radius: 100%;
+	}
 	.has-backround-lightgreen {
 		background-color: #a6ffc4;
 	}

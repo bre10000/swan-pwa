@@ -18,13 +18,13 @@
         faTimes,
     } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
-    import { checkInput, numberWithCommas } from "../../../lib";
+    import { checkInput, numberWithCommas, checkValue } from "../../../lib";
     import Select from "svelte-select";
     import { DateInput } from "date-picker-svelte";
     import qs from "qs";
     import DeleteConfirmation from "../../../widgets/modals/DeleteConfirmation.svelte";
     import { createActivityLog } from "../../../utils/activity/log";
-import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.svelte";
+    import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.svelte";
 
     export let slug;
 
@@ -38,6 +38,7 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
 
     let consortium_members = [];
     let items = [];
+    let categories = [];
 
     let errors;
 
@@ -52,7 +53,7 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
             return;
         }
 
-        if(!validateChildItems()) {
+        if (!validateChildItems()) {
             return;
         }
 
@@ -120,68 +121,67 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
     async function saveItems(po) {
         try {
             formChildItems.forEach(async (element) => {
-                if(element.createdAt) {
-
+                if (element.createdAt) {
                     let response = await put({
-                    path: "purchase-order-items/" + element.id + "?populate=*",
-                    data: {
+                        path:
+                            "purchase-order-items/" +
+                            element.id +
+                            "?populate=*",
                         data: {
-                            unit: element.unit,
-                            pieces: element.pieces,
-                            quantity: element.quantity,
-                            unitPrice: element.unitPrice,
-                            currency: element.currency,
-                            remark: element.remark,
+                            data: {
+                                unit: element.unit,
+                                pieces: element.pieces,
+                                quantity: element.quantity,
+                                sof: element.sof,
+                                unitPrice: element.unitPrice,
+                                currency: element.currency,
+                                remark: element.remark,
 
-                            purchase_order: po.id,
-                            item: element.item.value,
+                                purchase_order: po.id,
+                                item: element.item.value,
+                            },
                         },
-                    },
-                });
+                    });
 
-                console.log("Edit Purchase Order Item ", response);
+                    console.log("Edit Purchase Order Item ", response);
 
-                if (response.data) {
-                    createActivityLog(
-                        "Purchase Order Item",
-                        response.data,
-                        "Edit",
-                        response.data.id
-                    );
-                }
-
+                    if (response.data) {
+                        createActivityLog(
+                            "Purchase Order Item",
+                            response.data,
+                            "Edit",
+                            response.data.id
+                        );
+                    }
                 } else {
-
                     let response = await post({
-                    path: "purchase-order-items?populate=*",
-                    data: {
+                        path: "purchase-order-items?populate=*",
                         data: {
-                            unit: element.unit,
-                            pieces: element.pieces,
-                            quantity: element.quantity,
-                            unitPrice: element.unitPrice,
-                            currency: element.currency,
-                            remark: element.remark,
+                            data: {
+                                unit: element.unit,
+                                pieces: element.pieces,
+                                quantity: element.quantity,
+                                unitPrice: element.unitPrice,
+                                currency: element.currency,
+                                remark: element.remark,
 
-                            purchase_order: po.id,
-                            item: element.item.value,
+                                purchase_order: po.id,
+                                item: element.item.value,
+                            },
                         },
-                    },
-                });
+                    });
 
-                console.log("Save Purchase Order Items ", response);
+                    console.log("Save Purchase Order Items ", response);
 
-                if (response.data) {
-                    createActivityLog(
-                        "Purchase Order Item",
-                        response.data,
-                        "Create",
-                        response.data.id
-                    );
+                    if (response.data) {
+                        createActivityLog(
+                            "Purchase Order Item",
+                            response.data,
+                            "Create",
+                            response.data.id
+                        );
+                    }
                 }
-
-                }
-                
             });
 
             goto("purchase-orders");
@@ -198,6 +198,7 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
                 item: "",
                 items: [],
                 currency: "",
+                sof: "",
                 quantity: "",
                 unitPrice: "",
                 remark: "",
@@ -224,9 +225,11 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
             (x) => x.category == event.target.value
         );
 
-        console.log("Filtered Items ", items.filter(
-            (x) => x.category == event.target.value
-        ), event.target.value)
+        console.log(
+            "Filtered Items ",
+            items.filter((x) => x.category == event.target.value),
+            event.target.value
+        );
     }
     function selectItem(event, id) {
         let index = formChildItems.findIndex((x) => x.id == id);
@@ -346,10 +349,9 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
                         "-" +
                         x.attributes.pieces,
                     data: x,
-                    category: x.attributes.category
+                    category: x.attributes.category,
                 };
             });
-
 
             getItem();
         } catch (e) {
@@ -407,6 +409,7 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
                         category: x.attributes.item.data.attributes.category,
                         items: items,
                         currency: x.attributes.currency,
+                        sof: x.attributes.sof,
                         quantity: x.attributes.quantity,
                         unitPrice: x.attributes.unitPrice,
                         remark: x.attributes.remark,
@@ -418,10 +421,28 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
         }
     }
 
+    async function getCategories() {
+        try {
+            let params = {
+                "pagination[limit]": -1,
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+            let response = await get("categories", params);
+
+            console.log("Get Categories ", response);
+
+            categories = response.data.map((x) => x.attributes.name);
+        } catch (e) {
+            console.log("Error Get Categories ", e);
+        }
+    }
+
     $: if (slug) {
         getItems();
         getConsortiumMembers();
-       
+        getCategories();
     }
 </script>
 
@@ -431,7 +452,10 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
 
 <br /><br />
 <div class="container px-6">
-    <a href="purchase-orders" on:click|preventDefault={() => unsavedItemsDialog = true} class="has-text-dark"
+    <a
+        href="purchase-orders"
+        on:click|preventDefault={() => (unsavedItemsDialog = true)}
+        class="has-text-dark"
         ><span class="icon is-small"><Icon data={faAngleLeft} /></span> Back</a
     >
     <br /><br />
@@ -528,7 +552,6 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
                 <div class="column" />
             </div>
 
-
             <br />
         </form>
 
@@ -571,6 +594,9 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
                 </div>
                 <div class="column  is-narrow" style="width: 200px;">
                     <label for="" class="gray">Item (*)</label>
+                </div>
+                <div class="column">
+                    <label for="" class="gray">SOF</label>
                 </div>
                 <div class="column">
                     <label for="" class="gray">Quantity</label>
@@ -623,9 +649,9 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
                                 bind:value={childItem.category}
                                 class="border-radius-0 "
                             >
-                                <option>Health</option>
-                                <option>Wash</option>
-                                <option>ES/NFI</option>
+                                {#each categories as c}
+                                    <option>{c}</option>
+                                {/each}
                             </select>
                         </div>
                     </div>
@@ -645,8 +671,17 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
 
                     <div class="column">
                         <input
+                            bind:value={childItem.sof}
+                            type="text"
+                            placeholder="SOF"
+                            class="input has-background-light border-radius-0 "
+                        />
+                    </div>
+
+                    <div class="column">
+                        <input
                             bind:value={childItem.quantity}
-                            type="number"
+                            type="number" min=0 on:input={checkValue}
                             placeholder="Quantity"
                             class="input has-background-light border-radius-0 "
                         />
@@ -676,7 +711,7 @@ import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.sve
                     <div class="column">
                         <input
                             type="number"
-min=0 oninput="validity.valid||(value='');"
+                            min=0 on:input={checkValue}
                             placeholder="Unit Price"
                             class="input has-background-light border-radius-0 "
                             bind:value={childItem.unitPrice}
@@ -701,17 +736,13 @@ min=0 oninput="validity.valid||(value='');"
                     </div>
 
                     <div class="column">
-                        <div class="field">
-                            <div class="control is-fullwidth">
-                                <input
+                        <input
                                     type="text"
                                     placeholder="Remark"
-                                    class="input has-background-light"
+                                    class="input has-background-light border-radius-0"
                                     bind:value={childItem.remark}
                                     style="border-right: 1px solid lightgray !important;"
                                 />
-                            </div>
-                        </div>
                     </div>
 
                     <div
@@ -749,10 +780,9 @@ min=0 oninput="validity.valid||(value='');"
 </div>
 <br /><br /><br /><br /><br /><br /><br />
 
-
 {#if unsavedItemsDialog}
     <UnsavedConfirmation
-        on:confirm={() => goto('purchase-orders')}
+        on:confirm={() => goto("purchase-orders")}
         on:dismiss={() => (unsavedItemsDialog = false)}
     />
 {/if}
@@ -796,11 +826,11 @@ min=0 oninput="validity.valid||(value='');"
         border-right: 0px solid lightgray !important;
         border-radius: 0px;
         font-size: 0.9rem !important;
-        height: 36px !important;
+        height: 28px !important;
         /* background-color: #f5f5f5!important; */
     }
     :global(.selectContainer) {
-        height: 36px !important;
+        height: 28px !important;
     }
 
     :global(.selectContainer .listContainer .listItem) {
@@ -808,7 +838,9 @@ min=0 oninput="validity.valid||(value='');"
         border-radius: 0px;
     }
 
-    :global(.button.is-success svg *, .button.is-danger svg * , .button.is-info svg *) {
+    :global(.button.is-success svg *, .button.is-danger svg *, .button.is-info
+            svg
+            *) {
         color: white;
     }
 </style>

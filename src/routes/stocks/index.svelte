@@ -18,9 +18,7 @@
     import { exportToPDFAlternate } from "../../utils/export/exportPDFAlternate";
     import { createActivityLog } from "../../utils/activity/log";
     import { Moon } from "svelte-loading-spinners";
-import { numberWithCommas } from "../../lib";
-
-    
+    import { numberWithCommas, checkValue } from "../../lib";
 
     let query = "";
     let sortBy = "";
@@ -108,7 +106,7 @@ import { numberWithCommas } from "../../lib";
             sortable: true,
             selected: true,
         },
-        
+
         {
             key: "unitPrice",
             title: "Unit Price",
@@ -175,7 +173,7 @@ import { numberWithCommas } from "../../lib";
                             "purchase_order_item.item",
                             "purchase_order_item.purchase_order",
                             "stock_release_items",
-                            "stock_release_items.stock_release"
+                            "stock_release_items.stock_release",
                         ],
                     },
                 },
@@ -264,75 +262,143 @@ import { numberWithCommas } from "../../lib";
             $and: [
                 ...filters.map((x) => x.value),
                 {
-
-            $or: [
-                {
-                    date: {
-                        $containsi: query,
-                    },
-                },
-                {
-                    consortium_member: {
-                        name: {
-                            $containsi: query,
+                    $or: [
+                        {
+                            date: {
+                                $containsi: query,
+                            },
                         },
-                    },
-                },
-                {
-                    warehouse: {
-                        name: {
-                            $containsi: query,
-                        },
-                    },
-                },
-                {
-                    stock_items: {
-                        purchase_order_item: {
-                            item: {
+                        {
+                            consortium_member: {
                                 name: {
                                     $containsi: query,
                                 },
                             },
                         },
-                    },
-                },
-                {
-                    stock_items: {
-                        purchase_order_item: {
-                            item: {
-                                category: {
+                        {
+                            warehouse: {
+                                name: {
                                     $containsi: query,
                                 },
                             },
                         },
-                    },
-                },
-                {
-                    stock_items: {
-                        purchase_order_item: {
-                            item: {
-                                unit: {
-                                    $containsi: query,
+                        {
+                            stock_items: {
+                                purchase_order_item: {
+                                    item: {
+                                        name: {
+                                            $containsi: query,
+                                        },
+                                    },
                                 },
                             },
                         },
-                    },
-                },
-                {
-                    stock_items: {
-                        purchase_order_item: {
-                            purchase_order: {
-                                poNumber: {
-                                    $containsi: query,
+                        {
+                            stock_items: {
+                                purchase_order_item: {
+                                    sof: {
+                                        $containsi: query,
+                                    },
                                 },
                             },
                         },
-                    },
+                        {
+                            stock_items: {
+                                purchase_order_item: {
+                                    item: {
+                                        category: {
+                                            $containsi: query,
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        {
+                            stock_items: {
+                                purchase_order_item: {
+                                    item: {
+                                        unit: {
+                                            $containsi: query,
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        {
+                            stock_items: {
+                                purchase_order_item: {
+                                    purchase_order: {
+                                        poNumber: {
+                                            $containsi: query,
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    ],
                 },
             ],
-                }
-            ]
         };
+    }
+    function addExpiryFilter(expired) {
+        if (expired) {
+            let temp = {
+                index: filters.length,
+                value: {
+                    stock_items: {
+                        expiry_date: {
+                            $lte: new Date(),
+                        },
+                    },
+                },
+                name: "expiry_date",
+                query: new Date(),
+            };
+            let has_expiry = {
+                index: filters.length + 1,
+                value: {
+                    stock_items: {
+                        has_expiry: {
+                            $eq: true,
+                        },
+                    },
+                },
+                name: "has_expiry",
+                query: true,
+            };
+
+            filters = [has_expiry, temp, ...filters];
+        } else {
+            let temp = {
+                index: filters.length,
+                value: {
+                    stock_items: {
+                        expiry_date: {
+                            $gte: new Date(),
+                        },
+                    },
+                },
+                name: "expiry_date",
+                query: new Date(),
+            };
+
+            let has_expiry = {
+                index: filters.length + 1,
+                value: {
+                    stock_items: {
+                        has_expiry: {
+                            $eq: true,
+                        },
+                    },
+                },
+                name: "has_expiry",
+                query: true,
+            };
+
+            filters = [has_expiry, temp, ...filters];
+        }
+
+        search();
     }
 
     function addFilter() {
@@ -348,9 +414,9 @@ import { numberWithCommas } from "../../lib";
 
                 if (field == "consortium_member") {
                     parent = "consortium_member";
-                }else if (field == "warehouse") {
+                } else if (field == "warehouse") {
                     parent = "warehouse";
-                }  else {
+                } else {
                     parent = "stock_items";
                 }
 
@@ -373,7 +439,8 @@ import { numberWithCommas } from "../../lib";
             } else if (
                 field == "currency" ||
                 field == "unitPrice" ||
-                field == "quantity"
+                field == "quantity" ||
+                field == "sof"
             ) {
                 let grandparent, parent;
                 let field2 = field;
@@ -399,10 +466,9 @@ import { numberWithCommas } from "../../lib";
             } else if (
                 field == "item" ||
                 field == "unit" ||
-                field == "pieces" 
-                
+                field == "pieces"
             ) {
-                let greatgrandparent,grandparent, parent;
+                let greatgrandparent, grandparent, parent;
                 let field2 = field;
 
                 greatgrandparent = "stock_items";
@@ -422,29 +488,26 @@ import { numberWithCommas } from "../../lib";
                 temp.value[greatgrandparent][grandparent] = {};
                 temp.value[greatgrandparent][grandparent][parent] = {};
 
-                if(field == "id"){
+                if (field == "id") {
                     temp.value[greatgrandparent][grandparent][parent][field] = {
-                                            $eq: queryF,
+                        $eq: queryF,
                     };
                 } else {
                     temp.value[greatgrandparent][grandparent][parent][field] = {
                         $containsi: queryF,
                     };
                 }
-                
+
                 console.log("Custom Filter", temp);
 
                 filters = [temp, ...filters];
-            } else if (
-                field == "poNumber"
-            ) {
+            } else if (field == "poNumber") {
                 let greatgrandparent, grandparent, parent;
                 let field2 = field;
 
                 greatgrandparent = "stock_items";
                 grandparent = "purchase_order_item";
-                parent =  "purchase_order";
-
+                parent = "purchase_order";
 
                 let temp = {
                     index: filters.length,
@@ -457,20 +520,20 @@ import { numberWithCommas } from "../../lib";
                 temp.value[greatgrandparent][grandparent] = {};
                 temp.value[greatgrandparent][grandparent][parent] = {};
 
-                if(field == "id"){
+                if (field == "id") {
                     temp.value[greatgrandparent][grandparent][parent][field] = {
-                                            $eq: queryF,
+                        $eq: queryF,
                     };
                 } else {
                     temp.value[greatgrandparent][grandparent][parent][field] = {
                         $containsi: queryF,
                     };
                 }
-                
+
                 console.log("Custom Filter", temp);
 
                 filters = [temp, ...filters];
-            }else {
+            } else {
                 let temp = {
                     index: filters.length,
                     value: {},
@@ -499,15 +562,15 @@ import { numberWithCommas } from "../../lib";
     }
 
     function getStockBalance(item) {
-		let temp = 0;
-		if(item.attributes.stock_release_items?.data){
-			item.attributes.stock_release_items?.data?.forEach(element => {
-				temp = temp + element.attributes.quantity
-			});
-		}
+        let temp = 0;
+        if (item.attributes.stock_release_items?.data) {
+            item.attributes.stock_release_items?.data?.forEach((element) => {
+                temp = temp + element.attributes.quantity;
+            });
+        }
 
-		return numberWithCommas(item.attributes.received - temp)
-	}
+        return numberWithCommas(item.attributes.received - temp);
+    }
 
     function getPopulatedDataPdf(rowss) {
         let array = [];
@@ -538,21 +601,23 @@ import { numberWithCommas } from "../../lib";
                         .purchase_order.data.attributes.poNumber,
                     elementC.attributes.purchase_order_item.data.attributes.item
                         .data.attributes.name,
-                    elementC.attributes.purchase_order_item.data.attributes.item?.data.attributes
-                        .unit,
-                    elementC.attributes.purchase_order_item.data.attributes.item?.data.attributes
-                        .pieces,
+                    elementC.attributes.purchase_order_item.data.attributes.item
+                        ?.data.attributes.unit,
+                    elementC.attributes.purchase_order_item.data.attributes.item
+                        ?.data.attributes.pieces,
                     elementC.attributes.purchase_order_item.data.attributes
                         .quantity,
-                    
+
                     elementC.attributes.purchase_order_item.data.attributes
                         .unitPrice,
                     elementC.attributes.received,
-                    numberWithCommas( elementC.attributes.purchase_order_item.data.attributes
-                        .unitPrice * elementC.attributes.received),
+                    numberWithCommas(
+                        elementC.attributes.purchase_order_item.data.attributes
+                            .unitPrice * elementC.attributes.received
+                    ),
                     elementC.attributes.purchase_order_item.data.attributes
                         .currency,
-                    getStockBalance(elementC)
+                    getStockBalance(elementC),
                 ]);
             });
         });
@@ -651,9 +716,6 @@ import { numberWithCommas } from "../../lib";
         } catch (e) {}
     }
 
-    
-
-
     const unsubscribe = user.subscribe((value) => {
         if (!process.browser) {
             return;
@@ -665,8 +727,6 @@ import { numberWithCommas } from "../../lib";
             getItems();
         }
     });
-
-    
 
     onDestroy(unsubscribe);
 </script>
@@ -702,7 +762,7 @@ import { numberWithCommas } from "../../lib";
 
     <div class="columns">
         <div class="column is-narrow">
-            <div class="field has-addons" style="width: 400px;">
+            <div class="field has-addons" style="width: 250px;">
                 <div class="control has-icons-left">
                     <input
                         bind:value={query}
@@ -765,7 +825,7 @@ import { numberWithCommas } from "../../lib";
                                     bind:value={field}
                                     name="category"
                                 >
-                                    {#each columns.concat(columnsDetails).filter( x => x.key !== "total" && x.key !== "balance") as c}
+                                    {#each [...columns.concat(columnsDetails), { key: "sof", title: "SOF", sortable: true, selected: true }].filter((x) => x.key !== "total" && x.key !== "balance") as c}
                                         <option value={c.key}>{c.title}</option>
                                     {/each}
                                 </select>
@@ -791,6 +851,21 @@ import { numberWithCommas } from "../../lib";
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div class="column is-narrow">
+            <button
+                on:click={() => addExpiryFilter(false)}
+                class="button is-success mx-4 is-light p-4 has-text-weight-bold"
+            >
+                Show Non Expired Only
+            </button>
+            <button
+                on:click={() => addExpiryFilter(true)}
+                class="button is-danger is-light p-4 has-text-weight-bold"
+            >
+                Show Expired Only
+            </button>
         </div>
 
         <div class="column has-text-right">
@@ -849,9 +924,27 @@ import { numberWithCommas } from "../../lib";
             {#each filters as f (f.index)}
                 <span class="tag is-light is-medium is-rounded p-4 mr-4">
                     <b class="mx-2">
-                        {columns
-                            .concat(columnsDetails)
-                            .filter((c) => c.key == f?.name)[0]?.title}
+                        {[
+                            ...columns.concat(columnsDetails),
+                            {
+                                key: "sof",
+                                title: "SOF",
+                                sortable: true,
+                                selected: true,
+                            },
+                            {
+                                key: "has_expiry",
+                                title: "Has Expiry Date",
+                                sortable: true,
+                                selected: true,
+                            },
+                            {
+                                key: "expiry_date",
+                                title: "Expiry Date",
+                                sortable: true,
+                                selected: true,
+                            },
+                        ].filter((c) => c.key == f?.name)[0]?.title}
                     </b>
                     contains
                     <b class="mx-2">{f.query}</b>

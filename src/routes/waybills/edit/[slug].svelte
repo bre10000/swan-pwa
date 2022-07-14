@@ -19,7 +19,7 @@
         faHistory,
     } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
-    import { checkInput, numberWithCommas } from "../../../lib";
+    import { checkInput, numberWithCommas, checkValue } from "../../../lib";
     import Select from "svelte-select";
     import { DateInput } from "date-picker-svelte";
     import qs from "qs";
@@ -51,14 +51,11 @@
 
     let formChildItems = [];
 
-    let childItems = [];
-    let childItemsExisting = [];
-
     let consortium_members = [];
     let stock_releases = [];
     let stock_release_items = [];
 
-    let waybill_items = [];
+    let categories = [];
 
     let errors;
 
@@ -609,8 +606,8 @@
                                 .attributes.stock_release?.data.id,
                             label:
                                 "SRF # - " +
-                                x.attributes.stock_release_item.data
-                                .attributes.stock_release?.data.id,
+                                x.attributes.stock_release_item.data.attributes
+                                    .stock_release?.data.id,
                             data: x.attributes.stock_release_item.data
                                 .attributes.stock_release?.data,
                         },
@@ -681,9 +678,28 @@
         }
     }
 
+    async function getCategories() {
+        try {
+            let params = {
+                "pagination[limit]": -1,
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+            let response = await get("categories", params);
+
+            console.log("Get Categories ", response);
+
+            categories = response.data.map((x) => x.attributes.name);
+        } catch (e) {
+            console.log("Error Get Categories ", e);
+        }
+    }
+
     $: if (slug) {
         getItem();
         getConsortiumMembers();
+        getCategories();
     }
 </script>
 
@@ -793,9 +809,9 @@
                                 name="category"
                                 bind:value={$category.value}
                             >
-                                <option value="Health">Health</option>
-                                <option value="Wash">Wash</option>
-                                <option value="ES/NFI">ES/NFI</option>
+                                {#each categories as c}
+                                    <option>{c}</option>
+                                {/each}
                             </select>
                             {#if $formItem.hasError("category.required")}
                                 <p class="help is-danger">
@@ -991,7 +1007,7 @@
                 <div class="column  is-narrow" style="width: 120px;">
                     <label for="" class="gray">SRF #</label>
                 </div>
-                <div class="column  is-narrow" style="width: 300px;">
+                <div class="column  is-narrow" style="width: 200px;">
                     <label for="" class="gray">Item (*)</label>
                 </div>
                 <div class="column">
@@ -1013,11 +1029,11 @@
                 </div>
                 <div
                     class="column is-narrow has-text-weight-bold"
-                    style="width: 45px;"
+                    style="width: 40px;"
                 />
                 <div
                     class="column is-narrow has-text-weight-bold"
-                    style="width: 45px;"
+                    style="width: 40px;"
                 />
             </div>
 
@@ -1045,7 +1061,7 @@
                         </div>
                     </div>
 
-                    <div class="column is-narrow" style="width: 300px;">
+                    <div class="column is-narrow" style="width: 200px;">
                         <div class="field">
                             <div class="control">
                                 <Select
@@ -1083,7 +1099,7 @@
                     <div class="column">
                         <input
                             type="number"
-min=0 oninput="validity.valid||(value='');"
+                            min=0 on:input={checkValue}
                             placeholder="Quantity"
                             class="input"
                             on:change={() =>
@@ -1114,20 +1130,16 @@ min=0 oninput="validity.valid||(value='');"
                     </div>
 
                     <div class="column">
-                        <div class="field">
-                            <div class="control is-fullwidth">
-                                <input
+                        <input
                                     rows="1"
                                     class="input has-background-light border-radius-0 "
-                                    bind:value={remark}
+                                    bind:value={childItem.remark}
                                 />
-                            </div>
-                        </div>
                     </div>
 
                     <div
                         class="column is-narrow has-text-weight-bold input"
-                        style="width: 45px;"
+                        style="width: 40px;"
                     >
                         <!-- <button class="button is-info is-light ml-2"> <Icon data={faEdit}/></button> -->
                         <button
@@ -1142,7 +1154,7 @@ min=0 oninput="validity.valid||(value='');"
                     </div>
                     <div
                         class="column is-narrow has-text-weight-bold input"
-                        style="width: 45px;"
+                        style="width: 40px;"
                     >
                         <button
                             type="button"
@@ -1359,11 +1371,11 @@ min=0 oninput="validity.valid||(value='');"
         border-right: 0px solid lightgray !important;
         border-radius: 0px;
         font-size: 0.9rem !important;
-        height: 36px !important;
+        height: 28px !important;
         /* background-color: #f5f5f5!important; */
     }
     :global(.selectContainer) {
-        height: 36px !important;
+        height: 28px !important;
     }
 
     :global(.selectContainer .listContainer .listItem) {

@@ -17,9 +17,10 @@
         faPlus,
         faTimes,
         faHistory,
+        faCalendarAlt,
     } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
-    import { checkInput, numberWithCommas } from "../../../lib";
+    import { checkInput, numberWithCommas, checkValue } from "../../../lib";
     import Select from "svelte-select";
     import { DateInput } from "date-picker-svelte";
     import qs from "qs";
@@ -149,6 +150,8 @@
                         path: "stock-items/" + element.id + "?" + params,
                         data: {
                             data: {
+                                has_expiry: element.has_expiry,
+                                expiry_date: element.expiry_date,
                                 stock: stock.id,
                                 purchase_order_item:
                                     element.purchase_order_item.value,
@@ -211,7 +214,7 @@
                 checkInput(element.received) &&
                 checkInput(element.currency)
             ) {
-                if (element.remaining  < element.formQuantity ) {
+                if (element.remaining < element.formQuantity) {
                     element.error =
                         "<b class='has-text-danger'> Received amount exceeds Purchase order Quantity </b>";
                 } else {
@@ -265,6 +268,8 @@
                 received: "",
                 remark: "",
                 showHistory: false,
+                has_expiry: false,
+                expiry_date: new Date(),
 
                 id: Date.now(),
             },
@@ -281,27 +286,27 @@
         }
         formChildItems = formChildItems.filter((x) => x.id != id);
 
-        formChildItems[index].purchase_order_items =
-                    purchase_order_items.map((x) => {
-                        return {
-                            value: x.id,
-                            label:
-                                x.attributes.item.data.attributes.name +
-                                "-" +
-                                "PO ITEM ID - " +
-                                x.id +
-                                " - " +
-                                x.attributes.item.data.attributes.category +
-                                "  - UNIT - " +
-                                x.attributes.item.data.attributes.unit +
-                                " - PCS (" +
-                                x.attributes.item.data.attributes.pieces +
-                                ")",
-                            data: x,
-                        };
-                    });
+        formChildItems[index].purchase_order_items = purchase_order_items.map(
+            (x) => {
+                return {
+                    value: x.id,
+                    label:
+                        x.attributes.item.data.attributes.name +
+                        "-" +
+                        "PO ITEM ID - " +
+                        x.id +
+                        " - " +
+                        x.attributes.item.data.attributes.category +
+                        "  - UNIT - " +
+                        x.attributes.item.data.attributes.unit +
+                        " - PCS (" +
+                        x.attributes.item.data.attributes.pieces +
+                        ")",
+                    data: x,
+                };
+            }
+        );
     }
-
 
     async function deleteItem() {
         showConfirmation = false;
@@ -629,6 +634,8 @@
                             x.attributes.purchase_order_item.data?.attributes
                                 .unitPrice,
                         received: x.attributes.received,
+                        has_expiry: x.attributes.has_expiry,
+                        expiry_date: new Date(x.attributes.expiry_date),
                         remark: x.attributes.remark,
                         showHistory: false,
 
@@ -813,11 +820,15 @@
                 </div>
                 <div
                     class="column is-narrow has-text-weight-bold"
-                    style="width: 45px;"
+                    style="width: 40px;"
                 />
                 <div
                     class="column is-narrow has-text-weight-bold"
-                    style="width: 45px;"
+                    style="width: 40px;"
+                />
+                <div
+                    class="column is-narrow has-text-weight-bold"
+                    style="width: 40px;"
                 />
             </div>
 
@@ -897,7 +908,8 @@
                     <div class="column">
                         <input
                             type="number"
-min=0 oninput="validity.valid||(value='');"
+                            min="0"
+                            on:input={checkValue}
                             placeholder="Received"
                             class="input border-radius-0 "
                             class:is-danger={childItem.remaining -
@@ -936,20 +948,16 @@ min=0 oninput="validity.valid||(value='');"
                         />
                     </div>
                     <div class="column">
-                        <div class="field">
-                            <div class="control is-fullwidth">
-                                <input
-                                    rows="1"
-                                    class="input has-background-light border-radius-0 "
-                                    bind:value={remark}
-                                />
-                            </div>
-                        </div>
+                        <input
+                            rows="1"
+                            class="input has-background-light border-radius-0 "
+                            bind:value={childItem.remark}
+                        />
                     </div>
 
                     <div
                         class="column is-narrow has-text-weight-bold input"
-                        style="width: 45px;"
+                        style="width: 40px;"
                     >
                         <!-- <button class="button is-info is-light ml-2"> <Icon data={faEdit}/></button> -->
                         <button
@@ -964,7 +972,7 @@ min=0 oninput="validity.valid||(value='');"
                     </div>
                     <div
                         class="column is-narrow has-text-weight-bold input"
-                        style="width: 45px;"
+                        style="width: 40px;"
                     >
                         <button
                             type="button"
@@ -974,6 +982,20 @@ min=0 oninput="validity.valid||(value='');"
                             class="button is-info"
                         >
                             <Icon data={faHistory} /></button
+                        >
+                    </div>
+                    <div
+                        class="column is-narrow has-text-weight-bold input"
+                        style="width: 40px;"
+                    >
+                        <button
+                            type="button"
+                            on:click={() =>
+                                (childItem.showExpiryForm =
+                                    !childItem.showExpiryForm)}
+                            class="button is-info"
+                        >
+                            <Icon data={faCalendarAlt} /></button
                         >
                     </div>
                 </div>
@@ -1107,6 +1129,32 @@ min=0 oninput="validity.valid||(value='');"
                         </div>
                     </div>
                 {/if}
+
+                {#if childItem.showExpiryForm}
+                    <div class="columns px-3 has-background-light p-4">
+                        <div class="column">
+                            <h6>Expiry Date Form</h6>
+                            <label class="checkbox">
+                                <input
+                                    bind:checked={childItem.has_expiry}
+                                    type="checkbox"
+                                />
+                                Item Has Expiry Date
+                            </label>
+                        </div>
+                        <div class="column">
+                            <label for="">Expiry Date</label>
+                            <DateInput
+                                bind:value={childItem.expiry_date}
+                                format="yyyy/MM/dd"
+                                placeholder="2000/31/12"
+                                closeOnSelection={true}
+                                min={new Date("1920/1/1")}
+                                class="input"
+                            />
+                        </div>
+                    </div>
+                {/if}
             {/each}
         </form>
 
@@ -1160,11 +1208,11 @@ min=0 oninput="validity.valid||(value='');"
         border-right: 0px solid lightgray !important;
         border-radius: 0px;
         font-size: 0.9rem !important;
-        height: 36px !important;
+        height: 28px !important;
         /* background-color: #f5f5f5!important; */
     }
     :global(.selectContainer) {
-        height: 36px !important;
+        height: 28px !important;
     }
 
     :global(.selectContainer .listContainer .listItem) {
@@ -1172,7 +1220,9 @@ min=0 oninput="validity.valid||(value='');"
         border-radius: 0px;
     }
 
-    :global(.button.is-success svg *, .button.is-danger svg *) {
+    :global(.button.is-success svg *, .button.is-danger svg *, .button.is-info
+            svg
+            *) {
         color: white;
     }
 </style>

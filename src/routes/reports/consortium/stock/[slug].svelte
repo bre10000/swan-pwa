@@ -10,7 +10,7 @@
 faSave, faFileExcel, faFilePdf, faPrint } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
-    import { numberWithCommas } from "../../../../lib";
+    import { numberWithCommas, checkValue } from "../../../../lib";
     import { exportToCsvAlternate } from "../../../../utils/export/csvGenerator";
     import { exportToPDFAlternate } from "../../../../utils/export/exportPDFAlternate";
 

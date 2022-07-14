@@ -17,9 +17,9 @@
     import { onMount } from "svelte";
     import { DateInput } from "date-picker-svelte";
     import Select from "svelte-select";
-    import { checkInput, numberWithCommas } from "../../lib";
+    import { checkInput, numberWithCommas, checkValue } from "../../lib";
     import { createActivityLog } from "../../utils/activity/log";
-import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte";
+    import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte";
 
     const destination = field("destination", "", [required()]);
     const category = field("category", "", [required()]);
@@ -47,7 +47,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
     let stock_releases = [];
     let stock_release_items = [];
 
-    let waybill_items = [];
+    let categories = [];
 
     let errors;
 
@@ -192,8 +192,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                             waybill: waybill.id,
                             stock_release_item:
                                 element.stock_release_item.value,
-                            quantity:
-                                element.quantity,
+                            quantity: element.quantity,
                             remark: element.remark,
                         },
                     },
@@ -321,9 +320,13 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
             formChildItems[index].stock_release_item = "";
             formChildItems[index].stock_release = event.detail;
 
-            formChildItems[index].stock_release_items = stock_release_items.filter( x => x.attributes.purchase_order_item.data?.attributes
-                                .item.data.attributes.category == $category.value ).map(
-                (x) => {
+            formChildItems[index].stock_release_items = stock_release_items
+                .filter(
+                    (x) =>
+                        x.attributes.purchase_order_item.data?.attributes.item
+                            .data.attributes.category == $category.value
+                )
+                .map((x) => {
                     return {
                         value: x.id,
                         label:
@@ -350,13 +353,11 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                             x.id,
                         data: x,
                     };
-                }
-            );
+                });
 
             console.log(formChildItems[index]);
         }
     }
-
 
     async function getRemaining(event, childItem) {
         if (event.detail?.value) {
@@ -364,15 +365,21 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
             formChildItems[index].stock_release_item = event.detail;
 
             let waybillAmount = 0;
-            event.detail.data.attributes?.waybill_items?.data?.forEach(element => {
-                waybillAmount += parseInt(element.attributes.quantity? element.attributes.quantity: 0 )
-            });
-
+            event.detail.data.attributes?.waybill_items?.data?.forEach(
+                (element) => {
+                    waybillAmount += parseInt(
+                        element.attributes.quantity
+                            ? element.attributes.quantity
+                            : 0
+                    );
+                }
+            );
 
             formChildItems[index].waybill_items =
                 event.detail.data.attributes?.waybill_items?.data;
             formChildItems[index].amount =
-                parseInt(event.detail.data.attributes.quantity) - parseInt(waybillAmount);
+                parseInt(event.detail.data.attributes.quantity) -
+                parseInt(waybillAmount);
 
             let stock_item =
                 event.detail.data.attributes.purchase_order_item.data;
@@ -387,7 +394,12 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                 ? stock_item?.attributes.item?.data?.attributes.pieces
                 : "";
 
-                console.log("ahfdkjls", parseFloat(waybillAmount),  parseFloat(event.detail.data.attributes.quantity) - parseFloat(waybillAmount));
+            console.log(
+                "ahfdkjls",
+                parseFloat(waybillAmount),
+                parseFloat(event.detail.data.attributes.quantity) -
+                    parseFloat(waybillAmount)
+            );
             console.log("ahfdkjls", formChildItems[index]);
         }
     }
@@ -409,9 +421,28 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
         console.log("Refresh Remaining ", formChildItems);
     }
 
+    async function getCategories() {
+        try {
+            let params = {
+                "pagination[limit]": -1,
+            };
+            params = qs.stringify(params, {
+                encodeValuesOnly: true,
+            });
+            let response = await get("categories", params);
+
+            console.log("Get Categories ", response);
+
+            categories = response.data.map((x) => x.attributes.name);
+        } catch (e) {
+            console.log("Error Get Categories ", e);
+        }
+    }
+
     onMount(() => {
         getConsortiumMembers();
         addChildItem();
+        getCategories();
     });
 </script>
 
@@ -521,9 +552,9 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                                 name="category"
                                 bind:value={$category.value}
                             >
-                                <option value="Health">Health</option>
-                                <option value="Wash">Wash</option>
-                                <option value="ES/NFI">ES/NFI</option>
+                                {#each categories as c}
+                                    <option>{c}</option>
+                                {/each}
                             </select>
                             {#if $formItem.hasError("category.required")}
                                 <p class="help is-danger">
@@ -717,7 +748,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                 <div class="column  is-narrow" style="width: 120px;">
                     <label for="" class="gray">SRF #</label>
                 </div>
-                <div class="column  is-narrow" style="width: 300px;">
+                <div class="column  is-narrow" style="width: 200px;">
                     <label for="" class="gray">Item (*)</label>
                 </div>
                 <div class="column">
@@ -739,11 +770,11 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                 </div>
                 <div
                     class="column is-narrow has-text-weight-bold"
-                    style="width: 45px;"
+                    style="width: 40px;"
                 />
                 <div
                     class="column is-narrow has-text-weight-bold"
-                    style="width: 45px;"
+                    style="width: 40px;"
                 />
             </div>
 
@@ -771,7 +802,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                         </div>
                     </div>
 
-                    <div class="column is-narrow" style="width: 300px;">
+                    <div class="column is-narrow" style="width: 200px;">
                         <div class="field">
                             <div class="control">
                                 <Select
@@ -800,14 +831,16 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                             type="text"
                             class="input has-background-light border-radius-0 "
                             disabled
-                            value={childItem.amount ? numberWithCommas(childItem.amount) : "-"}
+                            value={childItem.amount
+                                ? numberWithCommas(childItem.amount)
+                                : "-"}
                         />
                     </div>
 
                     <div class="column">
                         <input
                             type="number"
-min=0 oninput="validity.valid||(value='');"
+                            min=0 on:input={checkValue}
                             placeholder="Quantity"
                             class="input"
                             on:change={() =>
@@ -838,20 +871,16 @@ min=0 oninput="validity.valid||(value='');"
                     </div>
 
                     <div class="column">
-                        <div class="field">
-                            <div class="control is-fullwidth">
-                                <input
+                        <input
                                     rows="1"
                                     class="input has-background-light border-radius-0 "
-                                    bind:value={remark}
+                                    bind:value={childItem.remark}
                                 />
-                            </div>
-                        </div>
                     </div>
 
                     <div
                         class="column is-narrow has-text-weight-bold input"
-                        style="width: 45px;"
+                        style="width: 40px;"
                     >
                         <!-- <button class="button is-info is-light ml-2"> <Icon data={faEdit}/></button> -->
                         <button
@@ -866,7 +895,7 @@ min=0 oninput="validity.valid||(value='');"
                     </div>
                     <div
                         class="column is-narrow has-text-weight-bold input"
-                        style="width: 45px;"
+                        style="width: 40px;"
                     >
                         <button
                             type="button"
@@ -898,13 +927,13 @@ min=0 oninput="validity.valid||(value='');"
                                             ?.attributes.stock_release.data.id}
                                     </div>
                                     <div class="column">
-                                        {s.attributes.waybill.data
-                                            ?.attributes.date}
+                                        {s.attributes.waybill.data?.attributes
+                                            .date}
                                     </div>
                                     <div class="column">
-                                        {s.attributes.waybill.data
-                                            ?.attributes.consortium_member?.data
-                                            .attributes.name}
+                                        {s.attributes.waybill.data?.attributes
+                                            .consortium_member?.data.attributes
+                                            .name}
                                     </div>
                                 </div>
                                 <div class="columns">
@@ -937,29 +966,31 @@ min=0 oninput="validity.valid||(value='');"
                                     <div class="column has-text-centered">
                                         <span class="is-small tag">Unit</span>
                                         <br />
-                                        {s.attributes.stock_release_item
-                                            .data?.attributes
-                                            .purchase_order_item?.data
-                                            ?.attributes.item?.data
-                                            ?.attributes.unit ? s.attributes.stock_release_item
-                                            .data?.attributes
-                                            .purchase_order_item?.data
-                                            ?.attributes.item?.data
-                                            ?.attributes.unit : "-"}
+                                        {s.attributes.stock_release_item.data
+                                            ?.attributes.purchase_order_item
+                                            ?.data?.attributes.item?.data
+                                            ?.attributes.unit
+                                            ? s.attributes.stock_release_item
+                                                  .data?.attributes
+                                                  .purchase_order_item?.data
+                                                  ?.attributes.item?.data
+                                                  ?.attributes.unit
+                                            : "-"}
                                     </div>
 
                                     <div class="column has-text-centered">
                                         <span class="is-small tag">Pieces</span>
                                         <br />
-                                        {s.attributes.stock_release_item
-                                            .data?.attributes
-                                            .purchase_order_item?.data
-                                            ?.attributes.item?.data
-                                            ?.attributes.pieces ? s.attributes.stock_release_item
-                                            .data?.attributes
-                                            .purchase_order_item?.data
-                                            ?.attributes.item?.data
-                                            ?.attributes.pieces : "-"}
+                                        {s.attributes.stock_release_item.data
+                                            ?.attributes.purchase_order_item
+                                            ?.data?.attributes.item?.data
+                                            ?.attributes.pieces
+                                            ? s.attributes.stock_release_item
+                                                  .data?.attributes
+                                                  .purchase_order_item?.data
+                                                  ?.attributes.item?.data
+                                                  ?.attributes.pieces
+                                            : "-"}
                                     </div>
 
                                     <div class="column has-text-centered">
@@ -1035,10 +1066,9 @@ min=0 oninput="validity.valid||(value='');"
 
 <br /><br /><br /><br /><br />
 
-
 {#if unsavedItemsDialog}
     <UnsavedConfirmation
-        on:confirm={() => goto('waybills')}
+        on:confirm={() => goto("waybills")}
         on:dismiss={() => (unsavedItemsDialog = false)}
     />
 {/if}
@@ -1075,11 +1105,11 @@ min=0 oninput="validity.valid||(value='');"
         border-right: 0px solid lightgray !important;
         border-radius: 0px;
         font-size: 0.9rem !important;
-        height: 36px !important;
+        height: 28px !important;
         /* background-color: #f5f5f5!important; */
     }
     :global(.selectContainer) {
-        height: 36px !important;
+        height: 28px !important;
     }
 
     :global(.selectContainer .listContainer .listItem) {

@@ -105,6 +105,12 @@ function checkInput(input) {
   return  input !== undefined && (input !== "") && (input !== null)
 }
 
+function checkValue(event) {
+  if (event.target.value < 0) {
+    event.target.value = 0;
+  }
+}
+
 export {
   constructURL,
   constructQry,
@@ -117,5 +123,6 @@ export {
   addDays,
   numberWithCommas,
   getPopulatedArray,
-  checkInput
+  checkInput,
+  checkValue
 }

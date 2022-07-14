@@ -300,6 +300,18 @@
                                 },
                             },
                         },
+                        {
+                            waybill_items: {
+                                stock_release_item: {
+                                    purchase_order_item: {
+                                        sof: {
+                                                $containsi: query,
+                                           
+                                        },
+                                    },
+                                },
+                            },
+                        },
 
                         {
                             waybill_items: {
@@ -430,7 +442,8 @@
             } else if (
                 field == "currency" ||
                 field == "unitPrice" ||
-                field == "quantity"
+                field == "quantity" ||
+                field == "sof"
             ) {
                 let greatgrandparent, grandparent, parent;
                 let field2 = field;
@@ -755,7 +768,7 @@
 
     <div class="columns">
         <div class="column is-narrow">
-            <div class="field has-addons" style="width: 400px;">
+            <div class="field has-addons" style="width: 250px;">
                 <div class="control has-icons-left">
                     <input
                         bind:value={query}
@@ -818,8 +831,13 @@
                                     bind:value={field}
                                     name="category"
                                 >
-                                    {#each columns
-                                        .concat(columnsDetails)
+                                    {#each [...columns
+                                        .concat(columnsDetails), {
+                                            key: "sof",
+                                            title: "SOF",
+                                            sortable: true,
+                                            selected: true,
+                                        }]
                                         .filter((x) => x.key !== "total" && x.key !== "balance") as c}
                                         <option value={c.key}>{c.title}</option>
                                     {/each}
@@ -904,8 +922,13 @@
             {#each filters as f (f.index)}
                 <span class="tag is-light is-medium is-rounded p-4 mr-4">
                     <b class="mx-2">
-                        {columns
-                            .concat(columnsDetails)
+                        {[...columns
+                                        .concat(columnsDetails), {
+                                            key: "sof",
+                                            title: "SOF",
+                                            sortable: true,
+                                            selected: true,
+                                        }]
                             .filter((c) => c.key == f?.name)[0]?.title}
                     </b>
                     contains

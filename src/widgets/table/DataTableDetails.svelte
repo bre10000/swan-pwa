@@ -25,7 +25,7 @@
 	} from "@fortawesome/free-solid-svg-icons";
 	import SelectedColumns from "./sub-components/SelectedColumns.svelte";
 	import { prevent_default, stop_propagation } from "svelte/internal";
-	import { checkInput, numberWithCommas } from "../../lib";
+	import { checkInput, numberWithCommas, checkValue } from "../../lib";
 
 	const dispatch = createEventDispatcher();
 	export let columns;
@@ -581,6 +581,15 @@
 															]?.data?.attributes
 																.category}</span
 														>
+														<!-- <br />
+														<span class="gray">
+															SOF - {item
+																.attributes.sof
+																? item
+																		.attributes
+																		.sof
+																: "-"}
+														</span> -->
 													</div>
 												{:else if col.key == "unit"}
 													<div
@@ -682,7 +691,11 @@
 														> <br />
 														{item.attributes[
 															col.key
-														]}
+														]
+															? item.attributes[
+																	col.key
+															  ]
+															: "-"}
 													</div>
 												{/if}
 											{/each}
@@ -739,6 +752,58 @@
 																	.purchase_order_item
 																	?.data?.id}
 															</span>
+															<br />
+															<span class="gray">
+																SOF - {item
+																	.attributes
+																	.purchase_order_item
+																	?.data
+																	?.attributes
+																	.sof
+																	? item
+																			.attributes
+																			.purchase_order_item
+																			?.data
+																			?.attributes
+																			.sof
+																	: "-"}
+															</span>
+															<br />
+															{#if item.attributes.has_expiry}
+																<span
+																	class="has-text-weight-bold"
+																	class:has-text-success={new Date(
+																		item.attributes.expiry_date
+																	).getTime() >
+																		Date.now()}
+																	class:has-text-danger={new Date(
+																		item.attributes.expiry_date
+																	).getTime() <
+																		Date.now()}
+																>
+																	EXP.D -
+																	{item
+																		.attributes
+																		.expiry_date
+																		? item
+																				.attributes
+																				.expiry_date
+																		: "-"}
+																	({item
+																		.attributes
+																		.expiry_date
+																		? numberWithCommas(
+																				parseInt(
+																					(new Date(
+																						item.attributes.expiry_date
+																					).getTime() -
+																						new Date().getTime()) /
+																						86400000
+																				)
+																		  )
+																		: "-"} Days)
+																</span>
+															{/if}
 														</span>
 													</div>
 												{:else if col.key == "unit"}
@@ -904,7 +969,6 @@
 												{:else if col.key == "item"}
 													<div
 														class="column is-2 is-narrow"
-														style="width: 200px;"
 													>
 														<span class=""
 															>{item.attributes
@@ -932,6 +996,22 @@
 																	.attributes
 																	.purchase_order_item
 																	?.data?.id}
+															</span> <br />
+
+															<span class="gray">
+																SOF - {item
+																	.attributes
+																	.purchase_order_item
+																	?.data
+																	?.attributes
+																	.sof
+																	? item
+																			.attributes
+																			.purchase_order_item
+																			?.data
+																			?.attributes
+																			.sof
+																	: "-"}
 															</span>
 														</span>
 													</div>
@@ -1095,8 +1175,7 @@
 															  )
 															: "-"}
 													</div>
-
-													{:else if col.key == "remaining"}
+												{:else if col.key == "remaining"}
 													<div
 														class="column has-text-centered"
 													>
@@ -1104,7 +1183,9 @@
 															class="is-small tag"
 															>{col.title}</span
 														> <br />
-														{getStockReleaseBalance(item)}
+														{getStockReleaseBalance(
+															item
+														)}
 													</div>
 												{:else}
 													<div
@@ -1180,6 +1261,27 @@
 																.purchase_order_item
 																?.data?.id}
 														</span>
+														<br />
+														<span class="gray">
+															SOF - {item
+																.attributes
+																.stock_release_item
+																.data
+																?.attributes
+																.purchase_order_item
+																?.data
+																?.attributes.sof
+																? item
+																		.attributes
+																		.stock_release_item
+																		.data
+																		?.attributes
+																		.purchase_order_item
+																		?.data
+																		?.attributes
+																		.sof
+																: "-"}
+														</span>
 													</div>
 												{:else if col.key == "unit" || col.key == "pieces"}
 													<div
@@ -1236,9 +1338,11 @@
 																		parseFloat(
 																			item
 																				.attributes
-																				.quantity ? item
-																				.attributes
-																				.quantity : 0
+																				.quantity
+																				? item
+																						.attributes
+																						.quantity
+																				: 0
 																		)
 															  )
 															: "-"}
