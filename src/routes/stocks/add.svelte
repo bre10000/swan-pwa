@@ -423,7 +423,8 @@
             });
 
         formChildItems.forEach((element) => {
-            element.formQuantity = temp;
+            if(element.purchase_order_item?.value == event.detail.data.id)
+                element.formQuantity = temp;
         });
 
         formChildItems = formChildItems;

@@ -18,8 +18,6 @@
     import { exportToPDFAlternate } from "../../utils/export/exportPDFAlternate";
     import { Moon } from "svelte-loading-spinners";
 
-    
-
     let query = "",
         queryC = "";
     let sortBy = "";
@@ -28,7 +26,7 @@
 
     let field, queryF;
 
-    let rows = [];
+    let rows;
 
     const columns = [
         {
@@ -196,18 +194,40 @@
 
     function addFilter() {
         if (field && queryF) {
-            let temp = {
-                index: filters.length,
-                value: {},
-                name: field,
-                query: queryF,
-            };
+            if (field == "userName" || field == "email") {
+                let parent = "users_permissions_user";
+                let field2 = field;
 
-            temp.value[field] = {
-                $containsi: queryF,
-            };
+                field = field.includes("userName") ? "name" : field;
 
-            filters = [temp, ...filters];
+                let temp = {
+                    index: filters.length,
+                    value: {},
+                    name: field2,
+                    query: queryF,
+                };
+                temp.value[parent] = {};
+                temp.value[parent][field] = {
+                    $containsi: queryF,
+                };
+
+                filters = [temp, ...filters];
+            } else {
+                let temp = {
+                    index: filters.length,
+                    value: {},
+                    name: field,
+                    query: queryF,
+                };
+
+                field = field.includes("userName") ? "name" : field;
+
+                temp.value[field] = {
+                    $containsi: queryF,
+                };
+
+                filters = [temp, ...filters];
+            }
         }
 
         field = "";
@@ -216,7 +236,6 @@
         search();
         console.log({ filters });
     }
-
     function removeFilter(f) {
         filters = [...filters.filter((x) => x.index !== f.index)];
         search();
@@ -298,7 +317,6 @@
             );
         } catch (e) {}
     }
-
 
     const unsubscribe = user.subscribe((value) => {
         if (!process.browser) {
@@ -479,7 +497,7 @@
         </div>
     </div>
 
-    <div class="container px-6">
+    <div class="container">
         {#if filters?.length > 0}
             {#each filters as f (f.index)}
                 <span class="tag is-light is-medium is-rounded p-4 mr-4">
@@ -496,7 +514,7 @@
             {/each}
         {/if}
     </div>
-    <br /><br />
+    <br />
     <div class="card">
         {#if rows?.length > 0}
             <DataTable

@@ -413,7 +413,8 @@
             });
 
         formChildItems.forEach((element) => {
-            element.formQuantity = temp;
+            if(element.stock_release_item?.value == event.detail.data.id)
+                element.formQuantity = temp;
         });
 
         formChildItems = formChildItems;

@@ -8,6 +8,7 @@
     import { faAngleLeft, faSave } from "@fortawesome/free-solid-svg-icons";
     import { onMount } from "svelte";
     import qs from "qs";
+import { checkValue } from "../../lib";
 
     const name = field("name", "", [required()]);
     const category = field("category", "Health", [required()]);
@@ -174,7 +175,7 @@
                     <label for="" class="gray">Pieces</label><br />
                     <input
                         bind:value={$pieces.value}
-                        type="number"
+                        type="number" min=0 on:input={checkValue}
                         placeholder="Piece"
                         class="input"
                     />

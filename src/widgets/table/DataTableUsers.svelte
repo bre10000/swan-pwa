@@ -329,7 +329,7 @@
 											: "-"}
 									{:else if col.key == "name"}
 										<div class="is-flex">
-											<figure class="image is-64x64" style="background-image: url({ row["avatar"]?.url ? image_url + row["avatar"]?.url :  "./images/profile/profile-placeholder.png" });">
+											<figure class="image is-64x64 mb-0" style="background-image: url({ row["avatar"]?.url ? image_url + row["avatar"]?.url :  "./images/profile/profile-placeholder.png" });">
 													<!-- {#if row["avatar"]?.url}
 														<img
 															class="is-rounded ml-0"

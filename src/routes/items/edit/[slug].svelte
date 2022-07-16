@@ -13,6 +13,7 @@
     import { faAngleLeft, faSave } from "@fortawesome/free-solid-svg-icons";
     import Icon from "svelte-awesome/components/Icon.svelte";
     import qs from "qs";
+import { checkValue } from "../../../lib";
 
     export let slug;
 
@@ -196,7 +197,7 @@
                     <label for="" class="gray">Pieces</label><br />
                     <input
                         bind:value={$pieces.value}
-                        type="number"
+                        type="number" min=0 on:input={checkValue}
                         placeholder="Piece"
                         class="input"
                     />
