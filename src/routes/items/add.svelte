@@ -60,6 +60,7 @@ import { checkValue } from "../../lib";
         try {
             let params = {
                 "pagination[limit]": -1,
+                sort: "name"
             };
             params = qs.stringify(params, {
                 encodeValuesOnly: true,

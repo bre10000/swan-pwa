@@ -67,7 +67,7 @@
         try {
             let params = {
                 filters: filters ? filters : {},
-                sort: sort ? sort : "id",
+                sort: sort ? sort : "name",
                 "pagination[page]": page ? page : 1,
             };
             params = qs.stringify(params, {
