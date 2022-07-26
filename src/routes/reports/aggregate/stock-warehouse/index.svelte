@@ -2,7 +2,7 @@
     import { get } from "../../../../lib/api";
     import {
         faAngleLeft,
-faSave,
+        faSave,
         faFileExcel,
         faFilePdf,
         faPrint,
@@ -37,8 +37,7 @@ faSave,
         items.forEach((element) => {
             total +=
                 element.attributes.purchase_order_item.data?.attributes
-                    .unitPrice *
-                    element.attributes.received
+                    .unitPrice * element.attributes.received;
         });
 
         return total;
@@ -66,9 +65,7 @@ faSave,
 
             console.log("Get Stock Items  ", response);
 
-            stock_items = response.data.filter(
-                (x) => x.attributes.stock.data
-            );
+            stock_items = response.data.filter((x) => x.attributes.stock.data);
         } catch (e) {
             console.log("Error get Stock Items  ", e);
         }
@@ -94,9 +91,9 @@ faSave,
                 {
                     stock: {
                         warehouse: {
-                                id: {
-                                    $in: [$warehouse.value.value],
-                                },
+                            id: {
+                                $in: [$warehouse.value.value],
+                            },
                         },
                     },
                 },
@@ -104,16 +101,14 @@ faSave,
         };
 
         if ($start.value != $end.value) {
-            filter.$and.push(
-                {
-                    stock: {
-                        date: {
-                            $gte: $start.value,
-                            $lte: $end.value,
-                        }
-                    }
-                }
-            )
+            filter.$and.push({
+                stock: {
+                    date: {
+                        $gte: $start.value,
+                        $lte: $end.value,
+                    },
+                },
+            });
         }
 
         getItem(filter);
@@ -263,40 +258,36 @@ faSave,
     function getPopulatedDataPdf(rowss) {
         let array = [];
 
-        
-            rowss.forEach((elementC) => {
-                array.push([
-                    elementC.attributes.stock.data.id,
-                    elementC.attributes.stock.data.attributes.consortium_member
-                        .data.attributes.name,
-                    elementC.attributes.stock.data.attributes.warehouse.data
-                        .attributes.name,
-                    elementC.attributes.stock.data.attributes.date,
-                    elementC.id,
-                    elementC.attributes.purchase_order_item.data.attributes
-                        .purchase_order.data.attributes.poNumber,
-                    elementC.attributes.purchase_order_item.data.attributes.item
-                        .data.attributes.name,
-                    elementC.attributes.purchase_order_item.data.attributes.item
-                        .data.attributes.category,
-                        elementC.attributes.purchase_order_item.data.attributes.item
-                        .data.attributes.unit,
-                        elementC.attributes.purchase_order_item.data.attributes.item
-                        .data.attributes.pieces,
-                    elementC.attributes.purchase_order_item.data.attributes
-                        .quantity,
-                    elementC.attributes.purchase_order_item.data.attributes
-                        .currency,
-                    elementC.attributes.purchase_order_item.data.attributes
-                        .unitPrice,
-                    elementC.attributes.received,
-                    elementC.attributes.purchase_order_item.data.attributes
-                        .unitPrice *
-                        elementC.attributes.received,
-                        elementC.attributes.remark
-                ]);
-
-            
+        rowss.forEach((elementC) => {
+            array.push([
+                elementC.attributes.stock.data.id,
+                elementC.attributes.stock.data.attributes.consortium_member.data
+                    .attributes.name,
+                elementC.attributes.stock.data.attributes.warehouse.data
+                    .attributes.name,
+                elementC.attributes.stock.data.attributes.date,
+                elementC.id,
+                elementC.attributes.purchase_order_item.data.attributes
+                    .purchase_order.data.attributes.poNumber,
+                elementC.attributes.purchase_order_item.data.attributes.item
+                    .data.attributes.name,
+                elementC.attributes.purchase_order_item.data.attributes.item
+                    .data.attributes.category,
+                elementC.attributes.purchase_order_item.data.attributes.item
+                    .data.attributes.unit,
+                elementC.attributes.purchase_order_item.data.attributes.item
+                    .data.attributes.pieces,
+                elementC.attributes.purchase_order_item.data.attributes
+                    .quantity,
+                elementC.attributes.purchase_order_item.data.attributes
+                    .currency,
+                elementC.attributes.purchase_order_item.data.attributes
+                    .unitPrice,
+                elementC.attributes.received,
+                elementC.attributes.purchase_order_item.data.attributes
+                    .unitPrice * elementC.attributes.received,
+                elementC.attributes.remark,
+            ]);
         });
 
         array.push([
@@ -305,7 +296,7 @@ faSave,
             "-",
             "-",
             "-",
-           
+
             "-",
             "-",
             "-",
@@ -347,6 +338,23 @@ faSave,
             getPopulatedDataPdf(stock_items),
             columnsDetails
         );
+    }
+
+    function getAllReceived(purchase_order_item) {
+        let temp = 0;
+       
+        
+        stock_items
+            .filter(
+                (x) =>
+                    (x.attributes.purchase_order_item?.data.id ==
+                    purchase_order_item.id) && x.attributes.stock?.data
+            )
+            ?.forEach((element) => {
+                temp = parseInt(temp) + parseInt(element.attributes.received);
+            });
+
+        return temp;
     }
 
     onMount(async () => {
@@ -451,7 +459,7 @@ faSave,
                                 listAutoWidth={true}
                             />
                         </div>
-                        {#if $formItem.hasError("item.required")}
+                        {#if $formItem.hasError("warehouse.required")}
                             <p class="help is-danger">Warehouse is required</p>
                         {/if}
                     </div>
@@ -509,7 +517,12 @@ faSave,
         <div class="card p-6">
             <br />
             <div class="has-text-centered is-flex is-align-items-center">
-                <img src="./images/logo/swan_consortium.svg" width="150" alt="SWAN Humaniterian Consortium" style="margin: 0 auto;">
+                <img
+                    src="./images/logo/swan_consortium.svg"
+                    width="150"
+                    alt="SWAN Humaniterian Consortium"
+                    style="margin: 0 auto;"
+                />
             </div>
             {#if $consortium_member.value}
                 <h3 class="has-text-centered has-text-weight-bold">
@@ -520,7 +533,8 @@ faSave,
                     {$consortium_member.value.attributes.address_2}
                 </p>
                 <p class="has-text-centered">
-                    {$consortium_member.value.attributes.website} - {$consortium_member.value.attributes.phone}
+                    {$consortium_member.value.attributes.website} - {$consortium_member
+                        .value.attributes.phone}
                 </p>
             {/if}
 
@@ -535,106 +549,117 @@ faSave,
             {/if}
             <!-- <p class="card-header-title">Stock Items</p> -->
 
-                {#if $warehouse.value}
-                    <p class="card-header-title">{$warehouse.value.label}</p>
-                {/if}
+            {#if $warehouse.value}
+                <p class="card-header-title">{$warehouse.value.label}</p>
+            {/if}
 
-                <table class="table is-bordered is-fullwidth is-narrow">
-                    <tr class="has-background-black has-text-white">
-                        <td>No.</td>
-                        <th class="has-text-white">PO #</th>
-                        <th class="has-text-white">Consortium Member</th>
-                        <th class="has-text-white">Warehouse</th>
-                        <th class="has-text-white">Date</th>
-                        <th class="has-text-white">Description</th>
-                        <th class="has-text-white">Unit</th>
-                        <th class="has-text-white">Pcs/Package</th>
+            <table class="table is-bordered is-fullwidth is-narrow">
+                <tr class="has-background-black has-text-white">
+                    <td>No.</td>
+                    <th class="has-text-white">PO #</th>
+                    <th class="has-text-white">Consortium Member</th>
+                    <th class="has-text-white">Warehouse</th>
+                    <th class="has-text-white">Date</th>
+                    <th class="has-text-white">Description</th>
+                    <th class="has-text-white">Unit</th>
+                    <th class="has-text-white">Pcs/Package</th>
 
-                        <th class="has-text-white">Unit Price</th>
-                        <th class="has-text-white">PO Quantity</th>
-                        <th class="has-text-white">Received</th>
-                        <th class="has-text-white">Total</th>
-                        <th class="has-text-white">Remark</th>
-                    </tr>
+                    <th class="has-text-white">Unit Price</th>
+                    <th class="has-text-white">PO Quantity</th>
+                    <th class="has-text-white">Received</th>
+                    <th class="has-text-white">Total</th>
+                    <th class="has-text-white">Remark</th>
+                </tr>
 
-
-                    {#each stock_items as stock, index}
-                        <tr>
-                            <td>{index + 1}</td>
-                            <td>
-                                {
-                                    stock.attributes.purchase_order_item.data
-                                    ?.attributes.purchase_order?.data?.attributes.poNumber
-                                }
-                            </td>
-                            <td>
-                                {stock.attributes.stock.data?.attributes
-                                    .consortium_member.data?.attributes.name}
-                            </td>
-                            <td>
-                                {stock.attributes.stock.data?.attributes
-                                    .warehouse.data?.attributes.name}
-                            </td>
-                            <td>
-                                {stock.attributes.stock.data?.attributes.date}
-                            </td>
-                            <td
-                                >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.item.data?.attributes.name} - PO Item ID ({stock
-                                    .attributes.purchase_order_item.data
-                                    ?.id})</td
-                            >
-                            <td
-                                >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.item.data?.attributes.unit ? stock.attributes.purchase_order_item.data
-                                    ?.attributes.item.data?.attributes.unit : "-"}</td
-                            >
-                            <td
-                                >{stock.attributes.purchase_order_item.data
-                                    ?.attributes.item.data?.attributes.pieces ? stock.attributes.purchase_order_item.data
-                                    ?.attributes.item.data?.attributes.pieces : "-"}</td
-                            >
-
-                            <td
-                                >{numberWithCommas(stock.attributes.purchase_order_item.data
-                                    ?.attributes.unitPrice)}</td
-                            >
-                            <td
-                                >{numberWithCommas(stock.attributes.purchase_order_item.data
-                                    ?.attributes.quantity)}</td
-                            >
-
-                            <td>{numberWithCommas(stock.attributes.received)}</td>
-                            
-                            
-                            <td
-                                >{numberWithCommas(
-                                    stock.attributes.purchase_order_item.data
-                                        ?.attributes.unitPrice *
-                                        stock.attributes.received
-                                )}
-                                {stock.attributes.purchase_order_item.data
-                                    ?.attributes.currency}</td
-                            >
-
-                            <td>{stock.attributes.remark}</td>
-                        </tr>
-                    {/each}
-
-                    <tr class="">
-                        <th>Total</th>
-                        <th colspan="10" />
-                        <th
-                            >{numberWithCommas(
-                                getTotal(
-                                    stock_items)
-                            )}</th
+                {#each stock_items as stock, index}
+                    <tr>
+                        <td>{index + 1}</td>
+                        <td>
+                            {stock.attributes.purchase_order_item.data
+                                ?.attributes.purchase_order?.data?.attributes
+                                .poNumber}
+                        </td>
+                        <td>
+                            {stock.attributes.stock.data?.attributes
+                                .consortium_member.data?.attributes.name}
+                        </td>
+                        <td>
+                            {stock.attributes.stock.data?.attributes.warehouse
+                                .data?.attributes.name}
+                        </td>
+                        <td>
+                            {stock.attributes.stock.data?.attributes.date}
+                        </td>
+                        <td
+                            >{stock.attributes.purchase_order_item.data
+                                ?.attributes.item.data?.attributes.name} - PO Item
+                            ID ({stock.attributes.purchase_order_item.data
+                                ?.id})</td
                         >
-                        <th></th>
-                    </tr>
-                </table>
+                        <td
+                            >{stock.attributes.purchase_order_item.data
+                                ?.attributes.item.data?.attributes.unit
+                                ? stock.attributes.purchase_order_item.data
+                                      ?.attributes.item.data?.attributes.unit
+                                : "-"}</td
+                        >
+                        <td
+                            >{stock.attributes.purchase_order_item.data
+                                ?.attributes.item.data?.attributes.pieces
+                                ? stock.attributes.purchase_order_item.data
+                                      ?.attributes.item.data?.attributes.pieces
+                                : "-"}</td
+                        >
 
-           
+                        <td
+                            >{numberWithCommas(
+                                stock.attributes.purchase_order_item.data
+                                    ?.attributes.unitPrice
+                            )}</td
+                        >
+                        <td
+                            >{numberWithCommas(
+                                stock.attributes.purchase_order_item.data
+                                    ?.attributes.quantity
+                            )}</td
+                        >
+
+                        <td
+                            class:has-background-danger={
+                                (getAllReceived(
+                                    stock.attributes.purchase_order_item.data
+                                ) > parseFloat(
+                                    stock.attributes.purchase_order_item.data
+                                        ?.attributes.quantity
+                                ) ) }
+                            >{numberWithCommas(stock.attributes.received)}
+
+                            <span class="has-text-black ml-4">
+                                {getAllReceived(stock.attributes.purchase_order_item.data)}
+                            </span></td
+                        >
+
+                        <td
+                            >{numberWithCommas(
+                                stock.attributes.purchase_order_item.data
+                                    ?.attributes.unitPrice *
+                                    stock.attributes.received
+                            )}
+                            {stock.attributes.purchase_order_item.data
+                                ?.attributes.currency}</td
+                        >
+
+                        <td>{stock.attributes.remark}</td>
+                    </tr>
+                {/each}
+
+                <tr class="">
+                    <th>Total</th>
+                    <th colspan="10" />
+                    <th>{numberWithCommas(getTotal(stock_items))}</th>
+                    <th />
+                </tr>
+            </table>
 
             <br /><br />
 

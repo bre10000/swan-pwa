@@ -59,6 +59,14 @@
             filterType: "string",
             selected: true,
         },
+        {
+            key: "old_id",
+            title: "OLD ID",
+            sortable: true,
+            filterValue: (v) => v.last_name.charAt(0).toLowerCase(),
+            filterType: "string",
+            selected: true,
+        },
     ];
 
     const columnsDetails = [
@@ -156,7 +164,7 @@
             let params = {
                 filters: filters ? filters : {},
                 sort: sort ? sort : "id:desc",
-                "pagination[page]": page ? page : 1,
+                
                 populate: {
                     consortium_member: {
                         populate: "*",
@@ -174,6 +182,12 @@
                     },
                 },
             };
+
+            if(page)
+                params["pagination[page]"] = page;
+            else    
+                params["pagination[limit]"] = -1;
+
             params = qs.stringify(params, {
                 encodeValuesOnly: true,
             });
@@ -191,7 +205,12 @@
 
     function search() {
         let qs = getQS();
-        getItems(qs, sortBy);
+        if(query == "" && filters.length == 0)
+            getItems(null, null, 1);
+        else {
+            getItems(qs, sortBy, null);
+        }
+
     }
 
     function changePage(event) {
@@ -203,10 +222,10 @@
     function sort(event) {
         sortBy = event.detail.key;
         sortBy = sortBy.replace("consortium_member", "consortium_member.name");
-        sortBy = sortBy.replace("warehouse", "warehouse.name");
+        // sortBy = sortBy.replace("warehouse", "warehouse.name");
         let qs = getQS();
 
-        getItems(qs, sortBy, event.detail.newPage);
+        getItems(qs, sortBy, 1);
     }
 
     function editRow(event) {
@@ -257,7 +276,7 @@
         return {
             $and: [
                 ...filters.map((x) => x.value),
-                {
+                query !== "" ? {
                     $or: [
                         {
                             date: {
@@ -283,49 +302,49 @@
                             },
                         },
 
-                        {
-                            stock_release_items: {
-                                purchase_order_item: {
-                                    sof: {
-                                        $containsi: query,
-                                    },
-                                },
-                            },
-                        },
+                        // {
+                        //     stock_release_items: {
+                        //         purchase_order_item: {
+                        //             sof: {
+                        //                 $containsi: query,
+                        //             },
+                        //         },
+                        //     },
+                        // },
 
-                        {
-                            stock_release_items: {
-                                purchase_order_item: {
-                                    item: {
-                                        name: {
-                                            $containsi: query,
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            stock_release_items: {
-                                purchase_order_item: {
-                                    item: {
-                                        category: {
-                                            $containsi: query,
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            stock_release_items: {
-                                purchase_order_item: {
-                                    item: {
-                                        unit: {
-                                            $containsi: query,
-                                        },
-                                    },
-                                },
-                            },
-                        },
+                        // {
+                        //     stock_release_items: {
+                        //         purchase_order_item: {
+                        //             item: {
+                        //                 name: {
+                        //                     $containsi: query,
+                        //                 },
+                        //             },
+                        //         },
+                        //     },
+                        // },
+                        // {
+                        //     stock_release_items: {
+                        //         purchase_order_item: {
+                        //             item: {
+                        //                 category: {
+                        //                     $containsi: query,
+                        //                 },
+                        //             },
+                        //         },
+                        //     },
+                        // },
+                        // {
+                        //     stock_release_items: {
+                        //         purchase_order_item: {
+                        //             item: {
+                        //                 unit: {
+                        //                     $containsi: query,
+                        //                 },
+                        //             },
+                        //         },
+                        //     },
+                        // },
                         {
                             stock_release_items: {
                                 purchase_order_item: {
@@ -338,7 +357,7 @@
                             },
                         },
                     ],
-                },
+                } : {}
             ],
         };
     }
@@ -533,7 +552,11 @@
 
     function removeFilter(f) {
         filters = [...filters.filter((x) => x.index !== f.index)];
-        search();
+        if(filters.length > 0)
+            search();
+        else {
+            getItems(null, null, 1)
+        }
     }
 
     function getStockReleaseBalance(item) {
@@ -697,7 +720,7 @@
         if (!value.loggedIn && value.fetched) {
             goto("login");
         } else if (value.data) {
-            getItems();
+            getItems(null, null, 1);
         }
     });
 
@@ -907,6 +930,9 @@
     <div class="card">
         {#if rows?.length > 0}
             <DataTableDetails
+                {filters}
+                {query}
+
                 {pagination}
                 {columns}
                 {columnsDetails}

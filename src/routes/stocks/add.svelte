@@ -368,6 +368,7 @@
                                 $in: [event.detail.data.id],
                             },
                         },
+                        
                     },
                     "pagination[limit]": -1,
                 };
@@ -380,7 +381,7 @@
 
                 let stocks = 0;
                 stock_items = response.data.filter(
-                    (x) => x.attributes.stock.data
+                    (x) => x.attributes.stock.data && x.id !== childItem.id
                 );
                 stock_items.forEach((element) => {
                     stocks += parseInt(element.attributes.received);
@@ -390,7 +391,7 @@
                     (x) => x.id == childItem.id
                 );
                 formChildItems[index].remaining =
-                    parseInt(event.detail.data.attributes.quantity) - stocks;
+                    parseInt(event.detail.data.attributes.quantity) - parseInt(stocks);
 
                 formChildItems[index].stock_items = stock_items;
                 formChildItems[index].purchase_order_item = event.detail;

@@ -10,6 +10,7 @@
     faBook,
     faChartLine,
     faClipboard,
+    faDatabase,
     faEye,
     faFile,
     faIndustry,
@@ -124,6 +125,18 @@
       >
     </li>
   </ul>
+
+  <br /><br />
+  <p class="menu-label">Developer</p>
+
+  <ul class="menu-list">
+    <li>
+      <a href="migration" class:is-active={segment == "migration"}
+        ><Icon data={faDatabase} /> Migration Tool</a
+      >
+    </li>
+  </ul>
+
   <br /><br />
 
   {#if $user.fetched && $user.loggedIn}
@@ -188,13 +201,13 @@
 <style>
   .menu {
     position: relative;
-    width: 14rem;
+    width: 16rem;
     height: 100vh !important;
     overflow-y: scroll;
   }
   .menu .dropdown {
     position: fixed;
-    width: 13rem;
+    width: 14rem;
     bottom: 10px;
     left: 10px;
   }

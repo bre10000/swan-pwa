@@ -14,6 +14,7 @@
   import { Chart } from "frappe-charts";
   import Pie from "svelte-chartjs/src/Pie.svelte"
   import { goto } from "@sapper/app";
+import { Moon } from "svelte-loading-spinners";
 
   const unsubscribe = user.subscribe((value) => {
     if (!process.browser) {
@@ -41,8 +42,11 @@
 
   let datastockRelease = {};
 
+  let loading = false;
+
 
   async function getStockReleases() {
+    loading = true;
     try {
       let params = {
         populate: [
@@ -94,8 +98,7 @@
           },
         ],
       }
-
-      setupCharts();
+      loading = false;
 
       
     } catch (e) {
@@ -155,8 +158,7 @@
           },
         ],
       }
-
-      setupCharts();
+      loading = false;
 
     } catch (e) {
       console.log("Error Stock  ", e);
@@ -242,24 +244,7 @@
 
 
 
-  function setupCharts() {
-    try {
-      let f = new Chart("#stocksChart", {
-        data: dataStock,
-        type: "donut",
-        height: 340,
-        // colors: ["#e9724d", "#d6d727", "#92cad1", "#79ccb3"],
-      });
-      let f2 = new Chart("#stockReleasesChart", {
-        data: datastockRelease,
-        type: "donut",
-        height: 340,
-      });
-    } catch (e) {
-      console.warn("Error Setting up charts", e);
-    }
-  }
-
+  
 
   onMount(() => {
     getStocks();
@@ -275,6 +260,10 @@
 <div class="container px-6 dashboard">
   <h3 class="has-text-info">Dashboard</h3>
   <br>
+
+  {#if !loading}
+    
+  
   
   <div class="columns">
     <div  on:click={() => goto("consortium-members")} class="column card has-background-light no-shadow p-5">
@@ -298,6 +287,7 @@
 
 
 
+  
   <br>
   <div class="columns">
     <div class="column p-6">
@@ -308,6 +298,16 @@
     </div>
   </div>
 
+
+  {:else}
+  <div class="has-text-centered">
+      <br /><br /><br /><br />
+      <div class="is-flex is-justify-content-center">
+          <Moon size="60" color="blue" unit="px" duration="1s" />
+      </div>
+      <br /><br /><br /><br />
+  </div>
+{/if}
  
  
 

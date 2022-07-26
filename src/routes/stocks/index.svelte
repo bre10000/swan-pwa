@@ -21,7 +21,7 @@
     import { numberWithCommas, checkValue } from "../../lib";
 
     let query = "";
-    let sortBy = "";
+    let sortBy = "id:desc";
 
     let currentItem;
     let showConfirmation = false;
@@ -32,7 +32,7 @@
 
     let field, queryF;
 
-    const columns = [
+    let columns = [
         {
             key: "id",
             title: "Batch #",
@@ -62,6 +62,14 @@
         {
             key: "date",
             title: "Date",
+            sortable: true,
+            filterValue: (v) => v.last_name.charAt(0).toLowerCase(),
+            filterType: "string",
+            selected: true,
+        },
+        {
+            key: "old_id",
+            title: "OLD ID",
             sortable: true,
             filterValue: (v) => v.last_name.charAt(0).toLowerCase(),
             filterType: "string",
@@ -159,7 +167,6 @@
             let params = {
                 filters: filters ? filters : {},
                 sort: sort ? sort : "id:desc",
-                "pagination[page]": page ? page : 1,
                 populate: {
                     consortium_member: {
                         populate: "*",
@@ -178,6 +185,13 @@
                     },
                 },
             };
+
+            if(page)
+                params["pagination[page]"] = page;
+            else    
+                params["pagination[limit]"] = -1;
+
+
             params = qs.stringify(params, {
                 encodeValuesOnly: true,
             });
@@ -195,7 +209,11 @@
 
     function search() {
         let qs = getQS();
-        getItems(qs, sortBy);
+        if(query == "" && filters.length == 0)
+            getItems(null, null, 1);
+        else {
+            getItems(qs, sortBy, null);
+        }
     }
 
     function changePage(event) {
@@ -211,6 +229,8 @@
         let qs = getQS();
 
         getItems(qs, sortBy, event.detail.newPage);
+
+        columns = columns;
     }
 
     function editRow(event) {
@@ -261,7 +281,7 @@
         return {
             $and: [
                 ...filters.map((x) => x.value),
-                {
+                query !== "" ? {
                     $or: [
                         {
                             date: {
@@ -282,61 +302,61 @@
                                 },
                             },
                         },
-                        {
-                            stock_items: {
-                                purchase_order_item: {
-                                    item: {
-                                        name: {
-                                            $containsi: query,
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            stock_items: {
-                                purchase_order_item: {
-                                    sof: {
-                                        $containsi: query,
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            stock_items: {
-                                purchase_order_item: {
-                                    item: {
-                                        category: {
-                                            $containsi: query,
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            stock_items: {
-                                purchase_order_item: {
-                                    item: {
-                                        unit: {
-                                            $containsi: query,
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            stock_items: {
-                                purchase_order_item: {
-                                    purchase_order: {
-                                        poNumber: {
-                                            $containsi: query,
-                                        },
-                                    },
-                                },
-                            },
-                        },
+                        // {
+                        //     stock_items: {
+                        //         purchase_order_item: {
+                        //             item: {
+                        //                 name: {
+                        //                     $containsi: query,
+                        //                 },
+                        //             },
+                        //         },
+                        //     },
+                        // },
+                        // {
+                        //     stock_items: {
+                        //         purchase_order_item: {
+                        //             sof: {
+                        //                 $containsi: query,
+                        //             },
+                        //         },
+                        //     },
+                        // },
+                        // {
+                        //     stock_items: {
+                        //         purchase_order_item: {
+                        //             item: {
+                        //                 category: {
+                        //                     $containsi: query,
+                        //                 },
+                        //             },
+                        //         },
+                        //     },
+                        // },
+                        // {
+                        //     stock_items: {
+                        //         purchase_order_item: {
+                        //             item: {
+                        //                 unit: {
+                        //                     $containsi: query,
+                        //                 },
+                        //             },
+                        //         },
+                        //     },
+                        // },
+                        // {
+                        //     stock_items: {
+                        //         purchase_order_item: {
+                        //             purchase_order: {
+                        //                 poNumber: {
+                        //                     $containsi: query,
+                        //                 },
+                        //             },
+                        //         },
+                        //     },
+                        // },
                     ],
-                },
+                } : {}
             ],
         };
     }
@@ -724,7 +744,7 @@
         if (!value.loggedIn && value.fetched) {
             goto("login");
         } else if (value.data) {
-            getItems();
+            getItems(null, null, 1);
         }
     });
 
@@ -961,6 +981,8 @@
     <div class="card">
         {#if rows?.length > 0}
             <DataTableDetails
+                {query}
+                {filters}
                 {pagination}
                 {columns}
                 {columnsDetails}

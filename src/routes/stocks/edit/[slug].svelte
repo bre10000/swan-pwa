@@ -512,7 +512,7 @@
 
                 let stocks = 0;
                 stock_items = response.data.filter(
-                    (x) => x.attributes.stock.data
+                    (x) => x.attributes.stock.data && x.id != childItem.id
                 );
                 stock_items.forEach((element) => {
                     stocks += parseInt(element.attributes.received);

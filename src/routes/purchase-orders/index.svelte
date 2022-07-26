@@ -21,7 +21,7 @@
     import { numberWithCommas, checkValue } from "../../lib";
 
     let query = "";
-    let sortBy = "";
+    let sortBy = "id:desc";
 
     let currentItem;
     let showConfirmation = false;
@@ -147,16 +147,16 @@
             let params = {
                 filters: filters ? filters : {},
                 sort: sort ? sort : "id:desc",
-                "pagination[page]": page ? page : 1,
-                populate: {
-                    consortium_member: {
-                        populate: "*",
-                    },
-                    purchase_order_items: {
-                        populate: "*",
-                    },
-                },
+                populate: [
+                    "consortium_member","purchase_order_items","purchase_order_items.item"
+                ]
             };
+
+            if(page)
+                params["pagination[page]"] = page;
+            else    
+                params["pagination[limit]"] = -1;
+
             params = qs.stringify(params, {
                 encodeValuesOnly: true,
             });
@@ -174,7 +174,11 @@
 
     function search() {
         let qs = getQS();
-        getItems(qs, sortBy);
+        if(query == "" && filters.length == 0)
+            getItems(null, null, 1);
+        else {
+            getItems(qs, sortBy, null);
+        }
     }
 
     function changePage(event) {
@@ -239,68 +243,53 @@
         return {
             $and: [
                 ...filters.map((x) => x.value),
-                {
-                    $or: [
-                        {
-                            poNumber: {
-                                $containsi: query,
-                            },
-                        },
-                        {
-                            date: {
-                                $containsi: query,
-                            },
-                        },
-                        {
-                            consortium_member: {
-                                name: {
-                                    $containsi: query,
-                                },
-                            },
-                        },
-                        {
-                            purchase_order_items: {
-                                id: {
-                                        $containsi: query,
-                                },
-                            },
-                        },
-                        {
-                            purchase_order_items: {
-                                sof: {
-                                        $containsi: query,
-                                },
-                            },
-                        },
-                        {
-                            purchase_order_items: {
-                                item: {
-                                    name: {
-                                        $containsi: query,
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            purchase_order_items: {
-                                item: {
-                                    category: {
-                                        $containsi: query,
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            purchase_order_items: {
-                                item: {
-                                    unit: {
-                                        $containsi: query,
-                                    },
-                                },
-                            },
-                        },
-                    ],
-                },
+               query !== "" ? {
+                          $or: [
+                              {
+                                  poNumber: {
+                                      $containsi: query,
+                                  },
+                              },
+                              {
+                                  date: {
+                                      $containsi: query,
+                                  },
+                              },
+                              {
+                                  consortium_member: {
+                                      name: {
+                                          $containsi: query,
+                                      },
+                                  },
+                              },
+                              {
+                                  purchase_order_items: {
+                                      sof: {
+                                          $containsi: query,
+                                      },
+                                  },
+                              },
+                              {
+                                  purchase_order_items: {
+                                      item: {
+                                          name: {
+                                              $containsi: query,
+                                          },
+                                      },
+                                  },
+                              },
+                              {
+                                  purchase_order_items: {
+                                      item: {
+                                          category: {
+                                              $containsi: query,
+                                          },
+                                      },
+                                  },
+                              },
+                          ],
+                      } : {}
+                    
             ],
         };
     }
@@ -312,13 +301,15 @@
                 field == "quantity" ||
                 field == "sof" ||
                 field == "currency" ||
-                field == "unit_price" ||
+                field == "unitPrice" ||
                 field == "item_id"
             ) {
                 let parent;
-                field = field.includes("item_id") ? "id" : field;
+                
                 let field2 = field;
 
+
+                
                 if (field == "consortium_member") {
                     parent = "consortium_member";
                 } else {
@@ -326,7 +317,7 @@
                 }
 
                 field = field.includes("name") ? "name" : field;
-
+                field = field.includes("item_id") ? "id" : field;
                 field = field.includes("consortium_member") ? "name" : field;
 
                 let temp = {
@@ -523,7 +514,7 @@
         if (!value.loggedIn && value.fetched) {
             goto("login");
         } else if (value.data) {
-            getItems();
+            getItems(null, null, 1);
         }
     });
 
@@ -725,6 +716,8 @@
     <div class="card">
         {#if rows?.length > 0}
             <DataTableDetails
+                {query}
+                {filters}
                 {pagination}
                 {columns}
                 {columnsDetails}

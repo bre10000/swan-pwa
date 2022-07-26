@@ -131,7 +131,7 @@
     }
 
     async function saveItems(stock_release) {
-        console.log("saveItems", {stock_release})
+        console.log("saveItems", { stock_release });
         try {
             let params = {
                 populate: [
@@ -149,10 +149,10 @@
                 encodeValuesOnly: true,
             });
             formChildItems.forEach(async (element) => {
-
                 if (element.createdAt) {
                     let response = await put({
-                        path: "stock-release-items/" + element.id + "?" + params,
+                        path:
+                            "stock-release-items/" + element.id + "?" + params,
                         data: {
                             data: {
                                 stock_release: stock_release.id,
@@ -293,16 +293,10 @@
         formChildItems = formChildItems.filter((x) => x.id != id);
 
         formChildItems.forEach((element) => {
-                getBatchNumbers(
-                    { detail: element.purchase_order },
-                    element
-                );
-                getStockItems(
-                    { detail: element.stock },
-                    element
-                );
-                getRemaining({ detail: element.stock_item }, element);
-            });
+            getBatchNumbers({ detail: element.purchase_order }, element);
+            getStockItems({ detail: element.stock }, element);
+            getRemaining({ detail: element.stock_item }, element);
+        });
     }
 
     async function deleteItem() {
@@ -407,19 +401,11 @@
                 };
             });
 
-
             formChildItems.forEach((element) => {
-                getBatchNumbers(
-                    { detail: element.purchase_order },
-                    element
-                );
-                getStockItems(
-                    { detail: element.stock },
-                    element
-                );
+                getBatchNumbers({ detail: element.purchase_order }, element);
+                getStockItems({ detail: element.stock }, element);
                 getRemaining({ detail: element.stock_item }, element);
             });
-
         } catch (e) {
             console.log("Error Purchase Orders ", e);
         }
@@ -502,7 +488,7 @@
 
     async function getStockItems(event, childItem) {
         if (event.detail?.value) {
-            console.log(childItem.stocks)
+            console.log(childItem.stocks);
             stock_items = childItem.stocks.filter(
                 (x) => x.value == event.detail.value
             )[0]?.data?.attributes.stock_items?.data;
@@ -536,13 +522,16 @@
 
     async function getRemaining(event, childItem) {
         if (event.detail?.value) {
-            let formIDs = formChildItems.filter( x => x.createdAt ).map( x => x.id)
-            
+            let formIDs = formChildItems
+                .filter((x) => x.createdAt)
+                .map((x) => x.id);
+
             stock_release_items =
-                event.detail.data.attributes.stock_release_items.data.filter(x => formIDs.findIndex(y=>y == x.id  ) == -1 );
+                event.detail?.data.attributes.stock_release_items?.data.filter(
+                    (x) => formIDs.findIndex((y) => y == x.id) == -1
+                );
 
             stock_items = [];
-
 
             if (
                 childItem.stock.data?.attributes.stock_items?.data?.filter(
@@ -572,7 +561,7 @@
             formChildItems[index].stock_release_items_history =
                 stock_release_items;
 
-            console.log("City boyysss", stock_release_items)
+            console.log("City boyysss", stock_release_items);
 
             formChildItems[index].released = released;
             formChildItems[index].batchStock = batchStock;
@@ -599,7 +588,7 @@
             });
 
         formChildItems.forEach((element) => {
-            if(event.detail.data.id == element.stock_item?.value)
+            if (event.detail.data.id == element.stock_item?.value)
                 element.formQuantity = temp;
         });
 
@@ -653,62 +642,79 @@
             });
             date.set(new Date(response.data.attributes.date));
 
-            
-
-            formChildItems = response.data.attributes.stock_release_items.data.map(
-                (x) => {
+            formChildItems =
+                response.data.attributes.stock_release_items.data.map((x) => {
                     return {
                         id: x.id,
                         purchase_order: {
                             value: x.attributes.purchase_order_item.data
                                 ?.attributes.purchase_order.data.id,
-                            label: "PO# - " + x.attributes.purchase_order_item.data
-                                ?.attributes.purchase_order.data.attributes
-                                .poNumber,
+                            label:
+                                "PO# - " +
+                                x.attributes.purchase_order_item.data
+                                    ?.attributes.purchase_order.data.attributes
+                                    .poNumber,
                             data: x.attributes.purchase_order_item.data
                                 ?.attributes.purchase_order.data,
                         },
                         stock: {
-                            value: x.attributes.stock_item.data?.attributes.stock.data?.id,
-                            label: "BATCH #" +x.attributes.stock_item.data?.attributes.stock.data?.id,
-                            data: x.attributes.stock_item.data?.attributes.stock.data,
+                            value: x.attributes.stock_item.data?.attributes
+                                .stock.data?.id,
+                            label:
+                                "BATCH #" +
+                                x.attributes.stock_item.data?.attributes.stock
+                                    .data?.id,
+                            data: x.attributes.stock_item.data?.attributes.stock
+                                .data,
                         },
-                        stocks: [{
-                            value: x.attributes.stock_item.data?.attributes.stock.data?.id,
-                            label: "BATCH #" +x.attributes.stock_item.data?.attributes.stock.data?.id,
-                            data: x.attributes.stock_item.data?.attributes.stock.data,
-                        }],
+                        stocks: [
+                            {
+                                value: x.attributes.stock_item.data?.attributes
+                                    .stock.data?.id,
+                                label:
+                                    "BATCH #" +
+                                    x.attributes.stock_item.data?.attributes
+                                        .stock.data?.id,
+                                data: x.attributes.stock_item.data?.attributes
+                                    .stock.data,
+                            },
+                        ],
                         stock_item: {
                             value: x.attributes.stock_item.data?.id,
-                            label: x.attributes.stock_item?.data?.attributes.purchase_order_item.data.attributes.item
-                                ?.data.attributes.name,
+                            label: x.attributes.stock_item?.data?.attributes
+                                .purchase_order_item.data.attributes.item?.data
+                                .attributes.name,
                             data: x.attributes.stock_item.data,
                         },
-                        stock_items: [{
-                            value: x.attributes.stock_item.data?.id,
-                            label: x.attributes.stock_item?.data?.attributes.purchase_order_item.data.attributes.item
-                                ?.data.attributes.name,
-                            data: x.attributes.stock_item.data,
-                        }],
+                        stock_items:
+                            x.attributes.stock_item.data?.attributes.stock.data.attributes.stock_items.data?.map(
+                                (y) => {
+                                    return {
+                                        value: y.id,
+                                        label: y.attributes.purchase_order_item
+                                            .data.attributes.item?.data
+                                            .attributes.name,
+                                        data: y,
+                                    };
+                                }
+                            ),
                         currency:
-                            x.attributes.purchase_order_item.data
-                                    ?.attributes.currency,
-                        unit: x.attributes.purchase_order_item.data
-                                ?.attributes.item.data.attributes.unit,
+                            x.attributes.purchase_order_item.data?.attributes
+                                .currency,
+                        unit: x.attributes.purchase_order_item.data?.attributes
+                            .item.data.attributes.unit,
                         pieces: x.attributes.purchase_order_item.data
-                                ?.attributes.item.data.attributes.pieces,
+                            ?.attributes.item.data.attributes.pieces,
                         unitPrice:
-                        x.attributes.purchase_order_item.data
-                                ?.attributes.unitPrice,
+                            x.attributes.purchase_order_item.data?.attributes
+                                .unitPrice,
                         quantity: x.attributes.quantity,
                         remark: x.attributes.remark,
                         showHistory: false,
 
                         createdAt: x.attributes.createdAt,
                     };
-                }
-            );
-
+                });
 
             getPurchaseOrders();
         } catch (e) {
@@ -718,7 +724,7 @@
 
     $: if (slug) {
         getConsortiumMembers();
-        
+
         getItem();
     }
 </script>
@@ -729,7 +735,10 @@
 
 <br /><br />
 <div class="container px-6">
-    <a href="stock-releases" on:click|preventDefault={() => unsavedItemsDialog = true} class="has-text-dark"
+    <a
+        href="stock-releases"
+        on:click|preventDefault={() => (unsavedItemsDialog = true)}
+        class="has-text-dark"
         ><span class="icon is-small"><Icon data={faAngleLeft} /></span> Back</a
     >
     <br /><br />
@@ -939,10 +948,11 @@
 
                     <div class="column">
                         <input
-                            type="number" min=0 on:input={checkValue}
+                            type="number"
+                            min="0"
+                            on:input={checkValue}
                             placeholder="Unit Price"
                             class="input"
-                            
                             on:change={() =>
                                 refreshRemaining({
                                     detail: childItem.stock_item,
@@ -968,10 +978,10 @@
 
                     <div class="column">
                         <input
-                                    rows="1"
-                                    class="input has-background-light border-radius-0 "
-                                    bind:value={childItem.remark}
-                                />
+                            rows="1"
+                            class="input has-background-light border-radius-0 "
+                            bind:value={childItem.remark}
+                        />
                     </div>
 
                     <div
@@ -1175,9 +1185,9 @@
                                         {s.attributes.purchase_order_item?.data
                                             ?.attributes.item?.data?.attributes
                                             .pieces
-                                            ? s.attributes.purchase_order_item?.data
-                                            ?.attributes.item?.data?.attributes
-                                            .pieces
+                                            ? s.attributes.purchase_order_item
+                                                  ?.data?.attributes.item?.data
+                                                  ?.attributes.pieces
                                             : "-"}
                                     </div>
 

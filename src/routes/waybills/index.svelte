@@ -66,9 +66,18 @@
             filterType: "string",
             selected: true,
         },
+        
         {
             key: "date",
             title: "Date",
+            sortable: true,
+            filterValue: (v) => v.last_name.charAt(0).toLowerCase(),
+            filterType: "string",
+            selected: true,
+        },
+        {
+            key: "old_id",
+            title: "OLD ID",
             sortable: true,
             filterValue: (v) => v.last_name.charAt(0).toLowerCase(),
             filterType: "string",
@@ -160,22 +169,20 @@
             let params = {
                 filters: filters ? filters : {},
                 sort: sort ? sort : "id:desc",
-                "pagination[page]": page ? page : 1,
-                populate: {
-                    consortium_member: {
-                        populate: "*",
-                    },
-                    waybill_items: {
-                        populate: [
-                            "stock_release_item",
-                            "stock_release_item.stock_release",
-                            "stock_release_item.purchase_order_item",
-                            "stock_release_item.purchase_order_item.item",
-                            "stock_release_item.purchase_order_item.purchase_order",
-                        ],
-                    },
-                },
+                populate: [
+                    "consortium_member",
+                    "waybill_items",
+                    "waybill_items.stock_release_item",
+                    "waybill_items.stock_release_item.stock_release",
+                    "waybill_items.stock_release_item.purchase_order_item",
+                    "waybill_items.stock_release_item.purchase_order_item.item",
+                    "waybill_items.stock_release_item.purchase_order_item.purchase_order",
+                ],
             };
+
+            if (page) params["pagination[page]"] = page;
+            else params["pagination[limit]"] = -1;
+
             params = qs.stringify(params, {
                 encodeValuesOnly: true,
             });
@@ -185,11 +192,14 @@
             console.log("Get Waybills Request - ", response);
 
             rows = response.data;
-            
-            rows.forEach(waybill => {
 
-                waybill.attributes.waybill_items.data = waybill.attributes.waybill_items.data.filter( x => x.attributes.stock_release_item.data?.attributes.stock_release.data )
-                
+            rows.forEach((waybill) => {
+                waybill.attributes.waybill_items.data =
+                    waybill.attributes.waybill_items.data.filter(
+                        (x) =>
+                            x.attributes.stock_release_item.data?.attributes
+                                .stock_release.data
+                    );
             });
             pagination = response.meta?.pagination;
         } catch (e) {
@@ -199,7 +209,7 @@
 
     function search() {
         let qs = getQS();
-        getItems(qs, sortBy);
+        getItems(qs, sortBy, null);
     }
 
     function changePage(event) {
@@ -265,108 +275,110 @@
         return {
             $and: [
                 ...filters.map((x) => x.value),
-                {
-                    $or: [
-                        {
-                            date: {
-                                $containsi: query,
-                            },
-                        },
-                        {
-                            destination: {
-                                $containsi: query,
-                            },
-                        },
-                        {
-                            category: {
-                                $containsi: query,
-                            },
-                        },
-                        {
-                            consortium_member: {
-                                name: {
-                                    $containsi: query,
-                                },
-                            },
-                        },
-                        {
-                            waybill_items: {
-                                stock_release_item: {
-                                    stock_release: {
-                                        id: {
-                                            $in: [query],
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            waybill_items: {
-                                stock_release_item: {
-                                    purchase_order_item: {
-                                        sof: {
-                                                $containsi: query,
-                                           
-                                        },
-                                    },
-                                },
-                            },
-                        },
+                query !== ""
+                    ? {
+                          $or: [
+                              {
+                                  date: {
+                                      $containsi: query,
+                                  },
+                              },
+                              {
+                                  destination: {
+                                      $containsi: query,
+                                  },
+                              },
+                              {
+                                  category: {
+                                      $containsi: query,
+                                  },
+                              },
+                              {
+                                  consortium_member: {
+                                      name: {
+                                          $containsi: query,
+                                      },
+                                  },
+                              },
+                              // {
+                              //     waybill_items: {
+                              //         stock_release_item: {
+                              //             stock_release: {
+                              //                 id: {
+                              //                     $in: [query],
+                              //                 },
+                              //             },
+                              //         },
+                              //     },
+                              // },
+                              // {
+                              //     waybill_items: {
+                              //         stock_release_item: {
+                              //             purchase_order_item: {
+                              //                 sof: {
+                              //                         $containsi: query,
 
-                        {
-                            waybill_items: {
-                                stock_release_item: {
-                                    purchase_order_item: {
-                                        item: {
-                                            name: {
-                                                $containsi: query,
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            waybill_items: {
-                                stock_release_item: {
-                                    purchase_order_item: {
-                                        item: {
-                                            category: {
-                                                $containsi: query,
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            waybill_items: {
-                                stock_release_item: {
-                                    purchase_order_item: {
-                                        item: {
-                                            unit: {
-                                                $containsi: query,
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            waybill_items: {
-                                stock_release_item: {
-                                    purchase_order_item: {
-                                        purchase_order: {
-                                            poNumber: {
-                                                $containsi: query,
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    ],
-                },
+                              //                 },
+                              //             },
+                              //         },
+                              //     },
+                              // },
+
+                              // {
+                              //     waybill_items: {
+                              //         stock_release_item: {
+                              //             purchase_order_item: {
+                              //                 item: {
+                              //                     name: {
+                              //                         $containsi: query,
+                              //                     },
+                              //                 },
+                              //             },
+                              //         },
+                              //     },
+                              // },
+                              // {
+                              //     waybill_items: {
+                              //         stock_release_item: {
+                              //             purchase_order_item: {
+                              //                 item: {
+                              //                     category: {
+                              //                         $containsi: query,
+                              //                     },
+                              //                 },
+                              //             },
+                              //         },
+                              //     },
+                              // },
+                              // {
+                              //     waybill_items: {
+                              //         stock_release_item: {
+                              //             purchase_order_item: {
+                              //                 item: {
+                              //                     unit: {
+                              //                         $containsi: query,
+                              //                     },
+                              //                 },
+                              //             },
+                              //         },
+                              //     },
+                              // },
+                              // {
+                              //     waybill_items: {
+                              //         stock_release_item: {
+                              //             purchase_order_item: {
+                              //                 purchase_order: {
+                              //                     poNumber: {
+                              //                         $containsi: query,
+                              //                     },
+                              //                 },
+                              //             },
+                              //         },
+                              //     },
+                              // },
+                          ],
+                      }
+                    : {},
             ],
         };
     }
@@ -730,7 +742,7 @@
         if (!value.loggedIn && value.fetched) {
             goto("login");
         } else if (value.data) {
-            getItems();
+            getItems(getQS(), null, 1);
         }
     });
 
@@ -831,14 +843,7 @@
                                     bind:value={field}
                                     name="category"
                                 >
-                                    {#each [...columns
-                                        .concat(columnsDetails), {
-                                            key: "sof",
-                                            title: "SOF",
-                                            sortable: true,
-                                            selected: true,
-                                        }]
-                                        .filter((x) => x.key !== "total" && x.key !== "balance") as c}
+                                    {#each [...columns.concat(columnsDetails), { key: "sof", title: "SOF", sortable: true, selected: true }].filter((x) => x.key !== "total" && x.key !== "balance") as c}
                                         <option value={c.key}>{c.title}</option>
                                     {/each}
                                 </select>
@@ -922,14 +927,15 @@
             {#each filters as f (f.index)}
                 <span class="tag is-light is-medium is-rounded p-4 mr-4">
                     <b class="mx-2">
-                        {[...columns
-                                        .concat(columnsDetails), {
-                                            key: "sof",
-                                            title: "SOF",
-                                            sortable: true,
-                                            selected: true,
-                                        }]
-                            .filter((c) => c.key == f?.name)[0]?.title}
+                        {[
+                            ...columns.concat(columnsDetails),
+                            {
+                                key: "sof",
+                                title: "SOF",
+                                sortable: true,
+                                selected: true,
+                            },
+                        ].filter((c) => c.key == f?.name)[0]?.title}
                     </b>
                     contains
                     <b class="mx-2">{f.query}</b>
@@ -946,6 +952,8 @@
     <div class="card">
         {#if rows?.length > 0}
             <DataTableDetails
+                {filters}
+                {query}
                 {pagination}
                 {columns}
                 {columnsDetails}

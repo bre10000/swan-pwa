@@ -33,10 +33,12 @@
 	export let columnsDetails;
 	export let detailVariable;
 
-	export let sortBy = "";
+	export let sortBy = "id";
 	export let sortOrder = 1;
 	export let iconAsc = "▲";
 	export let iconDesc = "▼";
+
+	export let query, filters;
 
 	export let pagination;
 
@@ -67,36 +69,6 @@
 		columnHeaders[col.title] = col;
 	});
 
-	$: if (filter_text && c_rows) {
-		if (filter_text == " ") filter_text = "";
-		c_rows = rows
-			.filter((r) => searchByKey(r))
-			.map((r) =>
-				Object.assign({}, r, {
-					$sortOn: r[sortBy],
-				})
-			)
-			.sort((a, b) => {
-				if (a.$sortOn > b.$sortOn) return sortOrder;
-				else if (a.$sortOn < b.$sortOn) return -sortOrder;
-				return 0;
-			});
-	}
-
-	function searchByKey(r) {
-		let temp = false;
-		Object.keys(r).forEach((element) => {
-			if (
-				r[element]
-					.toString()
-					.toLowerCase()
-					.includes(filter_text.toLowerCase())
-			)
-				temp = true;
-		});
-		return temp;
-	}
-
 	const calculateFilterValues = () => {
 		filterValues = {};
 		columns.forEach((c) => {
@@ -115,11 +87,12 @@
 	const handleClickCol = (col) => {
 		// updateSortOrder(col.key);
 		if (sortBy === col.key) {
-			sortOrder *= -1;
+			sortOrder = sortOrder * -1;
 		}
 		sortBy = col.key;
 		dispatch("clickCol", {
 			key: sortBy + ":" + (sortOrder == 1 ? "asc" : "desc"),
+			sortBy: sortBy,
 		});
 	};
 
@@ -206,11 +179,14 @@
 			item.attributes.stock_release_items?.data
 				?.filter((x) => checkInput(x.attributes.stock_release.data))
 				.forEach((element) => {
-					temp = temp + element.attributes.quantity;
+					temp =
+						parseInt(temp) + parseInt(element.attributes.quantity);
 				});
 		}
 
-		return numberWithCommas(item.attributes.received - temp);
+		return numberWithCommas(
+			parseInt(item.attributes.received) - parseInt(temp)
+		);
 	}
 
 	function getStockReleaseBalance(item) {
@@ -281,7 +257,7 @@
 							</label>
 						</th>
 					{/if}
-					{#each columns.filter((x) => x.selected) as col}
+					{#each columns as col}
 						<th
 							class:isSortable={col.sortable}
 							on:click={() => handleClickCol(col)}
@@ -289,6 +265,7 @@
 							{col.title}
 							{#if sortBy === col.key}
 								<!-- {sortOrder === 1 ? iconAsc : iconDesc} -->
+
 								{#if sortOrder === 1}
 									<span class="ml-4">
 										<Icon data={faAngleUp} /></span
@@ -353,7 +330,7 @@
 						{#if options.showSelect}
 							<th class="is-narrow" />
 						{/if}
-						{#each columns.filter((x) => x.selected) as col}
+						{#each columns as col}
 							<th
 								class:isSortable={col.sortable}
 								on:click={() => handleClickCol(col)}
@@ -1154,6 +1131,28 @@
 																		?.stock
 																		.data.id
 																: "-"}
+														</span> <br />
+														<span
+															class="has-text-info"
+														>
+															OLD Batch # {item
+																.attributes
+																.stock_item
+																?.data
+																?.attributes
+																?.stock.data
+																.attributes
+																.old_id
+																? item
+																		.attributes
+																		.stock_item
+																		?.data
+																		?.attributes
+																		?.stock
+																		.data
+																		.attributes
+																		.old_id
+																: "-"}
 														</span>
 													</div>
 												{:else if col.key == "quantity"}
@@ -1422,7 +1421,15 @@
 																	?.attributes
 																	.stock_release
 																	.data?.id
-															: "-"}
+															: "-"} <br>
+															<span class="is-size-7 gray">
+																OLD SRF # - 
+																{item.attributes
+																	.stock_release_item
+																	.data?.attributes
+																	.stock_release.data
+																	?.attributes?.srf_no}
+															</span>
 													</div>
 												{:else if col.key == "quantity"}
 													<div
@@ -1469,7 +1476,7 @@
 </div>
 
 <div class="container-fluid py-4 px-5">
-	{#if pagination}
+	{#if pagination && query == "" && filters.length == 0}
 		<Pagination
 			current_page={pagination.page}
 			pageCount={pagination.pageCount}
