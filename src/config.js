@@ -4,6 +4,7 @@ const server_ip = 'http://localhost:1337'
 // const www_ip = 'https://swan-stock-portal.herokuapp.com'
 const www_ip = 'http://swan.swanstockportal.com'
 
+
 const api_url = (process.env.NODE_ENV === 'production'
 ? www_ip 
 : server_ip) + '/api';
