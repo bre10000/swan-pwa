@@ -58,85 +58,99 @@
       >
     </li>
   </ul>
+  {#if $user.data?.role?.name == "Administrator" || $user.data?.role?.name == "Level Two B" || $user.data?.role?.name == "Level Two A"}
   <p class="menu-label">Administration</p>
+  {/if}
   <ul class="menu-list">
-    <li>
-      <a href="purchase-orders" class:is-active={segment == "purchase-orders"}
-        ><Icon data={faFile} /> Purchase Order</a
-      >
-    </li>
-    <li>
-      <a href="stocks" class:is-active={segment == "stocks"}
-        ><Icon data={faChartLine} /> Stock</a
-      >
-    </li>
-    <li>
-      <a href="stock-releases" class:is-active={segment == "stock-releases"}
-        ><Icon data={faClipboard} /> Stock Release</a
-      >
-    </li>
-    <li>
-      <a href="waybills" class:is-active={segment == "waybills"}
-        ><Icon data={faTruck} /> Waybill</a
-      >
-    </li>
+    {#if $user.data?.role?.name == "Administrator" || $user.data?.role?.name == "Level Two B"}
+      <li>
+        <a href="purchase-orders" class:is-active={segment == "purchase-orders"}
+          ><Icon data={faFile} /> Purchase Order</a
+        >
+      </li>
+    {/if}
+    {#if $user.data?.role?.name == "Administrator" || $user.data?.role?.name == "Level Two A"}
+      <li>
+        <a href="stocks" class:is-active={segment == "stocks"}
+          ><Icon data={faChartLine} /> Stock</a
+        >
+      </li>
+    {/if}
+    {#if $user.data?.role?.name == "Administrator" || $user.data?.role?.name == "Level Two B"}
+      <li>
+        <a href="stock-releases" class:is-active={segment == "stock-releases"}
+          ><Icon data={faClipboard} /> Stock Release</a
+        >
+      </li>
+    {/if}
+    {#if $user.data?.role?.name == "Administrator" || $user.data?.role?.name == "Level Two A"}
+      <li>
+        <a href="waybills" class:is-active={segment == "waybills"}
+          ><Icon data={faTruck} /> Waybill</a
+        >
+      </li>
+    {/if}
   </ul>
-  <p class="menu-label">Other</p>
-  <ul class="menu-list">
-    <li>
-      <a href="reports-list" class:is-active={segment == "reports-list"}
-        ><Icon data={faBook} /> Reports</a
-      >
-    </li>
-  </ul>
-  <p class="menu-label">Settings</p>
-  <ul class="menu-list">
-    <li>
-      <a href="items" class:is-active={segment == "items"}
-        ><Icon data={faList} /> Items</a
-      >
-    </li>
-    <li>
-      <a href="units" class:is-active={segment == "units"}
-        ><Icon data={faRuler} /> Units</a
-      >
-    </li>
-    <li>
-      <a href="categories" class:is-active={segment == "categories"}
-        ><Icon data={faArchive} /> Categories</a
-      >
-    </li>
-    <li>
-      <a href="warehouses" class:is-active={segment == "warehouses"}
-        ><Icon data={faWarehouse} /> Warehouse</a
-      >
-    </li>
-    <li>
-      <a href="users" class:is-active={segment == "users"}
-        ><Icon data={faUserFriends} /> Users</a
-      >
-    </li>
-  </ul>
+  {#if $user.data?.role?.name == "Administrator" || $user.data?.role?.name == "Level One"}
+    <p class="menu-label">Other</p>
+    <ul class="menu-list">
+      <li>
+        <a href="reports-list" class:is-active={segment == "reports-list"}
+          ><Icon data={faBook} /> Reports</a
+        >
+      </li>
+    </ul>
+  {/if}
 
-  <ul class="menu-list">
-    <li>
-      <a href="activity-logs" class:is-active={segment == "activity-logs"}
-        ><Icon data={faEye} /> Activity Logs</a
-      >
-    </li>
-  </ul>
+  {#if $user.data?.role?.name == "Administrator"}
+    <p class="menu-label">Settings</p>
+    <ul class="menu-list">
+      <li>
+        <a href="items" class:is-active={segment == "items"}
+          ><Icon data={faList} /> Items</a
+        >
+      </li>
+      <li>
+        <a href="units" class:is-active={segment == "units"}
+          ><Icon data={faRuler} /> Units</a
+        >
+      </li>
+      <li>
+        <a href="categories" class:is-active={segment == "categories"}
+          ><Icon data={faArchive} /> Categories</a
+        >
+      </li>
+      <li>
+        <a href="warehouses" class:is-active={segment == "warehouses"}
+          ><Icon data={faWarehouse} /> Warehouse</a
+        >
+      </li>
+      <li>
+        <a href="users" class:is-active={segment == "users"}
+          ><Icon data={faUserFriends} /> Users</a
+        >
+      </li>
+    </ul>
 
-  <br /><br />
-  <p class="menu-label">Developer</p>
+    <ul class="menu-list">
+      <li>
+        <a href="activity-logs" class:is-active={segment == "activity-logs"}
+          ><Icon data={faEye} /> Activity Logs</a
+        >
+      </li>
+    </ul>
 
-  <ul class="menu-list">
-    <li>
-      <a href="migration" class:is-active={segment == "migration"}
-        ><Icon data={faDatabase} /> Migration Tool</a
-      >
-    </li>
-  </ul>
+    <br /><br />
+    <p class="menu-label">Developer</p>
 
+    <ul class="menu-list">
+      <li>
+        <a href="migration" class:is-active={segment == "migration"}
+          ><Icon data={faDatabase} /> Migration Tool</a
+        >
+      </li>
+    </ul>
+  {/if}
   <br /><br />
 
   {#if $user.fetched && $user.loggedIn}
@@ -154,6 +168,7 @@
           </span>
 
           <span class="has-text-weight-bold">{$user.data.name}</span>
+          
           <span class="icon is-small">
             <Icon data={faAngleUp} />
           </span>
@@ -163,7 +178,13 @@
         <div class="dropdown-content" style="width: 15rem;">
           <br />
           <div class="is-flex is-justify-content-center">
-            <figure class="image is-128x128" style="background-image: url({ $user.data.avatar?.url ? image_url + $user.data.avatar?.url :  "./images/profile/profile-placeholder.png" });">
+            <figure
+              class="image is-128x128"
+              style="background-image: url({$user.data.avatar?.url
+                ? image_url + $user.data.avatar?.url
+                : './images/profile/profile-placeholder.png'});"
+            >
+            
               <!-- {#if $user.data.avatar?.url}
                 <img
                   class="is-rounded"
@@ -179,6 +200,8 @@
               {/if} -->
             </figure>
           </div>
+          <br/>
+          <p class="gray has-text-centered">{$user.data?.role?.name}</p>
           <br />
           <ul class="menu-list px-4">
             <li>
@@ -214,7 +237,7 @@
 
   .menu-list .is-active {
     background-color: rgb(234, 228, 255);
-    color: #0000BF;
+    color: #0000bf;
     font-weight: bold;
   }
 
@@ -222,7 +245,7 @@
     font-weight: normal;
   }
   :global(.menu-list a.is-active svg *) {
-    color: #0000BF !important;
+    color: #0000bf !important;
   }
 
   :global(.menu-list a svg *, .menu-list a *) {
@@ -232,11 +255,10 @@
     margin-right: 1rem;
   }
 
-
   .image.is-128x128 {
-		background-repeat: no-repeat;
-		background-position: center center;
-		background-size: cover;
-		border-radius: 100%;
-	}
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    border-radius: 100%;
+  }
 </style>

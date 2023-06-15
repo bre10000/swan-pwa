@@ -1,8 +1,8 @@
 // const server_ip = 'https://account.simuni.ml'
-const server_ip = 'http://localhost:1337'
+const server_ip = 'https://swan.vero.et'
 // const server_ip = 'http://swan.swanstockportal.com'
 // const www_ip = 'https://swan-stock-portal.herokuapp.com'
-const www_ip = 'http://swan.swanstockportal.com'
+const www_ip = 'https://swan.vero.et'
 
 
 const api_url = (process.env.NODE_ENV === 'production'

@@ -26,7 +26,7 @@
     const consortium_member = field("consortium_member", "", [required()]);
     const date = field("date", new Date(), [required()]);
 
-    const formItem = form(warehouse, consortium_member, date);
+    let formItem = form(warehouse, consortium_member, date);
 
     let remark = "";
     let remaining = 0;

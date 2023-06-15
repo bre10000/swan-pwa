@@ -37,7 +37,7 @@
     const consigneeAddress = field("consigneeAddress", "", []);
     const consigneePhone = field("consigneePhone", "", []);
 
-    const formItem = form(destination, category, consortium_member, date);
+    let formItem = form(destination, category, consortium_member, date);
 
     let remark = "";
 

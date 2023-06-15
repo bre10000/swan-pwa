@@ -26,7 +26,7 @@
     const consortium_member = field("consortium_member", "", [required()]);
     const date = field("date", new Date(), [required()]);
 
-    const formItem = form(poNumber, consortium_member, date);
+    let formItem = form(poNumber, consortium_member, date);
 
     let formChildItems = [];
 

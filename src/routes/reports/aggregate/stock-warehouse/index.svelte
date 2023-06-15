@@ -635,7 +635,7 @@
                             >{numberWithCommas(stock.attributes.received)}
 
                             <span class="has-text-black ml-4">
-                                {getAllReceived(stock.attributes.purchase_order_item.data)}
+                               POQ - {getAllReceived(stock.attributes.purchase_order_item.data)}
                             </span></td
                         >
 
