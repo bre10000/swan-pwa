@@ -592,9 +592,12 @@
                         </td>
                         <td
                             >{stock.attributes.purchase_order_item.data
-                                ?.attributes.item.data?.attributes.name} - PO Item
+                                ?.attributes.item.data?.attributes.name} 
+                                - PO Item
                             ID ({stock.attributes.purchase_order_item.data
-                                ?.id})</td
+                                ?.id})
+                                
+                                </td
                         >
                         <td
                             >{stock.attributes.purchase_order_item.data
@@ -624,19 +627,21 @@
                             )}</td
                         >
 
+                        <!-- class:has-background-danger={
+                            (getAllReceived(
+                                stock.attributes.purchase_order_item.data
+                            ) > parseFloat(
+                                stock.attributes.purchase_order_item.data
+                                    ?.attributes.quantity
+                            ) ) } -->
                         <td
-                            class:has-background-danger={
-                                (getAllReceived(
-                                    stock.attributes.purchase_order_item.data
-                                ) > parseFloat(
-                                    stock.attributes.purchase_order_item.data
-                                        ?.attributes.quantity
-                                ) ) }
+                            
                             >{numberWithCommas(stock.attributes.received)}
 
-                            <span class="has-text-black ml-4">
+                            <!-- <span class="has-text-black ml-4">
                                POQ - {getAllReceived(stock.attributes.purchase_order_item.data)}
-                            </span></td
+                            </span> -->
+                            </td
                         >
 
                         <td

@@ -26,6 +26,7 @@
     import DeleteConfirmation from "../../../widgets/modals/DeleteConfirmation.svelte";
     import { createActivityLog } from "../../../utils/activity/log";
     import UnsavedConfirmation from "../../../widgets/modals/UnsavedConfirmation.svelte";
+    import LoadingPurchaseOrders from "../../../widgets/modals/LoadingPurchaseOrders.svelte";
 
     export let slug;
 
@@ -55,6 +56,8 @@
     let showConfirmation = false;
 
     let unsavedItemsDialog;
+
+    let purchaseOrdersLoading = false;
 
     async function add() {
         await formItem.validate();
@@ -360,6 +363,7 @@
 
     async function getPurchaseOrders() {
         try {
+            purchaseOrdersLoading = true;
             let params = {
                 populate: {
                     consortium_member: {
@@ -406,8 +410,10 @@
                 getStockItems({ detail: element.stock }, element);
                 getRemaining({ detail: element.stock_item }, element);
             });
+            purchaseOrdersLoading = false;
         } catch (e) {
             console.log("Error Purchase Orders ", e);
+            purchaseOrdersLoading = false;
         }
     }
 
@@ -890,6 +896,7 @@
                         <div class="field">
                             <div class="control">
                                 <Select
+                                    loading={purchaseOrdersLoading}
                                     items={purchase_orders}
                                     on:select={(event) =>
                                         getBatchNumbers(event, childItem)}
@@ -942,7 +949,7 @@
                             type="text"
                             class="input has-background-light border-radius-0 "
                             disabled
-                            value={childItem.balance ? childItem.balance : "-"}
+                            value={childItem.balance ? childItem.balance : "0"}
                         />
                     </div>
 
@@ -1273,6 +1280,11 @@
         on:dismiss={() => (showConfirmation = false)}
     />
 {/if}
+
+{#if purchaseOrdersLoading}
+    <LoadingPurchaseOrders />
+{/if}
+
 
 <style>
     .card {

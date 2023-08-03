@@ -457,7 +457,7 @@
                             value={index + 1}
                         />
                     </div>
-                    <div class="column  is-narrow" style="width: 90px;">
+                    <div class="column is-narrow" style="width: 90px;">
                         <div class="control select is-fullwidth">
                             <select
                                 on:change={(event) =>
@@ -616,7 +616,7 @@
         background-color: #fff;
         border-color: #dbdbdb;
         border-radius: 4px;
-        color: #363636;
+        color: #131313;
         font-size: medium;
         padding: 0.5rem;
     }

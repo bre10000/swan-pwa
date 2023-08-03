@@ -14,6 +14,7 @@
         faTimes,
         faHistory,
         faCalendarAlt,
+        faCircleNotch,
     } from "@fortawesome/free-solid-svg-icons";
     import { onMount } from "svelte";
     import { DateInput } from "date-picker-svelte";
@@ -21,6 +22,7 @@
     import { checkInput, numberWithCommas, checkValue } from "../../lib";
     import { createActivityLog } from "../../utils/activity/log";
     import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte";
+    import LoadingPurchaseOrders from "../../widgets/modals/LoadingPurchaseOrders.svelte";
 
     const warehouse = field("warehouse", "", [required()]);
     const consortium_member = field("consortium_member", "", [required()]);
@@ -42,6 +44,8 @@
     let errors;
 
     let unsavedItemsDialog;
+
+    let purchaseOrdersLoading = false;
 
     async function add() {
         await formItem.validate();
@@ -124,7 +128,6 @@
                                 element.purchase_order_item.value,
                             received: element.received,
                             remark: element.remark,
-                            
                         },
                     },
                 });
@@ -277,6 +280,8 @@
 
     async function getPurchaseOrders(event) {
         try {
+            purchaseOrdersLoading = true;
+
             let params = {
                 populate: {
                     consortium_member: {
@@ -315,12 +320,16 @@
                     data: x,
                 };
             });
+
+            purchaseOrdersLoading = false;
         } catch (e) {
             console.log("Error Purchase Orders ", e);
+            purchaseOrdersLoading = false;
         }
     }
 
     async function getPurchaseOrderItems(event, childItem) {
+
         if (event.detail?.value) {
             purchase_order_items = purchase_orders.filter(
                 (x) => x.value == event.detail.value
@@ -348,6 +357,7 @@
                     };
                 });
         }
+
     }
 
     async function getRemaining(event, childItem) {
@@ -368,7 +378,6 @@
                                 $in: [event.detail.data.id],
                             },
                         },
-                        
                     },
                     "pagination[limit]": -1,
                 };
@@ -391,7 +400,8 @@
                     (x) => x.id == childItem.id
                 );
                 formChildItems[index].remaining =
-                    parseInt(event.detail.data.attributes.quantity) - parseInt(stocks);
+                    parseInt(event.detail.data.attributes.quantity) -
+                    parseInt(stocks);
 
                 formChildItems[index].stock_items = stock_items;
                 formChildItems[index].purchase_order_item = event.detail;
@@ -424,7 +434,7 @@
             });
 
         formChildItems.forEach((element) => {
-            if(element.purchase_order_item?.value == event.detail.data.id)
+            if (element.purchase_order_item?.value == event.detail.data.id)
                 element.formQuantity = temp;
         });
 
@@ -578,10 +588,10 @@
                 >
                     No.
                 </div>
-                <div class="column  is-narrow" style="width: 90px;">
+                <div class="column is-narrow" style="width: 90px;">
                     <label for="" class="gray">PO #</label>
                 </div>
-                <div class="column  is-narrow" style="width: 150px;">
+                <div class="column is-narrow" style="width: 150px;">
                     <label for="" class="gray">Item (*)</label>
                 </div>
                 <div class="column">
@@ -594,10 +604,10 @@
                     <label for="" class="gray">Unit Price</label>
                 </div>
                 <div class="column">
-                    <label for="" class="gray">Received</label>
+                    <label for="" class="gray">Remaining</label>
                 </div>
                 <div class="column">
-                    <label for="" class="gray">Remaining</label>
+                    <label for="" class="gray">Received</label>
                 </div>
                 <div class="column">
                     <span class="has-text-weight-bold">Total</span>
@@ -624,7 +634,7 @@
                     <div class="column is-narrow" style="width: 50px;">
                         <input
                             type="text"
-                            class="input has-background-light border-radius-0 "
+                            class="input has-background-light border-radius-0"
                             disabled
                             value={index + 1}
                         />
@@ -633,6 +643,7 @@
                         <div class="field">
                             <div class="control">
                                 <Select
+                                    loading={purchaseOrdersLoading}
                                     items={purchase_orders}
                                     on:select={(event) =>
                                         getPurchaseOrderItems(event, childItem)}
@@ -645,7 +656,7 @@
                     <div class="column is-narrow" style="width: 150px;">
                         <div class="field">
                             <div class="control">
-                                <Select
+                                <Select                                    
                                     on:select={(event) =>
                                         getRemaining(event, childItem)}
                                     on:clear={() => {
@@ -665,7 +676,7 @@
                     <div class="column">
                         <input
                             type="text"
-                            class="input has-background-light border-radius-0 "
+                            class="input has-background-light border-radius-0"
                             disabled
                             value={childItem.currency
                                 ? childItem.currency
@@ -675,7 +686,7 @@
                     <div class="column">
                         <input
                             type="text"
-                            class="input has-background-light border-radius-0 "
+                            class="input has-background-light border-radius-0"
                             disabled
                             value={childItem.quantity
                                 ? childItem.quantity
@@ -685,7 +696,7 @@
                     <div class="column">
                         <input
                             type="text"
-                            class="input has-background-light border-radius-0 "
+                            class="input has-background-light border-radius-0"
                             disabled
                             value={childItem.quantity
                                 ? childItem.unitPrice
@@ -694,11 +705,21 @@
                     </div>
                     <div class="column">
                         <input
+                            type="text"
+                            class="input has-background-light border-radius-0"
+                            disabled
+                            value={childItem.remaining
+                                ? childItem.remaining
+                                : "0"}
+                        />
+                    </div>
+                    <div class="column">
+                        <input
                             type="number"
                             min="0"
                             on:input={checkValue}
                             placeholder="Received"
-                            class="input border-radius-0 "
+                            class="input border-radius-0"
                             class:is-danger={childItem.remaining -
                                 (childItem.received != ""
                                     ? childItem.received
@@ -711,21 +732,11 @@
                             bind:value={childItem.received}
                         />
                     </div>
-                    <div class="column">
-                        <input
-                            type="text"
-                            class="input has-background-light border-radius-0 "
-                            disabled
-                            value={childItem.remaining
-                                ? childItem.remaining
-                                : "-"}
-                        />
-                    </div>
 
                     <div class="column">
                         <input
                             type="text"
-                            class="input has-background-light border-radius-0 "
+                            class="input has-background-light border-radius-0"
                             disabled
                             value={childItem.received
                                 ? numberWithCommas(
@@ -737,7 +748,7 @@
                     <div class="column">
                         <input
                             rows="1"
-                            class="input has-background-light border-radius-0 "
+                            class="input has-background-light border-radius-0"
                             bind:value={childItem.remark}
                         />
                     </div>
@@ -958,6 +969,10 @@
     />
 {/if}
 
+{#if purchaseOrdersLoading}
+    <LoadingPurchaseOrders />
+{/if}
+
 <style>
     .card {
         overflow: visible !important;
@@ -1002,9 +1017,11 @@
         border-radius: 0px;
     }
 
-    :global(.button.is-success svg *, .button.is-danger svg *, .button.is-info
-            svg
-            *) {
+    :global(
+            .button.is-success svg *,
+            .button.is-danger svg *,
+            .button.is-info svg *
+        ) {
         color: white;
     }
 </style>

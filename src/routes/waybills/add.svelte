@@ -834,7 +834,7 @@
                             disabled
                             value={childItem.amount
                                 ? numberWithCommas(childItem.amount)
-                                : "-"}
+                                : "0"}
                         />
                     </div>
 

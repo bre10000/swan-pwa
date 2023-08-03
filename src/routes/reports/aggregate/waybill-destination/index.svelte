@@ -83,7 +83,7 @@
                 {
                     waybill: {
                         destination: {
-                            $containsi: $destination.value?.value,
+                            $containsi: $destination.value?.value.trim(),
                         },
                     },
                 },
@@ -91,7 +91,7 @@
                     stock_release_item: {
                         stock_release: {
                             id: {
-                                $not: null,
+                                $notNull: true,
                             },
                         },
                     },

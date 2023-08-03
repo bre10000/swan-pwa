@@ -127,7 +127,7 @@ import { Moon } from "svelte-loading-spinners";
       stocks = response.data;
 
       stocks.forEach(element => {
-        element.attributes.stock_items.data = element.attributes.stock_items.data.filter( x => x.attributes.purchase_order_item?.data?.attributes.purchase_order?.data.id );
+        element.attributes.stock_items.data = element.attributes.stock_items.data.filter( x => x.attributes.purchase_order_item?.data?.attributes.purchase_order?.data?.id );
 
       });
 

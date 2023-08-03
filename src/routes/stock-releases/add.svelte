@@ -20,6 +20,7 @@
     import { checkInput, numberWithCommas, checkValue } from "../../lib";
     import { createActivityLog } from "../../utils/activity/log";
 import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte";
+    import LoadingPurchaseOrders from "../../widgets/modals/LoadingPurchaseOrders.svelte";
 
     const consortium_member = field("consortium_member", "", [required()]);
     const date = field("date", new Date(), [required()]);
@@ -40,6 +41,8 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
     let errors;
 
     let unsavedItemsDialog;
+
+    let purchaseOrdersLoading = false;
 
     async function add() {
         await formItem.validate();
@@ -253,6 +256,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
 
     async function getPurchaseOrders() {
         try {
+            purchaseOrdersLoading = true;
             let params = {
                 populate: {
                     consortium_member: {
@@ -293,8 +297,10 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                     data: x,
                 };
             });
+            purchaseOrdersLoading = false;
         } catch (e) {
             console.log("Error Purchase Orders ", e);
+            purchaseOrdersLoading = false;
         }
     }
 
@@ -643,6 +649,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                         <div class="field">
                             <div class="control">
                                 <Select
+                                loading={purchaseOrdersLoading}
                                     items={purchase_orders}
                                     on:select={(event) =>
                                         getBatchNumbers(event, childItem)}
@@ -695,7 +702,7 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
                             type="text"
                             class="input has-background-light border-radius-0 "
                             disabled
-                            value={childItem.balance ? childItem.balance : "-"}
+                            value={childItem.balance ? childItem.balance : "0"}
                         />
                     </div>
 
@@ -1022,6 +1029,11 @@ import UnsavedConfirmation from "../../widgets/modals/UnsavedConfirmation.svelte
         on:dismiss={() => (unsavedItemsDialog = false)}
     />
 {/if}
+
+{#if purchaseOrdersLoading}
+    <LoadingPurchaseOrders />
+{/if}
+
 
 
 <style>
